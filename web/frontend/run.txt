@@ -1,0 +1,45 @@
+mkdir frontend
+cd frontend
+
+npx create-next-app@latest frontend --ts
+cd frontend
+
+npm install @reduxjs/toolkit react-redux axios
+npm install -D tailwindcss postcss autoprefixer
+npx tailwindcss init -p
+npm install next@latest webpack@latest mini-css-extract-plugin@latest
+npm install next webpack mini-css-extract-plugin
+
+frontend/
+│
+├── public/                     # Static assets seperti gambar dan ikon
+├── src/
+│   ├── components/              # Semua komponen UI aplikasi
+│   │   ├── VideoUploader.tsx    # Komponen untuk mengunggah video
+│   │   ├── ImageGrid.tsx        # Komponen untuk menampilkan grid gambar
+│   │   └── Loader.tsx           # Komponen loader (untuk loading state)
+│   │
+│   ├── features/                # Fitur atau slice terkait dengan dataset
+│   │   └── video/
+│   │       ├── videoSlice.ts    # Redux slice untuk mengelola video state
+│   │       └── videoAPI.ts      # API call terkait dengan video
+│   │
+│   ├── pages/                   # Semua halaman Next.js
+│   │   ├── _app.tsx             # Root komponen aplikasi
+│   │   └── index.tsx            # Halaman utama
+│   │
+│   ├── store/                   # Konfigurasi Redux store
+│   │   └── store.ts             # Store global Redux Toolkit
+│   │
+│   └── styles/                  # File styling global
+│       └── globals.css          # Import untuk Tailwind CSS
+│
+├── tailwind.config.js           # Konfigurasi Tailwind CSS
+├── postcss.config.js            # Konfigurasi PostCSS
+├── tsconfig.json                # Konfigurasi TypeScript
+├── next.config.js               # Konfigurasi Next.js
+└── package.json                 # Dependensi proyek
+
+
+npm run build
+npm run dev
