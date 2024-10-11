@@ -4,8 +4,8 @@ import videoReducer from '../features/video/videoSlice';
 
 export const store = configureStore({
   reducer: {
-    menu: menuReducer,   // Pastikan menu reducer sudah ada di sini
-    video: videoReducer, // Tambahkan reducer lain jika ada
+    menu: menuReducer,
+    video: videoReducer,
   },
 });
 
