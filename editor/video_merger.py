@@ -59,3 +59,5 @@ if __name__ == "__main__":
 
 # python video_merger.py --clips "D:\engine\smart_parking\dataset\cctv\keluar_lt_2_out.mp4" "D:\engine\smart_parking\dataset\cctv\keluar_lt_2_out.mp4" "D:\engine\smart_parking\dataset\cctv\keluar_lt_2_out.mp4" "D:\engine\smart_parking\dataset\cctv\keluar_lt_2_out.mp4" --output compose_video.mp4
 # python video_merger.py --clips "D:\engine\smart_parking\dataset\cctv\keluar_lt_2_out.mp4" "D:\engine\smart_parking\dataset\cctv\keluar_lt_2_out.mp4" "D:\engine\smart_parking\dataset\cctv\keluar_lt_2_out.mp4" --reduce --output compose_video.mp4
+
+# python video_merger.py --clips "C:\Users\febri.dwi\Documents\dataset\2024-11-08\split_video_2024-11-08\192.168.1.10_01_2024110810130612_1.mp4_1097.mp4" "C:\Users\febri.dwi\Documents\dataset\2024-11-08\split_video_2024-11-08\192.168.1.10_01_2024110810130612_1.mp4_4596.mp4" --output 2024_11_11_compose_video.mp4

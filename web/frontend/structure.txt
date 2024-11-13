@@ -1,0 +1,80 @@
+endeavour-data-studio/
+├── public/                    # Static files like images, fonts, etc.
+├── src/
+│   ├── components/            # Global components shared across the application
+│   │   ├── layout/            # New folder for layout components
+│   │   │   ├── Header.tsx     # Header component
+│   │   │   └── Footer.tsx     # Footer component
+│   │   ├── Button.tsx         # Example shared button component
+│   │   ├── Modal.tsx          # Modal component for dialogs
+│   │   ├── Input.tsx          # Reusable input component
+│   │   ├── Textarea.tsx       # Reusable textarea component
+│   │   ├── Select.tsx         # Reusable select dropdown component
+│   │   ├── Checkbox.tsx       # Reusable checkbox component
+│   │   └── Loader.tsx         # Loader component for loading states
+│   ├── features/              # Feature-specific slices and components
+│   │   ├── annotations/        # For features_annotations
+│   │   │   └── index.tsx      # Page for annotations feature
+│   │   ├── videoEditor/        # For features_video_editor
+│   │   │   └── index.tsx      # Page for video editing feature
+│   │   ├── imageEditor/        # For features_image_editor
+│   │   │   ├── index.tsx      # Page for image editing feature
+│   │   │   ├── components/     # Components for image editing feature
+│   │   │   │   ├── TransformationManipulation/
+│   │   │   │   │   ├── CropTool.tsx
+│   │   │   │   │   ├── RotateTool.tsx
+│   │   │   │   │   ├── ResizeTool.tsx
+│   │   │   │   │   ├── FlipTool.tsx
+│   │   │   │   │   ├── ImageMorphingTool.tsx
+│   │   │   │   │   ├── Transform3DTool.tsx
+│   │   │   │   │   ├── PerspectiveCorrectionTool.tsx
+│   │   │   │   │   ├── LensDistortionCorrectionTool.tsx
+│   │   │   │   │   ├── SplitTool.tsx
+│   │   │   │   │   ├── MergeTool.tsx
+│   │   │   │   │   ├── OverlayTool.tsx
+│   │   │   │   │   ├── EdgeDetectionTool.tsx
+│   │   │   │   │   ├── PhotoCollageTool.tsx
+│   │   │   │   │   ├── WatermarkTool.tsx
+│   │   │   │   │   ├── ChangeBackgroundTool.tsx
+│   │   │   │   │   └── RemoveBackgroundTool.tsx
+│   │   │   │   └── ExportFormatConversion/
+│   │   │   │       ├── ImageConversionTool.tsx
+│   │   │   │       ├── CompressTool.tsx
+│   │   │   │       ├── BulkResizeTool.tsx
+│   │   │   │       ├── CreateGIFTool.tsx
+│   │   │   │       ├── HDRMergeTool.tsx
+│   │   │   │       └── ColorPaletteExtractionTool.tsx
+│   │   │   ├── hooks/          # Hooks for image editing feature
+│   │   │   │   ├── useImageTransformation.ts
+│   │   │   │   ├── useExportConversion.ts
+│   │   │   │   └── useBackgroundProcessing.ts
+│   │   │   └── utils/          # Utilities for image editing feature
+│   │   │       ├── imageUtils.ts
+│   │   │       ├── exportConversionUtils.ts
+│   │   │       └── backgroundProcessing.ts
+│   │   ├── textEditor/         # For features_text_editor
+│   │   │   └── index.tsx       # Page for text editing feature
+│   │   ├── audioEditor/        # For features_audio_editor
+│   │   │   └── index.tsx       # Page for audio editing feature
+│   │   ├── numericDataEditor/  # For features_numeric_data_editor
+│   │   │   └── index.tsx       # Page for numeric data editing feature
+│   │   ├── datasetSplit/       # For features_dataset_split
+│   │   │   └── index.tsx       # Page for dataset splitting feature
+│   │   └── documentEditor/     # For features_document_editor
+│   │       └── index.tsx       # Page for document editing feature
+│   ├── redux/                 # Redux setup
+│   │   ├── store.ts           # Redux store configuration
+│   │   └── slices/            # Slices for different features
+│   │       ├── annotationsSlice.ts      # Redux slice for annotations feature
+│   │       ├── videoEditorSlice.ts      # Redux slice for video editor feature
+│   │       ├── imageEditorSlice.ts       # Redux slice for image editor feature
+│   │       ├── textEditorSlice.ts        # Redux slice for text editor feature
+│   │       ├── audioEditorSlice.ts       # Redux slice for audio editor feature
+│   │       ├── numericDataEditorSlice.ts # Redux slice for numeric data editor feature
+│   │       ├── datasetSplitSlice.ts      # Redux slice for dataset split feature
+│   │       └── documentEditorSlice.ts    # Redux slice for document editor feature
+│   └── styles/                # Global styles and CSS files
+├── .gitignore                  # Ignored files in git
+├── package.json                # Project dependencies and scripts
+├── tsconfig.json               # TypeScript configuration
+└── next.config.js              # Next.js configuration

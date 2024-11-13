@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FaMoon, FaSun, FaUser, FaCog, FaSignOutAlt } from 'react-icons/fa';
+import { useState } from "react";
+import { FaMoon, FaSun, FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
 
 const Header: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false); // State for dark mode toggle
@@ -7,7 +7,7 @@ const Header: React.FC = () => {
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark', !isDarkMode); // Toggle dark mode in the root HTML element
+    document.documentElement.classList.toggle("dark", !isDarkMode); // Toggle dark mode in the root HTML element
   };
 
   const toggleProfileMenu = () => {
@@ -19,14 +19,22 @@ const Header: React.FC = () => {
       <div className="w-full py-2 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Left Side: Logo and Title */}
         <div className="flex items-center space-x-2">
-          <svg xmlns="http://www.w3.org/2000/svg" width="2em" height="2em" viewBox="0 0 2048 2048" fill="#699bf7">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="2em"
+            height="2em"
+            viewBox="0 0 2048 2048"
+            fill="#699bf7"
+          >
             <rect width="2048" height="2048" fill="none" />
             <path
               fill="white"
               d="M2048 640h-640V482L691 960l717 478v-158h640v640h-640v-328l-768-512v200H0V640h640v200l768-512V0h640zm-512 768v384h384v-384zM512 1152V768H128v384zM1536 128v384h384V128z"
             />
           </svg>
-          <span className="text-2xl font-bold text-white">Dataset Editor</span>
+          <span className="text-2xl font-bold text-white">
+            Endeavour Data Studio
+          </span>
         </div>
 
         {/* Right Side: Profile Menu and Dark Mode Toggle */}
@@ -36,7 +44,11 @@ const Header: React.FC = () => {
             onClick={toggleDarkMode}
             className="text-white hover:bg-blue-600 rounded-full p-2 transition duration-300"
           >
-            {isDarkMode ? <FaSun className="w-5 h-5 text-yellow-400" /> : <FaMoon className="w-5 h-5" />}
+            {isDarkMode ? (
+              <FaSun className="w-5 h-5 text-yellow-400" />
+            ) : (
+              <FaMoon className="w-5 h-5" />
+            )}
           </button>
 
           {/* User Info */}
@@ -51,9 +63,17 @@ const Header: React.FC = () => {
               <button
                 onClick={toggleProfileMenu}
                 className="overflow-hidden rounded-full shadow-inner transition duration-300"
-                style={{ backgroundColor: 'var(--default-blue)', border: '2px solid var(--default-blue)' }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--hover-blue)'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--default-blue)'}
+                style={{
+                  backgroundColor: "var(--default-blue)",
+                  border: "2px solid var(--default-blue)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "var(--hover-blue)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor =
+                    "var(--default-blue)")
+                }
               >
                 <img
                   src="https://images.unsplash.com/photo-1600486913747-55e5470d6f40?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"
@@ -102,8 +122,6 @@ const Header: React.FC = () => {
 
 export default Header;
 
-
-
 // const Header: React.FC = () => {
 //     return (
 //       <header className="bg-[#1a4f9d] shadow-sm">
@@ -123,6 +141,5 @@ export default Header;
 //       </header>
 //     );
 //   };
-  
+
 //   export default Header;
-  

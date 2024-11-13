@@ -1,5 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
 interface VideoState {
   loading: boolean;
@@ -17,21 +17,28 @@ const initialState: VideoState = {
 
 // Thunk for splitting video
 export const splitVideo = createAsyncThunk(
-  'video/splitVideo',
+  "video/splitVideo",
   async (formData: FormData, { dispatch }) => {
-    const response = await axios.post('http://localhost:8000/split-video', formData);
+    const response = await axios.post(
+      `http://localhost:8000/videos/split-video-to-img`,
+      formData
+    );
     const { video_id } = response.data;
 
     // Polling progress
     const checkProgress = () => {
-      axios.get(`http://localhost:8000/progress/${video_id}`).then(res => {
-        const { progress } = res.data;
-        dispatch(setProgress(progress));
+      axios
+        .get(
+          `http://localhost:8000/videos/progress-split-video-to-img/${video_id}`
+        )
+        .then((res) => {
+          const { progress } = res.data;
+          dispatch(setProgress(progress));
 
-        if (progress < 100) {
-          setTimeout(checkProgress, 1000);  // Poll every 1 second
-        }
-      });
+          if (progress < 100) {
+            setTimeout(checkProgress, 1000); // Poll every 1 second
+          }
+        });
     };
     checkProgress();
 
@@ -41,21 +48,26 @@ export const splitVideo = createAsyncThunk(
 
 // Thunk for concatenating videos
 export const concatenateVideos = createAsyncThunk(
-  'video/concatenateVideos',
+  "video/concatenateVideos",
   async (formData: FormData, { dispatch }) => {
-    const response = await axios.post('http://localhost:8000/concatenate-videos', formData);
+    const response = await axios.post(
+      "http://localhost:8000/videos/concatenate-videos",
+      formData
+    );
     const { video_id } = response.data;
 
     // Polling progress for concatenation
     const checkProgress = () => {
-      axios.get(`http://localhost:8000/concatenation-progress/${video_id}`).then(res => {
-        const { progress } = res.data;
-        dispatch(setProgress(progress));
+      axios
+        .get(`http://localhost:8000/videos/concatenation-progress/${video_id}`)
+        .then((res) => {
+          const { progress } = res.data;
+          dispatch(setProgress(progress));
 
-        if (progress < 100) {
-          setTimeout(checkProgress, 1000);  // Poll every 1 second
-        }
-      });
+          if (progress < 100) {
+            setTimeout(checkProgress, 1000); // Poll every 1 second
+          }
+        });
     };
     checkProgress();
 
@@ -64,7 +76,7 @@ export const concatenateVideos = createAsyncThunk(
 );
 
 const videoSlice = createSlice({
-  name: 'video',
+  name: "video",
   initialState,
   reducers: {
     setProgress: (state, action) => {
@@ -87,7 +99,7 @@ const videoSlice = createSlice({
       })
       .addCase(splitVideo.rejected, (state) => {
         state.loading = false;
-        state.error = 'Failed to split video';
+        state.error = "Failed to split video";
       })
       // Concatenate Videos
       .addCase(concatenateVideos.pending, (state) => {
@@ -99,15 +111,13 @@ const videoSlice = createSlice({
       })
       .addCase(concatenateVideos.rejected, (state) => {
         state.loading = false;
-        state.error = 'Failed to concatenate videos';
+        state.error = "Failed to concatenate videos";
       });
   },
 });
 
 export const { setProgress, resetProgress } = videoSlice.actions;
 export default videoSlice.reducer;
-
-
 
 // import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 // import axios from 'axios';

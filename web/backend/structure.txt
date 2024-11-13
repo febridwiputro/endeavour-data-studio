@@ -1,0 +1,49 @@
+my_fastapi_app/
+├── app/
+│   ├── __init__.py              
+│   ├── main.py                  
+│   ├── config.py                
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── config.py           
+│   │   ├── security.py          
+│   ├── db/
+│   │   ├── __init__.py
+│   │   ├── session.py           
+│   │   ├── base.py              
+│   │   └── models/              
+│   │       ├── __init__.py
+│   │       └── user.py          
+│   ├── schemas/
+│   │   ├── __init__.py
+│   │   └── user.py              
+│   ├── crud/
+│   │   ├── __init__.py
+│   │   └── user.py              
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── deps.py              
+│   │   └── v1/                  
+│   │       ├── __init__.py
+│   │       └── user.py          
+│   ├── services/                
+│   │   ├── __init__.py
+│   │   ├── rabbitmq/             # Folder untuk integrasi RabbitMQ
+│   │   │   ├── __init__.py
+│   │   │   ├── consumer.py       # Konsumer pesan dari RabbitMQ
+│   │   │   ├── producer.py       # Produser pesan ke RabbitMQ
+│   │   │   └── connection.py     # Mengatur koneksi RabbitMQ
+│   │   └── websocket/            # Folder untuk integrasi WebSocket
+│   │       ├── __init__.py
+│   │       └── manager.py        # Mengatur WebSocket connection management
+│   ├── tests/
+│   │   ├── __init__.py
+│   │   ├── test_user.py          
+│   │   └── test_websocket.py     # Contoh test WebSocket
+│   └── utils/
+│       ├── __init__.py
+│       └── helpers.py           
+├── .env                         
+├── alembic.ini                  
+├── requirements.txt             
+└── README.md                    
