@@ -14,7 +14,8 @@ from app.services.image_service import (
     adjust_image_size, 
     adjust_images_in_folder, 
     process_compress_images_in_folder,
-    adjust_images_in_folder
+    adjust_images_in_folder,
+    process_crop_images_in_folder
 )
 import logging
 
@@ -22,6 +23,37 @@ logging.basicConfig(level=logging.INFO)
 router = APIRouter()
 
 
+@router.post("/crop-images-in-folder", summary="Crop Images in Folder")
+async def crop_images_in_folder(
+    background_tasks: BackgroundTasks,
+    folder_path: str = Form(...),
+    target_width: int = Form(...),
+    target_height: int = Form(...),
+    output_folder: str = Form("output")
+):
+    logging.info(f"Received request with folder_path: {folder_path}, target_width: {target_width}, target_height: {target_height}, output_folder: {output_folder}")
+    
+    # Get absolute paths for input and output directories
+    images_dir = os.path.abspath(folder_path)
+    output_dir = os.path.abspath(output_folder)
+
+    # Validate input folder
+    if not os.path.exists(images_dir):
+        return {"error": f"Folder path '{folder_path}' does not exist."}
+
+    # Create output folder if it doesn't exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Generate a unique crop ID for this process
+    crop_id = random.randint(1000, 9999)
+    progress_status[crop_id] = 0
+    logging.info(f"Crop ID generated: {crop_id}")
+
+    # Start cropping task in the background
+    background_tasks.add_task(process_crop_images_in_folder, crop_id, images_dir, target_width, target_height, output_dir)
+
+    return {"message": "Folder image cropping started", "crop_id": crop_id}
 
 @router.post("/adjust-image-size", summary="Adjust a single image size")
 async def adjust_image_size_endpoint(
@@ -102,24 +134,18 @@ async def progress_adjust_images_in_folder(adjustment_id: int):
 @router.post("/compress-images-in-folder", summary="Compress Images in Folder")
 async def compress_images_in_folder(
     background_tasks: BackgroundTasks,
-    files: List[UploadFile] = File(None),
     folder_path: str = Form(...),
     target_size_kb: int = Form(150),
-    output_folder: str = Form(None)
+    output_folder: str = Form("output")
 ):
     logging.info(f"Received request with folder_path: {folder_path}, target_size_kb: {target_size_kb}, output_folder: {output_folder}")
     
-    if folder_path:
-        images_dir = os.path.abspath(folder_path)
-    else:
-        return {"error": "No valid folder path provided for compression"}
-
-    if output_folder:
-        output_dir = os.path.abspath(output_folder)
-
-    # Create directories if they don't exist
+    # Check if folder_path is provided and valid
+    images_dir = os.path.abspath(folder_path)
     if not os.path.exists(images_dir):
-        os.makedirs(images_dir)
+        return {"error": f"Folder path '{folder_path}' does not exist."}
+
+    output_dir = os.path.abspath(output_folder)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -132,6 +158,40 @@ async def compress_images_in_folder(
     background_tasks.add_task(process_compress_images_in_folder, compress_id, images_dir, target_size_kb, output_dir)
 
     return {"message": "Folder image compression started", "compress_id": compress_id}
+
+# @router.post("/compress-images-in-folder", summary="Compress Images in Folder")
+# async def compress_images_in_folder(
+#     background_tasks: BackgroundTasks,
+#     files: List[UploadFile] = File(None),
+#     folder_path: str = Form(...),
+#     target_size_kb: int = Form(150),
+#     output_folder: str = Form(None)
+# ):
+#     logging.info(f"Received request with folder_path: {folder_path}, target_size_kb: {target_size_kb}, output_folder: {output_folder}")
+    
+#     if folder_path:
+#         images_dir = os.path.abspath(folder_path)
+#     else:
+#         return {"error": "No valid folder path provided for compression"}
+
+#     if output_folder:
+#         output_dir = os.path.abspath(output_folder)
+
+#     # Create directories if they don't exist
+#     if not os.path.exists(images_dir):
+#         os.makedirs(images_dir)
+#     if not os.path.exists(output_dir):
+#         os.makedirs(output_dir)
+
+#     # Generate unique compress_id and initialize progress
+#     compress_id = random.randint(1000, 9999)
+#     progress_status[compress_id] = 0
+#     logging.info(f"Compress ID generated: {compress_id}")
+
+#     # Start compression task in the background
+#     background_tasks.add_task(process_compress_images_in_folder, compress_id, images_dir, target_size_kb, output_dir)
+
+#     return {"message": "Folder image compression started", "compress_id": compress_id}
 
 @router.get("/progress-compress-images-in-folder/{compress_id}", summary="Check folder image compression progress")
 async def progress_compress_images_in_folder(compress_id: int):

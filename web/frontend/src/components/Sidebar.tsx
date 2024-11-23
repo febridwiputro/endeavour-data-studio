@@ -84,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   const getMenuIcon = (menuName: string) => {
     const iconSize = isOpen ? "w-6 h-6" : "w-4 h-4"; // Adjust icon size based on `isOpen`
     const icons: { [key: string]: JSX.Element } = {
-      Annotations: <FaPenFancy className={iconSize} />,
+      "Annotations": <FaPenFancy className={iconSize} />,
       "Image Editor": <FaImage className={iconSize} />,
       "Text Editor": <FaFileAlt className={iconSize} />,
       "Audio Editor": <FaMusic className={iconSize} />,

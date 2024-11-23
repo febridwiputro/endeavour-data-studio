@@ -12,6 +12,8 @@ import { resetProgress } from "../features/video/videoSlice";
 import Header from "../components/Header";
 import CompressImagesInFolder from "../components/images/CompressImagesInFolder";
 import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
+import AnnotationPage from "@/pages/AnnotationsPage";
+
 
 const Home = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -463,6 +465,11 @@ const Home = () => {
           selectedMenu={selectedMenu}
           menuData={menu}
         />
+
+        <div className="flex-grow p-4">
+          {selectedMenu === "Annotations" && <AnnotationPage />}
+          {/* Tambahkan komponen lain sesuai menu yang dipilih */}
+        </div>
 
         <div className="w-full p-6 bg-white shadow-md rounded-md ml-4">
           {/* Breadcrumb Navigation */}
