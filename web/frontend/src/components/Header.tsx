@@ -32,9 +32,7 @@ const Header: React.FC = () => {
               d="M2048 640h-640V482L691 960l717 478v-158h640v640h-640v-328l-768-512v200H0V640h640v200l768-512V0h640zm-512 768v384h384v-384zM512 1152V768H128v384zM1536 128v384h384V128z"
             />
           </svg>
-          <span className="text-2xl font-bold text-white">
-            Endeavour Data Studio
-          </span>
+          <span className="text-2xl font-bold text-white">Data Studio</span>
         </div>
 
         {/* Right Side: Profile Menu and Dark Mode Toggle */}

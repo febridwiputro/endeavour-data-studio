@@ -14,7 +14,6 @@ import CompressImagesInFolder from "../components/images/CompressImagesInFolder"
 import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
 import AnnotationPage from "@/pages/AnnotationsPage";
 
-
 const Home = () => {
   const dispatch = useDispatch<AppDispatch>();
 
@@ -466,14 +465,14 @@ const Home = () => {
           menuData={menu}
         />
 
-        <div className="flex-grow p-4">
+        {/* <div className="flex-grow p-4">
           {selectedMenu === "Annotations" && <AnnotationPage />}
-          {/* Tambahkan komponen lain sesuai menu yang dipilih */}
-        </div>
+        </div> */}
 
         <div className="w-full p-6 bg-white shadow-md rounded-md ml-4">
+          {selectedMenu === "Annotations" && <AnnotationPage />}
           {/* Breadcrumb Navigation */}
-          {renderBreadcrumb()}
+          {/* {renderBreadcrumb()} */}
           {/* Default Content when no menu is selected */}
           {/* {!selectedMenu && renderDefaultContent(menu)}{" "} */}
           {/* Pass menuData to the renderDefaultContent */}
@@ -524,9 +523,7 @@ const Home = () => {
           {/* Fallback content for unknown selected menu */}
           {selectedMenu &&
             selectedMenu !== "Split by Number of Images" &&
-            selectedMenu !== "Concatenate by Composition" && (
-              <p>Content for {selectedMenu} is not available yet.</p>
-            )}
+            selectedMenu !== "Concatenate by Composition"}
           {/* Conditional Rendering for Different Menus */}
           {selectedMenu === "Compress" && <CompressImagesInFolder />}{" "}
           {/* Render CompressImagesInFolder when 'Compress' is selected */}

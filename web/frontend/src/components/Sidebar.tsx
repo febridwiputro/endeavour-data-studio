@@ -15,6 +15,7 @@ import {
   FaSearch,
   FaLock,
 } from "react-icons/fa";
+import AnnotationPage from "@/pages/AnnotationsPage";
 
 interface SidebarProps {
   menuData: any[];
@@ -34,12 +35,21 @@ const Sidebar: React.FC<SidebarProps> = ({
   }>({});
   const [openSubSubMenus, setOpenSubSubMenus] = useState<{
     [key: string]: string | null;
-  }>({}); // New state for deeper submenus
+  }>({});
+
+  const [activePage, setActivePage] = useState<string | null>(null);
 
   const handleMenuToggle = (menuName: string) => {
+    console.log(`Selected Menu: ${menuName}`);
+
+    if (menuName === "Annotations") {
+      setActivePage("Annotations");
+      setActivePage(null);
+    }
+
     setOpenMenu((prev) => (prev === menuName ? null : menuName));
     setOpenSubMenus({});
-    setOpenSubSubMenus({}); // Reset sub-sub menus
+    setOpenSubSubMenus({});
   };
 
   const handleSubMenuToggle = (menuName: string, subFeatureName: string) => {
@@ -47,6 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       ...prev,
       [menuName]: prev[menuName] === subFeatureName ? null : subFeatureName,
     }));
+    console.log("subFeatureName ==", subFeatureName);
     setOpenSubSubMenus({});
   };
 
@@ -62,6 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           ? null
           : subSubFeatureName,
     }));
+    console.log("subSubFeatureName ==", subSubFeatureName);
   };
 
   const handleSidebarToggle = () => {
@@ -82,9 +94,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const getMenuIcon = (menuName: string) => {
-    const iconSize = isOpen ? "w-6 h-6" : "w-4 h-4"; // Adjust icon size based on `isOpen`
+    const iconSize = isOpen ? "w-6 h-6" : "w-4 h-4";
     const icons: { [key: string]: JSX.Element } = {
-      "Annotations": <FaPenFancy className={iconSize} />,
+      Annotations: <FaPenFancy className={iconSize} />,
       "Image Editor": <FaImage className={iconSize} />,
       "Text Editor": <FaFileAlt className={iconSize} />,
       "Audio Editor": <FaMusic className={iconSize} />,

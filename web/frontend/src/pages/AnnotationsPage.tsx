@@ -12,6 +12,7 @@ import { resetProgress } from "../features/video/videoSlice";
 import Header from "../components/Header";
 import CompressImagesInFolder from "../components/images/CompressImagesInFolder";
 import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
+import CreateProjectModal from "@/components/CreateProjectModal";
 
 const AnnotationsPage = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -32,6 +33,7 @@ const AnnotationsPage = () => {
   const [searchQuery, setSearchQuery] = useState(""); // State to store search query
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State to store selected category
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State to control dropdown visibility
+  const [showModal, setShowModal] = useState(false);
 
   interface DropdownProps {
     menuData: any[];
@@ -110,7 +112,7 @@ const AnnotationsPage = () => {
   };
 
   const renderBreadcrumb = () => (
-    <nav aria-label="Breadcrumb" className="flex mb-4">
+    <nav aria-label="Breadcrumb" className="flex">
       <ol className="flex overflow-hidden rounded-lg border border-gray-200 text-gray-600">
         <li className="flex items-center">
           <a
@@ -131,7 +133,6 @@ const AnnotationsPage = () => {
                 d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
               />
             </svg>
-
             <span className="ms-1.5 text-xs font-medium"> Home </span>
           </a>
         </li>
@@ -454,79 +455,59 @@ const AnnotationsPage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <Header />
-      <div className="flex">
-        <Sidebar
-          onMenuClick={handleMenuClick}
-          selectedMenu={selectedMenu}
-          menuData={menu}
-        />
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        {/* Breadcrumb */}
+        <nav aria-label="Breadcrumb" className="flex">
+          <ol className="flex overflow-hidden rounded-lg border border-gray-200 text-gray-600">
+            <li className="flex items-center">
+              <a
+                href="#"
+                className="flex h-10 items-center gap-1.5 bg-gray-100 px-4 transition hover:text-gray-900"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="size-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+                  />
+                </svg>
+                <span className="ms-1.5 text-xs font-medium"> Home </span>
+              </a>
+            </li>
 
-        <div className="w-full p-6 bg-white shadow-md rounded-md ml-4">
-          {/* Breadcrumb Navigation */}
-          {renderBreadcrumb()}
-          {/* Default Content when no menu is selected */}
-          {!selectedMenu && renderDefaultContent(menu)}{" "}
-          {/* Pass menuData to the renderDefaultContent */}
-          {/* Conditional Content based on selected menu */}
-          {selectedMenu === "Split by Number of Images" && (
-            <>
-              <VideoToImage />
+            <li className="relative flex items-center">
+              <span className="absolute inset-y-0 -start-px h-10 w-4 bg-gray-100 [clip-path:_polygon(0_0,_0%_100%,_100%_50%)]"></span>
 
-              {showProgressModal && (
-                <ProgressModal
-                  progress={progress}
-                  onClose={() => setShowProgressModal(false)}
-                />
-              )}
-              {showSuccessModal && (
-                <Modal
-                  show={true}
-                  title="Success"
-                  message="Video successfully processed!"
-                  onClose={() => setShowSuccessModal(false)}
-                />
-              )}
-              {showErrorModal && (
-                <Modal
-                  show={true}
-                  title="Error"
-                  message="Failed to process video."
-                  onClose={() => setShowErrorModal(false)}
-                />
-              )}
+              <a
+                href="#"
+                className="flex h-10 items-center bg-white pe-4 ps-8 text-xs font-medium transition hover:text-gray-900"
+              >
+                Annotations
+              </a>
+            </li>
+          </ol>
+        </nav>
 
-              <div className="mt-6">
-                <ImageGrid images={images} />
-              </div>
-            </>
-          )}
-          {selectedMenu === "Concatenate by Composition" && (
-            <>
-              <ConcatenateVideo />
-              {showProgressModal && (
-                <ProgressModal
-                  progress={progress}
-                  onClose={() => setShowProgressModal(false)}
-                />
-              )}
-            </>
-          )}
-          {/* Fallback content for unknown selected menu */}
-          {selectedMenu &&
-            selectedMenu !== "Split by Number of Images" &&
-            selectedMenu !== "Concatenate by Composition" && (
-              <p>Content for {selectedMenu} is not available yet.</p>
-            )}
-          {/* Conditional Rendering for Different Menus */}
-          {selectedMenu === "Compress" && <CompressImagesInFolder />}{" "}
-          {/* Render CompressImagesInFolder when 'Compress' is selected */}
-          {selectedMenu === "Image Size Adjustment" && (
-            <ImageSizeAdjustment />
-          )}{" "}
-        </div>
+        {/* Create Button */}
+        <button
+          className="px-4 py-2 text-sm font-medium text-white bg-[#1a4e9d] rounded-[8px] hover:bg-[#173e85] transition"
+          onClick={() => setShowModal(true)}
+        >
+          Create
+        </button>
       </div>
+
+      {/* Modal */}
+      {showModal && <CreateProjectModal onClose={() => setShowModal(false)} />}
+      {!selectedMenu && renderDefaultContent(menu)}
     </div>
   );
 };
