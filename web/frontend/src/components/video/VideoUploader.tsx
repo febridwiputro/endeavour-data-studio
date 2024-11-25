@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { splitVideo } from '../features/video/videoSlice';
-import { AppDispatch } from '../store/store';
+import { splitVideo } from '../../features/video/videoSlice';
+import { AppDispatch } from '../../store/store';
 
 const VideoUploader = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);

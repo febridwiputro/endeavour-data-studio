@@ -40,8 +40,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [activePage, setActivePage] = useState<string | null>(null);
 
   const handleMenuToggle = (menuName: string) => {
-    console.log(`Selected Menu: ${menuName}`);
-
     if (menuName === "Annotations") {
       setActivePage("Annotations");
       setActivePage(null);

@@ -89,7 +89,6 @@ const Home = () => {
 
   const handleMenuClick = (menuName: string) => {
     setSelectedMenu(menuName);
-    console.log("Selected Menu:", menuName);
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
