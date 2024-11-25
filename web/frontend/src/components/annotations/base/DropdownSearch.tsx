@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 interface DropdownSearchProps {
-  menuData: any[]; // Replace `any[]` with a more specific type if available
+  menuData: { name: string }[]; // Define the structure of menu data
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedCategory: string | null;
@@ -32,8 +32,8 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Search submitted with:", { searchQuery, selectedCategory });
-    // Implement search logic if needed
+    console.log("Search submitted with query:", searchQuery);
+    // Implement search logic here
   };
 
   return (
@@ -42,6 +42,13 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
       onSubmit={handleSubmit}
     >
       <div className="flex">
+        <label
+          htmlFor="search-dropdown"
+          className="mb-2 text-sm font-medium text-gray-900 sr-only"
+        >
+          Search
+        </label>
+
         {/* Dropdown Button */}
         <div className="relative flex-shrink-0">
           <button
@@ -49,6 +56,7 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
             onClick={handleDropdownToggle}
             className="inline-flex h-full items-center py-2.5 px-4 text-sm font-medium text-center bg-white border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100"
             type="button"
+            style={{ color: "var(--default-blue)" }}
           >
             {selectedCategory || "All categories"}
             <svg
@@ -71,7 +79,10 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
           {/* Dropdown List */}
           {isDropdownOpen && (
             <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 mt-2">
-              <ul className="py-2 text-sm">
+              <ul
+                className="py-2 text-sm"
+                style={{ color: "var(--default-blue)" }}
+              >
                 {menuData.map((menuItem, index) => (
                   <li key={index}>
                     <button
@@ -95,6 +106,7 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
             value={searchQuery}
             onChange={handleSearchChange}
             className="block h-full p-2.5 w-full z-20 bg-white border border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-e-lg"
+            style={{ color: "var(--default-blue)" }}
             placeholder="Search Mockups, Logos, Design Templates..."
             required
           />
@@ -102,7 +114,8 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
           {/* Search Button */}
           <button
             type="submit"
-            className="absolute top-0 right-0 p-2.5 text-sm font-medium h-full text-white rounded-e-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300"
+            className="absolute top-0 right-0 p-2.5 text-sm font-medium h-full text-white rounded-e-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800"
+            style={{ backgroundColor: "var(--default-blue)" }}
           >
             <svg
               className="w-4 h-4"

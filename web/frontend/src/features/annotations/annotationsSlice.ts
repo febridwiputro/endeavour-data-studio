@@ -12,9 +12,11 @@ export const fetchAnnotations = createAsyncThunk(
   "annotations/fetchAnnotations",
   async (): Promise<AnnotationData> => {
     const response = await axios.get("http://localhost:8000/annotations/");
-    return response.data.data; // Assuming API returns the correct format
+    console.log("Fetched Annotations Data:", response.data.data);
+    return response.data.data;
   }
 );
+
 
 const annotationsSlice = createSlice({
   name: "annotations",
