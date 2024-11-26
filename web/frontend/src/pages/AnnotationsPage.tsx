@@ -4,7 +4,6 @@ import CreateButton from "@/components/annotations/base/CreateButton";
 import DefaultContent from "@/components/annotations/base/DefaultContent";
 import CreateProjectModal from "@/components/annotations/CreateProjectModal";
 
-
 const AnnotationsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const menuData = [{ name: "Category 1" }, { name: "Category 2" }];
@@ -13,8 +12,36 @@ const AnnotationsPage: React.FC = () => {
     <div>
       <div className="flex items-center justify-between mb-4">
         <Breadcrumb />
-        <CreateButton onClick={() => setShowModal(true)} />
+
+        {/* Buttons Section */}
+        <div className="flex items-center space-x-4">
+          {/* Docs Button */}
+          <a
+            href="#docs"
+            className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-[8px] hover:bg-gray-100 transition"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-4 h-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 12h6m2 8H7a2 2 0 01-2-2V6a2 2 0 012-2h6l4 4v12a2 2 0 01-2 2z"
+              />
+            </svg>
+            <span>Docs</span>
+          </a>
+
+          {/* Create Button */}
+          <CreateButton onClick={() => setShowModal(true)} />
+        </div>
       </div>
+
       {showModal && <CreateProjectModal onClose={() => setShowModal(false)} />}
       <DefaultContent menuData={menuData} />
     </div>
@@ -22,6 +49,33 @@ const AnnotationsPage: React.FC = () => {
 };
 
 export default AnnotationsPage;
+
+
+
+// import React, { useState } from "react";
+// import Breadcrumb from "@/components/annotations/base/Breadcrumb";
+// import CreateButton from "@/components/annotations/base/CreateButton";
+// import DefaultContent from "@/components/annotations/base/DefaultContent";
+// import CreateProjectModal from "@/components/annotations/CreateProjectModal";
+
+
+// const AnnotationsPage: React.FC = () => {
+//   const [showModal, setShowModal] = useState(false);
+//   const menuData = [{ name: "Category 1" }, { name: "Category 2" }];
+
+//   return (
+//     <div>
+//       <div className="flex items-center justify-between mb-4">
+//         <Breadcrumb />
+//         <CreateButton onClick={() => setShowModal(true)} />
+//       </div>
+//       {showModal && <CreateProjectModal onClose={() => setShowModal(false)} />}
+//       <DefaultContent menuData={menuData} />
+//     </div>
+//   );
+// };
+
+// export default AnnotationsPage;
 
 
 // import { useState, useEffect } from "react";
