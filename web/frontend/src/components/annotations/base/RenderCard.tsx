@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
 
-const RenderCard: React.FC = () => {
+interface RenderCardProps {
+  onClick: () => void;
+}
+
+const RenderCard: React.FC<RenderCardProps> = ({ onClick }) => {
   const [currentDateTime, setCurrentDateTime] = useState("");
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -39,6 +43,7 @@ const RenderCard: React.FC = () => {
     <a
       href="#"
       className="block relative rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
+      onClick={onClick}
     >
       {/* Card Image */}
       <div className="relative h-48 w-full">
