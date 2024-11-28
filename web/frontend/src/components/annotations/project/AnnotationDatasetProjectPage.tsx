@@ -14,13 +14,13 @@ const AnnotationDatasetProjectPage: React.FC = () => {
   const [selectedImages, setSelectedImages] = useState<number[]>([]);
 
   const handleImageSelect = (index: number) => {
-    setSelectedImages((prev) =>
-      prev.includes(index)
-        ? prev.filter((i) => i !== index) // Deselect image
-        : [...prev, index] // Select image
+    setSelectedImages(
+      (prev) =>
+        prev.includes(index)
+          ? prev.filter((i) => i !== index) // Deselect image
+          : [...prev, index] // Select image
     );
   };
-  
 
   const handleSplitOptionSelect = (option: string) => {
     setSplitOption(option);
@@ -63,34 +63,36 @@ const AnnotationDatasetProjectPage: React.FC = () => {
         </div>
       </div>
 
-{/* Search Bar Section */}
-<div className="flex items-center space-x-4 mb-6">
-  <div className="flex items-center border border-gray-300 rounded-md overflow-hidden w-full focus-within:border-blue-500 transition-colors">
-    <input
-      type="text"
-      placeholder="Search images"
-      className="px-4 py-2 text-sm flex-grow bg-white text-gray-700 focus:outline-none"
-    />
-    <div className="h-full w-px bg-gray-300"></div> {/* Separator line */}
-    <button className="px-4 py-2 bg-white text-gray-700 text-sm flex items-center space-x-2 hover:bg-gray-100">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M10 10l6 6m-6-6a6 6 0 1112 0 6 6 0 01-12 0z"
-        />
-      </svg>
-      <span>Search</span>
-    </button>
-  </div>
-</div>
+      {/* Search Bar Section */}
+      <div className="flex items-center space-x-4 mb-1">
+        {" "}
+        {/* Ubah mb-6 menjadi mb-3 */}
+        <div className="flex items-center border border-gray-300 rounded-md overflow-hidden w-full focus-within:border-blue-500 transition-colors">
+          <input
+            type="text"
+            placeholder="Search images"
+            className="px-4 py-2 text-sm flex-grow bg-white text-gray-700 focus:outline-none"
+          />
+          <div className="h-full w-px bg-gray-300"></div> {/* Separator line */}
+          <button className="px-4 py-2 bg-white text-gray-700 text-sm flex items-center space-x-2 hover:bg-gray-100">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M10 10l6 6m-6-6a6 6 0 1112 0 6 6 0 01-12 0z"
+              />
+            </svg>
+            <span>Search</span>
+          </button>
+        </div>
+      </div>
 
       {/* Search and Filters Section */}
       <div className="flex flex-wrap justify-between items-center mb-6 gap-4">
@@ -181,14 +183,29 @@ const AnnotationDatasetProjectPage: React.FC = () => {
               </div>
             )}
           </div>
-          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
-            Search by Image
+          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300 flex items-center space-x-2">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16L10 10M10 10l4 4m0 0l6-6M4 16h16"
+              />
+              <circle cx="9" cy="7" r="3" strokeWidth={2} />
+            </svg>
+            <span>Search by Image</span>
           </button>
         </div>
       </div>
 
-            {/* Selected Images and View Mode */}
-            <div className="flex justify-between items-center mb-6">
+      {/* Selected Images and View Mode */}
+      <div className="flex justify-between items-center mb-6">
         <div className="text-sm text-gray-600">
           {imagesSelected} images selected
         </div>
@@ -240,112 +257,113 @@ const AnnotationDatasetProjectPage: React.FC = () => {
             </svg>
           </button>
         </div>
-        </div>
+      </div>
 
-{/* Grid Section */}
-<div
-  className={`grid ${
-    activeView === "grid" ? "grid-cols-6 gap-6" : "grid-cols-1 gap-4"
-  }`}
->
-  {Array.from({ length: 50 }).map((_, index) => {
-    const isSelected = selectedImages.includes(index);
-    const isImageFullScreen = fullScreenImage === index; // Track if this image is in full-screen
-
-    return (
+      {/* Grid Section */}
       <div
-        key={index}
-        className="relative border border-gray-200 rounded-md overflow-hidden shadow-sm group"
-        style={{
-          width: activeView === "grid" ? "200px" : "100%",
-          height: activeView === "grid" ? "200px" : "auto",
-        }}
+        className={`grid gap-6 ${
+          activeView === "grid"
+            ? "grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+            : "grid-cols-1"
+        }`}
       >
-        <img
-          src="https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg"
-          alt={`Image 000${index + 1}`}
-          className="object-cover w-full h-full"
-        />
-        {/* Image Label */}
-        <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-sm px-2 py-1">
-          000{index + 1}_jpg
-        </div>
-        {/* Annotated Label */}
-        <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs px-2 py-0.5 rounded-bl-md">
-          Annotated
-        </div>
-        {/* Checkbox for Selection */}
-        <div
-          className={`absolute top-0 left-0 ${
-            isSelected ? "opacity-100" : "opacity-0"
-          } group-hover:opacity-100 transition`}
-        >
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={() => handleImageSelect(index)}
-            className="form-checkbox h-5 w-5 text-[#1a4f9d] rounded-full border-gray-300 focus:ring-[#1a4f9d]"
-            style={{ margin: "4px" }}
-          />
-        </div>
-        {/* Show Full Image Icon */}
-        <div
-          className="absolute top-8 left-0 opacity-0 group-hover:opacity-100 transition"
-          onClick={() => setFullScreenImage(index)}
-        >
-          <button className="bg-gray-800 bg-opacity-70 p-2 rounded-full text-white">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+        {Array.from({ length: 50 }).map((_, index) => {
+          const isSelected = selectedImages.includes(index);
+          const isImageFullScreen = fullScreenImage === index; // Track if this image is in full-screen
+
+          return (
+            <div
+              key={index}
+              className="relative border border-gray-200 rounded-md overflow-hidden shadow-sm group"
+              style={{
+                width: activeView === "grid" ? "200px" : "100%",
+                height: activeView === "grid" ? "200px" : "auto",
+              }}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 8h16M4 16h16"
-              />
-            </svg>
-          </button>
-        </div>
-        {/* Full-Screen Image Modal */}
-        {isImageFullScreen && (
-          <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
-            <div className="relative w-full max-w-4xl">
-              <button
-                className="absolute top-4 right-4 bg-red-600 text-white p-2 rounded-full"
-                onClick={() => setFullScreenImage(null)}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
               <img
                 src="https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg"
                 alt={`Image 000${index + 1}`}
-                className="object-contain w-full h-full"
+                className="object-cover w-full h-full"
               />
+              {/* Image Label */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-sm px-2 py-1">
+                000{index + 1}_jpg
+              </div>
+              {/* Annotated Label */}
+              <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs px-2 py-0.5 rounded-bl-md">
+                Annotated
+              </div>
+              {/* Checkbox for Selection */}
+              <div
+                className={`absolute top-0 left-0 ${
+                  isSelected ? "opacity-100" : "opacity-0"
+                } group-hover:opacity-100 transition`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => handleImageSelect(index)}
+                  className="form-checkbox h-5 w-5 text-[#1a4f9d] rounded-full border-gray-300 focus:ring-[#1a4f9d]"
+                  style={{ margin: "4px" }}
+                />
+              </div>
+              {/* Show Full Image Icon */}
+              <div
+                className="absolute top-8 left-0 opacity-0 group-hover:opacity-100 transition"
+                onClick={() => setFullScreenImage(index)}
+              >
+                <button className="bg-gray-800 bg-opacity-70 p-2 rounded-full text-white">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 8h16M4 16h16"
+                    />
+                  </svg>
+                </button>
+              </div>
+              {/* Full-Screen Image Modal */}
+              {isImageFullScreen && (
+                <div className="fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center z-50">
+                  <div className="relative w-full max-w-4xl">
+                    <button
+                      className="absolute top-4 right-4 bg-red-600 text-white p-2 rounded-full"
+                      onClick={() => setFullScreenImage(null)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                    <img
+                      src="https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg"
+                      alt={`Image 000${index + 1}`}
+                      className="object-contain w-full h-full"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          );
+        })}
       </div>
-    );
-  })}
-</div>
-
 
       {/* Footer Section */}
       <div className="mt-6 flex justify-between items-center">
