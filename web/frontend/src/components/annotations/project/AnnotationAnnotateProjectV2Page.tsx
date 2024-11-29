@@ -1,20 +1,140 @@
 import React, { useState } from "react";
 
 const AnnotationAnnotateProjectV2Page: React.FC = () => {
-  const [tasks, setTasks] = useState(Array.from({ length: 10 }, (_, i) => i + 1)); // Sample data
+  const [tasks, setTasks] = useState(
+    Array.from({ length: 10 }, (_, i) => i + 1)
+  ); // Sample data
   const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
+  const [isSplitDropdownOpen, setIsSplitDropdownOpen] = useState(false);
+  const [splitOption, setSplitOption] = useState("Split");
+  const [showColumnsDropdown, setShowColumnsDropdown] = useState(false);
+  const [columns, setColumns] = useState({
+    id: true,
+    completed: true,
+    annotatedBy: true,
+    predictions: true,
+    image: true,
+    act: true,
+  });
+
+  const handleSplitOptionSelect = (option: string) => {
+    setSplitOption(option);
+    setIsSplitDropdownOpen(false);
+  };
+
+  const toggleColumn = (column: keyof typeof columns) => {
+    setColumns((prev) => ({ ...prev, [column]: !prev[column] }));
+  };
 
   const handleSelectTask = (taskId: number) => {
     setSelectedTasks((prev) =>
-      prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId]
+      prev.includes(taskId)
+        ? prev.filter((id) => id !== taskId)
+        : [...prev, taskId]
     );
   };
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold text-gray-800">Annotate</h1>
+      <div className="flex items-center justify-between bg-white p-4 rounded-md shadow mb-4">
+        <div className="flex items-center space-x-2 relative">
+          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
+            Actions
+          </button>
+          <div className="relative">
+            <button
+              className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300 flex items-center"
+              onClick={() => setShowColumnsDropdown(!showColumnsDropdown)}
+>
+              {splitOption}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="ml-2 h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>            
+            {showColumnsDropdown && (
+              <div className="absolute mt-2 w-48 bg-white border border-gray-300 rounded-md shadow-lg z-10">
+                <div className="p-2 space-y-2">
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={columns.id}
+                      onChange={() => toggleColumn("id")}
+                      className="form-checkbox h-4 w-4 text-[#1a4f9d] rounded focus:ring-[#1a4f9d]"
+                    />
+                    <span className="ml-2">ID</span>
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={columns.completed}
+                      onChange={() => toggleColumn("completed")}
+                      className="form-checkbox h-4 w-4 text-[#1a4f9d] rounded focus:ring-[#1a4f9d]"
+                    />
+                    <span className="ml-2">Completed</span>
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={columns.annotatedBy}
+                      onChange={() => toggleColumn("annotatedBy")}
+                      className="form-checkbox h-4 w-4 text-[#1a4f9d] rounded focus:ring-[#1a4f9d]"
+                    />
+                    <span className="ml-2">Annotated by</span>
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={columns.predictions}
+                      onChange={() => toggleColumn("predictions")}
+                      className="form-checkbox h-4 w-4 text-[#1a4f9d] rounded focus:ring-[#1a4f9d]"
+                    />
+                    <span className="ml-2">Predictions</span>
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={columns.image}
+                      onChange={() => toggleColumn("image")}
+                      className="form-checkbox h-4 w-4 text-[#1a4f9d] rounded focus:ring-[#1a4f9d]"
+                    />
+                    <span className="ml-2">Images</span>
+                  </label>
+                  <label className="flex items-center text-sm text-gray-700">
+                    <input
+                      type="checkbox"
+                      checked={columns.act}
+                      onChange={() => toggleColumn("act")}
+                      className="form-checkbox h-4 w-4 text-[#1a4f9d] rounded focus:ring-[#1a4f9d]"
+                    />
+                    <span className="ml-2">Act</span>
+                  </label>
+                </div>
+              </div>
+            )}
+          </div>
+          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
+            Filters
+          </button>
+          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
+            Order
+          </button>
+          <button className="px-4 py-2 bg-[#1a4f9d] text-white text-sm rounded-md shadow hover:bg-[#173e85]">
+            Label All Tasks
+          </button>
+        </div>
+
         <div className="flex items-center space-x-4">
           <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
             Import
@@ -33,31 +153,19 @@ const AnnotationAnnotateProjectV2Page: React.FC = () => {
         </div>
       </div>
 
-      {/* Table Header */}
       <div className="flex items-center justify-between bg-white p-4 rounded-md shadow mb-4">
         <div className="flex items-center space-x-2">
-          <input type="checkbox" className="form-checkbox h-4 w-4 text-blue-600" />
+          <input
+            type="checkbox"
+            className="form-checkbox h-4 w-4 text-blue-600"
+          />
           <span className="text-sm text-gray-700">
             {selectedTasks.length} images selected
           </span>
         </div>
-        <div className="flex items-center space-x-2">
-          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
-            Actions
-          </button>
-          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
-            Columns
-          </button>
-          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
-            Filters
-          </button>
-          <button className="px-4 py-2 bg-gray-200 text-gray-700 text-sm rounded-md shadow hover:bg-gray-300">
-            Order
-          </button>
-          <button className="px-4 py-2 bg-[#1a4f9d] text-white text-sm rounded-md shadow hover:bg-[#173e85]">
-            Label All Tasks
-          </button>
-        </div>
+        <h1 className="text-s text-gray-800">
+          Tasks: 1 / 1 Annotations: 0 Predictions: 0
+        </h1>
       </div>
 
       {/* Table */}
@@ -66,15 +174,24 @@ const AnnotationAnnotateProjectV2Page: React.FC = () => {
           <thead className="bg-gray-100 text-gray-600">
             <tr>
               <th className="px-4 py-2">
-                <input type="checkbox" className="form-checkbox h-4 w-4 text-blue-600" />
+                <input
+                  type="checkbox"
+                  className="form-checkbox h-4 w-4 text-blue-600"
+                />
               </th>
-              <th className="px-4 py-2">ID</th>
-              <th className="px-4 py-2">Completed</th>
-              <th className="px-4 py-2">Annotated by</th>
-              <th className="px-4 py-2">Image</th>
-              <th className="px-4 py-2"></th>
+              {columns.id && <th className="px-4 py-2">ID</th>}
+              {columns.completed && <th className="px-4 py-2">Completed</th>}
+              {columns.annotatedBy && (
+                <th className="px-4 py-2">Annotated by</th>
+              )}
+              {columns.predictions && (
+                <th className="px-4 py-2">Predictions</th>
+              )}
+              {columns.image && <th className="px-4 py-2">Images</th>}
+              {columns.act && <th className="px-4 py-2">Act</th>}
             </tr>
           </thead>
+
           <tbody>
             {tasks.map((taskId) => (
               <tr key={taskId} className="hover:bg-gray-50">
@@ -86,34 +203,39 @@ const AnnotationAnnotateProjectV2Page: React.FC = () => {
                     onChange={() => handleSelectTask(taskId)}
                   />
                 </td>
-                <td className="px-4 py-2">{taskId}</td>
-                <td className="px-4 py-2">0</td>
-                <td className="px-4 py-2">0</td>
-                <td className="px-4 py-2">
-                  <img
-                    src="https://via.placeholder.com/50"
-                    alt="Preview"
-                    className="w-10 h-10 object-cover rounded-md"
-                  />
-                </td>
-                <td className="px-4 py-2">
-                  <button className="px-2 py-1 bg-gray-200 rounded-md text-sm hover:bg-gray-300">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth={2}
-                      stroke="currentColor"
-                      className="h-4 w-4"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4 6h16M4 12h16m-7 6h7"
-                      />
-                    </svg>
-                  </button>
-                </td>
+                {columns.id && <td className="px-4 py-2">123</td>}
+                {columns.completed && <td className="px-4 py-2">Yes</td>}
+                {columns.annotatedBy && <td className="px-4 py-2">User A</td>}
+                {columns.predictions && <td className="px-4 py-2">90%</td>}
+                {columns.image && (
+                  <td className="px-4 py-2">
+                    <img
+                      src="https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg"
+                      alt="Preview"
+                      className="w-10 h-10 object-cover rounded-md"
+                    />
+                  </td>
+                )}
+                {columns.act && (
+                  <td className="px-4 py-2">
+                    <button className="px-2 py-1 bg-gray-200 rounded-md text-sm hover:bg-gray-300">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth={2}
+                        stroke="currentColor"
+                        className="h-4 w-4"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M4 6h16M4 12h16m-7 6h7"
+                        />
+                      </svg>
+                    </button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>
@@ -124,7 +246,6 @@ const AnnotationAnnotateProjectV2Page: React.FC = () => {
 };
 
 export default AnnotationAnnotateProjectV2Page;
-
 
 // import React, { useState } from "react";
 
@@ -240,7 +361,7 @@ export default AnnotationAnnotateProjectV2Page;
 //                 <td className="p-3">
 //                   <img
 //                     src={task.image}
-//                     alt={`Task ${task.id}`}
+//                     alt={Task ${task.id}}
 //                     className="h-12 w-12 object-cover rounded"
 //                   />
 //                 </td>

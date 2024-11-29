@@ -3,6 +3,7 @@ import SidebarAnnotationProject from "./SidebarAnnotationProject";
 import AnnotationUploadDataProjectPage from "./AnnotationUploadDataProjectPage";
 import AnnotationAnnotateProjectPage from "./AnnotationAnnotateProjectPage";
 import AnnotationAnnotateProjectV2Page from "./AnnotationAnnotateProjectV2Page";
+import AnnotationAnnotateProjectLabelingPage from "./labeling/AnnotationAnnotateProjectLabelingPage";
 import AnnotationDatasetProjectPage from "./AnnotationDatasetProjectPage";
 
 const AnnotationsProjectPage: React.FC = () => {
@@ -11,7 +12,7 @@ const AnnotationsProjectPage: React.FC = () => {
   const renderContent = () => {
     switch (activePage) {
       case "Annotate":
-        return <AnnotationAnnotateProjectV2Page />;
+        return <AnnotationAnnotateProjectLabelingPage />;
       case "Dataset":
         return <AnnotationDatasetProjectPage />
       case "Upload Data":
