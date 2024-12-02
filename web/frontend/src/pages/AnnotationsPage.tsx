@@ -3,6 +3,7 @@ import Breadcrumb from "@/components/annotations/base/Breadcrumb";
 import CreateButton from "@/components/annotations/base/CreateButton";
 import DefaultContent from "@/components/annotations/base/DefaultContent";
 import CreateProjectModal from "@/components/annotations/CreateProjectModal";
+import ProjectSettingsModal from "@/components/annotations/project/settings/ProjectSettingsModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHome, faFolder } from "@fortawesome/free-solid-svg-icons";
 
