@@ -14,6 +14,11 @@ import {
   FaPalette,
   FaSearch,
   FaLock,
+  FaMoon,
+  FaSun,
+  FaUser,
+  FaCog,
+  FaSignOutAlt,
 } from "react-icons/fa";
 import AnnotationPage from "@/pages/AnnotationsPage";
 
@@ -37,6 +42,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     [key: string]: string | null;
   }>({});
 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const [activePage, setActivePage] = useState<string | null>(null);
 
   const handleMenuToggle = (menuName: string) => {
@@ -125,6 +132,15 @@ const Sidebar: React.FC<SidebarProps> = ({
     const element = e.currentTarget;
     element.style.backgroundColor = "";
     element.style.color = "var(--default-blue)";
+  };
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle("dark", !isDarkMode);
+  };
+
+  const toggleProfileMenu = () => {
+    setIsProfileMenuOpen(!isProfileMenuOpen);
   };
 
   const renderSubFeatures = (subFeatures: any[], menuName: string) => {
@@ -222,7 +238,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         className="px-2 py-6"
         style={{ overflowY: "auto", maxHeight: "calc(100vh - 96px)" }}
       >
-        <div className="flex items-center justify-center">
+        <div
+          className="flex items-center justify-center"
+          // style={{ backgroundColor: "#1a4f9d" }}
+        >
           <div
             className="flex items-center cursor-pointer"
             onClick={handleSidebarToggle}
@@ -245,7 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               style={{ color: "var(--default-blue)" }}
               className={`text-xl font-bold ml-2 ${!isOpen && "hidden"}`}
             >
-              Dashboard
+              Data Studio
             </span>
           </div>
         </div>
@@ -282,6 +301,81 @@ const Sidebar: React.FC<SidebarProps> = ({
             </li>
           ))}
         </ul>
+      </div>
+
+      {/* Footer Section: Dark Mode Toggle and Profile Info */}
+      <div className="flex flex-col items-start space-y-4 p-4 border-t">
+        {/* Dark Mode Toggle */}
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={toggleDarkMode}
+            className="text-white bg-blue-500 hover:bg-blue-600 rounded-full p-2 transition duration-300"
+          >
+            {isDarkMode ? (
+              <FaSun className="w-5 h-5 text-yellow-400" />
+            ) : (
+              <FaMoon className="w-5 h-5" />
+            )}
+          </button>
+          {/* Conditionally render the text */}
+          {isOpen && (
+            <span className="text-sm text-gray-700">
+              {isDarkMode ? "Light Mode" : "Dark Mode"}
+            </span>
+          )}
+        </div>
+
+        {/* Profile Info */}
+        <div className="relative flex items-center space-x-2">
+          <button
+            onClick={toggleProfileMenu}
+            className="overflow-hidden rounded-full shadow-inner transition duration-300"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1600486913747-55e5470d6f40?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1770&q=80"
+              alt="Profile"
+              className="w-10 h-10 object-cover"
+            />
+          </button>
+          {/* Conditionally render the profile text */}
+          {isOpen && (
+            <div className="text-sm">
+              <p className="text-xs text-black">Febri Dwi Putro</p>
+              <p className="text-xs text-black">putrodwifebri@gmail.com</p>
+            </div>
+          )}
+
+          {/* Profile Menu Dropdown */}
+          {isProfileMenuOpen && (
+            <div className="absolute bottom-full right-0 z-10 mb-2 w-48 rounded-md border border-gray-100 bg-white shadow-lg">
+              <div className="p-2">
+                <a
+                  href="#"
+                  className="flex items-center gap-2 block rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                >
+                  <FaUser className="w-4 h-4" />
+                  Profile
+                </a>
+                <a
+                  href="#"
+                  className="flex items-center gap-2 block rounded-lg px-4 py-2 text-sm text-gray-500 hover:bg-gray-50 hover:text-gray-700"
+                >
+                  <FaCog className="w-4 h-4" />
+                  Settings
+                </a>
+                <form method="POST" action="#">
+                  <button
+                    type="submit"
+                    className="flex items-center gap-2 w-full rounded-lg px-4 py-2 text-sm text-red-700 hover:bg-red-50"
+                  >
+                    <FaSignOutAlt className="w-4 h-4" />
+                    Logout
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -9,7 +9,8 @@ import {
   faEye,
   faServer,
   faBrain,
-  faCompressAlt, faExpandAlt
+  faCompressAlt,
+  faExpandAlt,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface SidebarProps {
@@ -21,7 +22,6 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
   activePage,
   setActivePage,
 }) => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
 
   const menuItems = [
@@ -61,17 +61,30 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
         isMinimized ? "w-20" : "w-72"
       } flex flex-col border-r border-gray-200 shadow transition-all duration-300`}
     >
-      {/* Toggle Button */}
-      <div className="flex justify-end p-2">
+      {/* Header Section */}
+      <div
+        className={`flex items-center ${
+          isMinimized ? "justify-center" : "justify-between"
+        } p-4 bg-gray-100 border-b border-gray-200`}
+      >
+        {/* Title */}
+        {!isMinimized && (
+          <h1 className="text-lg font-semibold text-gray-800">
+            Computer Vision
+          </h1>
+        )}
+
+        {/* Toggle Button */}
         <button
           onClick={() => setIsMinimized(!isMinimized)}
-          className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          className={`flex items-center justify-center ${
+            isMinimized ? "w-10 h-10" : "w-8 h-8"
+          } bg-white rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-200 focus:outline-none transition-all`}
+          title={isMinimized ? "Expand Sidebar" : "Collapse Sidebar"}
         >
           <FontAwesomeIcon
             icon={isMinimized ? faExpandAlt : faCompressAlt}
-            className={`w-6 h-6 transform ${
-              isMinimized ? "rotate-180" : ""
-            } transition-transform`}
+            className="w-5 h-5"
           />
         </button>
       </div>
@@ -100,27 +113,43 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
       {/* Menu Sections */}
       {menuItems.map((section) => (
         <div key={section.category}>
-          {!isMinimized && (
-            <h2 className="text-xs font-semibold text-gray-500 uppercase mb-3">
-              {section.category}
-            </h2>
-          )}
+          <div
+            className={`flex items-center px-4 ${
+              isMinimized ? "justify-center" : "justify-start"
+            } mb-3`}
+          >
+            {/* Category Text */}
+            {!isMinimized && (
+              <h2 className="text-xs font-semibold text-gray-500 uppercase">
+                {section.category}
+              </h2>
+            )}
+          </div>
           <ul className="space-y-2">
             {section.items.map((item) => (
               <li key={item.name}>
                 <button
                   className={`${getButtonClass(
                     item.name
-                  )} ${isMinimized ? "justify-center flex" : ""}`}
+                  )} ${isMinimized ? "justify-center flex-col h-10 w-10 mx-auto" : "justify-start flex-row px-4 py-2"} flex items-center`}
                   onClick={() => setActivePage(item.name)}
                   title={isMinimized ? item.name : undefined}
                 >
-                  <div className="flex items-center justify-center">
-                    <FontAwesomeIcon icon={item.icon} className="w-5 h-5" />
+                  <div
+                    className={`flex items-center justify-center ${
+                      isMinimized ? "w-full h-full" : ""
+                    }`}
+                  >
+                    <FontAwesomeIcon
+                      icon={item.icon}
+                      className={`${isMinimized ? "w-4 h-4" : "w-5 h-5"}`} // Reduced size for minimized icons
+                    />
                   </div>
                   {!isMinimized && (
                     <>
-                      {item.name}
+                      <span className="ml-3 text-sm font-medium">
+                        {item.name}
+                      </span>
                       {item.badge && (
                         <span
                           className={`ml-auto text-xs font-medium rounded px-2 py-0.5 ${
@@ -146,7 +175,6 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
 };
 
 export default SidebarAnnotationProject;
-
 
 // import React, { useState } from "react";
 
@@ -334,8 +362,8 @@ export default SidebarAnnotationProject;
 //   ];
 
 //   const getButtonClass = (item: string) =>
-//     `w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg 
-//     ${activePage === item ? "bg-[#e6f0ff] text-[#1a4f9d]" : "text-gray-700"} 
+//     `w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg
+//     ${activePage === item ? "bg-[#e6f0ff] text-[#1a4f9d]" : "text-gray-700"}
 //     hover:bg-[#e6f0ff] hover:text-[#1a4f9d] transition`;
 
 //   return (

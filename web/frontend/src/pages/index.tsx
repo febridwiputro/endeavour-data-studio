@@ -77,7 +77,7 @@ const Home: React.FC = () => {
   // Main content for authenticated users
   return (
     <div className="min-h-screen bg-gray-100">
-      <Header />
+      {/* <Header /> */}
       <div className="flex">
         <Sidebar
           onMenuClick={handleMenuClick}

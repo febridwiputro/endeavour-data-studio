@@ -3,15 +3,34 @@ import Breadcrumb from "@/components/annotations/base/Breadcrumb";
 import CreateButton from "@/components/annotations/base/CreateButton";
 import DefaultContent from "@/components/annotations/base/DefaultContent";
 import CreateProjectModal from "@/components/annotations/CreateProjectModal";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faHome, faFolder } from "@fortawesome/free-solid-svg-icons";
+
 
 const AnnotationsPage: React.FC = () => {
+  const breadcrumbItems = [
+    { label: "Home", href: "/", icon: <FontAwesomeIcon icon={faHome} /> },
+    { label: "Annotations", href: "/annotations", icon: <FontAwesomeIcon icon={faFolder} /> },
+    { label: "Details" }, // No icon
+  ];
+
   const [showModal, setShowModal] = useState(false);
   const menuData = [{ name: "Category 1" }, { name: "Category 2" }];
+
+  const [selectedPage, setSelectedPage] = useState("AnnotationProjectPage"); // Track the current page
+
+  const handleOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+  };
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <Breadcrumb />
+      <Breadcrumb items={breadcrumbItems} />
 
         {/* Buttons Section */}
         <div className="flex items-center space-x-4">
@@ -37,8 +56,12 @@ const AnnotationsPage: React.FC = () => {
             <span>Docs</span>
           </a>
 
-          {/* Create Button */}
-          <CreateButton onClick={() => setShowModal(true)} />
+          {/* Dynamic Button */}
+          {selectedPage === "AnnotationProjectPage" ? (
+            <CreateButton onClick={handleOpenModal} label="Create Settings" />
+          ) : (
+            <CreateButton onClick={handleOpenModal} label="Create" />
+          )}
         </div>
       </div>
 
