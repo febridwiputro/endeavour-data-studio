@@ -25,7 +25,15 @@ interface MainPanelProps {
   cursorPosition: { x: number; y: number };
   zoomLevel: number;
   panOffset: { x: number; y: number };
-  activeTool: "zoomIn" | "zoomOut" | "move" | "pan" | "dashLine" | "zoomToFit" | "zoomToActualSize" | null;
+  activeTool:
+    | "zoomIn"
+    | "zoomOut"
+    | "move"
+    | "pan"
+    | "dashLine"
+    | "zoomToFit"
+    | "zoomToActualSize"
+    | null;
   handleZoomIn: () => void;
   handleZoomOut: () => void;
   handleMove: () => void;
@@ -51,10 +59,10 @@ const MainPanel: React.FC<MainPanelProps> = ({
   handlePan,
   handleDashLineCursor,
   handleZoomToFit,
-  handleZoomToActualSize
+  handleZoomToActualSize,
 }) => {
   const selectedTask = tasks.find((task) => task.id === selectedTaskId);
-  
+
   return (
     <div
       className="bg-white"
@@ -149,130 +157,152 @@ const MainPanel: React.FC<MainPanelProps> = ({
           </div>
 
           <div className="relative bg-gray-100 border border-gray-200 rounded overflow-hidden">
-  {/* Dashed Crosshair */}
-  {showDashLines && (
-    <div
-      className="absolute inset-0 pointer-events-none"
-      style={{
-        backgroundImage: `linear-gradient(to bottom, transparent 49%, rgba(0, 0, 0, 0.5) 50%, transparent 51%), 
+            {/* Dashed Crosshair */}
+            {showDashLines && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundImage: `linear-gradient(to bottom, transparent 49%, rgba(0, 0, 0, 0.5) 50%, transparent 51%), 
                           linear-gradient(to right, transparent 49%, rgba(0, 0, 0, 0.5) 50%, transparent 51%)`,
-        backgroundSize: "100% 1px, 1px 100%",
-        backgroundPosition: `${cursorPosition.x}px 0, 0 ${cursorPosition.y}px`,
-        backgroundRepeat: "no-repeat",
-      }}
-    />
-  )}
-  {/* Image */}
-  <div
-    className="transform"
-    style={{
-      transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
-      transformOrigin: "center",
-      transition: "transform 0.2s ease-in-out",
-    }}
-  >
-    <img
-      src={selectedTask.image}
-      alt={`Task ${selectedTask.id}`}
-      className="w-full object-contain"
-    />
-  </div>
-  {/* Annotation Toolbar */}
-  <div className="absolute top-4 right-4 flex flex-col space-y-2">
-    <div className="relative group">
-      <button
-        onClick={handleZoomIn}
-        className={`p-2 rounded-full shadow ${
-          activeTool === "zoomIn" ? "bg-blue-200" : "bg-gray-100"
-        } hover:bg-gray-200`}
-      >
-        <FontAwesomeIcon icon={faSearchPlus} style={{ color: "#1a4e9d" }} />
-      </button>
-      <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
-        Zoom In
-      </span>
-    </div>
-    <div className="relative group">
-      <button
-        onClick={handleZoomOut}
-        className={`p-2 rounded-full shadow ${
-          activeTool === "zoomOut" ? "bg-blue-200" : "bg-gray-100"
-        } hover:bg-gray-200`}
-      >
-        <FontAwesomeIcon icon={faSearchMinus} style={{ color: "#1a4e9d" }} />
-      </button>
-      <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
-        Zoom Out
-      </span>
-    </div>
-    <div className="relative group">
-      <button
-        onClick={handleMove}
-        className={`p-2 rounded-full shadow ${
-          activeTool === "move" ? "bg-blue-200" : "bg-gray-100"
-        } hover:bg-gray-200`}
-      >
-        <FontAwesomeIcon icon={faHandPaper} style={{ color: "#1a4e9d" }} />
-      </button>
-      <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
-        Move
-      </span>
-    </div>
-    <div className="relative group">
-      <button
-        onClick={handlePan}
-        className={`p-2 rounded-full shadow ${
-          activeTool === "pan" ? "bg-blue-200" : "bg-gray-100"
-        } hover:bg-gray-200`}
-      >
-        <FontAwesomeIcon icon={faArrowsAlt} style={{ color: "#1a4e9d" }} />
-      </button>
-      <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
-        Pan
-      </span>
-    </div>
-    <div className="relative group">
-      <button
-        onClick={handleDashLineCursor}
-        className={`p-2 rounded-full shadow ${
-          activeTool === "dashLine" ? "bg-blue-200" : "bg-gray-100"
-        } hover:bg-gray-200`}
-      >
-        <FontAwesomeIcon icon={faGripLines} style={{ color: "#1a4e9d" }} />
-      </button>
-      <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
-        Dashed Line Cursor
-      </span>
-    </div>
-    <div className="relative group">
-      <button
-        onClick={handleZoomToFit}
-        className={`p-2 rounded-full shadow ${
-          activeTool === "zoomToFit" ? "bg-blue-200" : "bg-gray-100"
-        } hover:bg-gray-200`}
-      >
-        <FontAwesomeIcon icon={faExpand} style={{ color: "#1a4e9d" }} />
-      </button>
-      <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
-        Zoom to Fit
-      </span>
-    </div>
-    <div className="relative group">
-  <button
-    onClick={handleZoomToActualSize}
-    className={`p-2 rounded-full shadow ${
-      activeTool === "zoomToActualSize" ? "bg-blue-200" : "bg-gray-100"
-    } hover:bg-gray-200`}
-  >
-    <FontAwesomeIcon icon={faSearchPlus} style={{ color: "#1a4e9d" }} />
-  </button>
-  <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
-    Zoom to Actual Size
-  </span>
-</div>
-
-  </div>
-</div>
+                  backgroundSize: "100% 1px, 1px 100%",
+                  backgroundPosition: `${cursorPosition.x}px 0, 0 ${cursorPosition.y}px`,
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+            )}
+            {/* Image */}
+            <div
+              className="transform"
+              style={{
+                transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
+                transformOrigin: "center",
+                transition: "transform 0.2s ease-in-out",
+              }}
+            >
+              <img
+                src={selectedTask.image}
+                alt={`Task ${selectedTask.id}`}
+                className="w-full object-contain"
+              />
+            </div>
+            {/* Annotation Toolbar */}
+            <div className="absolute top-4 right-4 flex flex-col space-y-2">
+              <div className="relative group">
+                <button
+                  onClick={handleZoomIn}
+                  className={`p-2 rounded-full shadow ${
+                    activeTool === "zoomIn" ? "bg-blue-200" : "bg-gray-100"
+                  } hover:bg-gray-200`}
+                >
+                  <FontAwesomeIcon
+                    icon={faSearchPlus}
+                    style={{ color: "#1a4e9d" }}
+                  />
+                </button>
+                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
+                  Zoom In
+                </span>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={handleZoomOut}
+                  className={`p-2 rounded-full shadow ${
+                    activeTool === "zoomOut" ? "bg-blue-200" : "bg-gray-100"
+                  } hover:bg-gray-200`}
+                >
+                  <FontAwesomeIcon
+                    icon={faSearchMinus}
+                    style={{ color: "#1a4e9d" }}
+                  />
+                </button>
+                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
+                  Zoom Out
+                </span>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={handleMove}
+                  className={`p-2 rounded-full shadow ${
+                    activeTool === "move" ? "bg-blue-200" : "bg-gray-100"
+                  } hover:bg-gray-200`}
+                >
+                  <FontAwesomeIcon
+                    icon={faHandPaper}
+                    style={{ color: "#1a4e9d" }}
+                  />
+                </button>
+                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
+                  Move
+                </span>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={handlePan}
+                  className={`p-2 rounded-full shadow ${
+                    activeTool === "pan" ? "bg-blue-200" : "bg-gray-100"
+                  } hover:bg-gray-200`}
+                >
+                  <FontAwesomeIcon
+                    icon={faArrowsAlt}
+                    style={{ color: "#1a4e9d" }}
+                  />
+                </button>
+                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
+                  Pan
+                </span>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={handleDashLineCursor}
+                  className={`p-2 rounded-full shadow ${
+                    activeTool === "dashLine" ? "bg-blue-200" : "bg-gray-100"
+                  } hover:bg-gray-200`}
+                >
+                  <FontAwesomeIcon
+                    icon={faGripLines}
+                    style={{ color: "#1a4e9d" }}
+                  />
+                </button>
+                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
+                  Dashed Line Cursor
+                </span>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={handleZoomToFit}
+                  className={`p-2 rounded-full shadow ${
+                    activeTool === "zoomToFit" ? "bg-blue-200" : "bg-gray-100"
+                  } hover:bg-gray-200`}
+                >
+                  <FontAwesomeIcon
+                    icon={faExpand}
+                    style={{ color: "#1a4e9d" }}
+                  />
+                </button>
+                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
+                  Zoom to Fit
+                </span>
+              </div>
+              <div className="relative group">
+                <button
+                  onClick={handleZoomToActualSize}
+                  className={`p-2 rounded-full shadow ${
+                    activeTool === "zoomToActualSize"
+                      ? "bg-blue-200"
+                      : "bg-gray-100"
+                  } hover:bg-gray-200`}
+                >
+                  <FontAwesomeIcon
+                    icon={faSearchPlus}
+                    style={{ color: "#1a4e9d" }}
+                  />
+                </button>
+                <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-800 text-white text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100">
+                  Zoom to Actual Size
+                </span>
+              </div>
+            </div>
+          </div>
 
           <div className="flex items-center justify-between bg-white p-4 rounded-md shadow mb-4">
             <div className="flex items-center space-x-2">
