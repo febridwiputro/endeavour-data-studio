@@ -38,6 +38,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
       category: "Models",
       items: [
         { name: "Models", icon: faCube },
+        { name: "External Models", icon: faCube },
         { name: "Visualize", icon: faEye },
       ],
     },
