@@ -2,6 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Default Light Mode */
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --default-blue: #1a4f9d;
+  --hover-blue: #3f82e0;
+}
+
+/* Dark Mode */
+:root.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --default-blue: #3f82e0; /* Optional: Adjust colors for dark mode */
+  --hover-blue: #699bf7;
+}
+
+/* Apply theme colors */
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth theme transition */
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+
+
+
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -27,4 +64,4 @@ body {
   .text-balance {
     text-wrap: balance;
   }
-}
+} */

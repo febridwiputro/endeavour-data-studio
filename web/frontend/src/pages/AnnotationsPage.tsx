@@ -18,7 +18,7 @@ const AnnotationsPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const menuData = [{ name: "Category 1" }, { name: "Category 2" }];
 
-  const [selectedPage, setSelectedPage] = useState("AnnotationProjectPage"); // Track the current page
+  const [selectedPage, setSelectedPage] = useState("AnnotationProjectPage");
 
   const handleOpenModal = () => {
     setShowModal(true);

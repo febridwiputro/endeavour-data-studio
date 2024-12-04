@@ -9,7 +9,6 @@ import ImageGrid from "../components/ImageGrid";
 import ProgressModal from "../components/video/ProgressModal";
 import Modal from "../components/video/Modal";
 import { resetProgress } from "../features/video/videoSlice";
-import Header from "../components/Header";
 import CompressImagesInFolder from "../components/images/CompressImagesInFolder";
 import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
 import AnnotationPage from "@/pages/AnnotationsPage";
@@ -76,8 +75,7 @@ const Home: React.FC = () => {
 
   // Main content for authenticated users
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* <Header /> */}
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
       <div className="flex">
         <Sidebar
           onMenuClick={handleMenuClick}
@@ -85,7 +83,7 @@ const Home: React.FC = () => {
           menuData={menu}
         />
 
-        <div className="w-full p-6 bg-white shadow-md rounded-md ml-4">
+        <div className="w-full p-6 bg-white dark:bg-gray-800 shadow-md rounded-md ml-4">
           {selectedMenu === "Annotations" && <AnnotationPage />}
           {selectedMenu === "Split by Number of Images" && (
             <>
@@ -141,7 +139,7 @@ const Home: React.FC = () => {
 export default Home;
 
 
-// import { useState, useEffect } from "react";
+// import React, { useState, useEffect } from "react";
 // import { useDispatch, useSelector } from "react-redux";
 // import { fetchMenu } from "../features/menu/menuSlice";
 // import { RootState, AppDispatch } from "../store/store";
@@ -156,17 +154,18 @@ export default Home;
 // import CompressImagesInFolder from "../components/images/CompressImagesInFolder";
 // import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
 // import AnnotationPage from "@/pages/AnnotationsPage";
+// import LoginPage from "./LoginPage";
+// import SignUpPage from "./SignUpPage";
 
-// const Home = () => {
+// const Home: React.FC = () => {
 //   const dispatch = useDispatch<AppDispatch>();
+//   const [isAuthenticated, setIsAuthenticated] = useState(false); // Manage login state
+//   const [isSignUp, setIsSignUp] = useState(false); // Manage toggle between login and sign-up
 
 //   const { menu = [] } = useSelector((state: RootState) => state.menu);
-//   const {
-//     loading,
-//     progress,
-//     images = [],
-//     error,
-//   } = useSelector((state: RootState) => state.video);
+//   const { loading, progress, images = [], error } = useSelector(
+//     (state: RootState) => state.video
+//   );
 
 //   const [selectedMenu, setSelectedMenu] = useState(""); // Default state for no menu selected
 //   const [showProgressModal, setShowProgressModal] = useState(false);
@@ -204,9 +203,22 @@ export default Home;
 //     setSelectedMenu(menuName);
 //   };
 
+//   // Show login or sign-up page if not authenticated
+//   if (!isAuthenticated) {
+//     return isSignUp ? (
+//       <SignUpPage onBackToLogin={() => setIsSignUp(false)} />
+//     ) : (
+//       <LoginPage
+//         onLogin={() => setIsAuthenticated(true)}
+//         onSignUp={() => setIsSignUp(true)}
+//       />
+//     );
+//   }
+
+//   // Main content for authenticated users
 //   return (
 //     <div className="min-h-screen bg-gray-100">
-//       <Header />
+//       {/* <Header /> */}
 //       <div className="flex">
 //         <Sidebar
 //           onMenuClick={handleMenuClick}
@@ -259,16 +271,8 @@ export default Home;
 //               )}
 //             </>
 //           )}
-//           {/* Fallback content for unknown selected menu */}
-//           {selectedMenu &&
-//             selectedMenu !== "Split by Number of Images" &&
-//             selectedMenu !== "Concatenate by Composition"}
-//           {/* Conditional Rendering for Different Menus */}
-//           {selectedMenu === "Compress" && <CompressImagesInFolder />}{" "}
-//           {/* Render CompressImagesInFolder when 'Compress' is selected */}
-//           {selectedMenu === "Image Size Adjustment" && (
-//             <ImageSizeAdjustment />
-//           )}{" "}
+//           {selectedMenu === "Compress" && <CompressImagesInFolder />}
+//           {selectedMenu === "Image Size Adjustment" && <ImageSizeAdjustment />}
 //         </div>
 //       </div>
 //     </div>
