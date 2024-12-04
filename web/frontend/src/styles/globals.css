@@ -8,14 +8,14 @@
   --foreground: #171717;
   --default-blue: #1a4f9d;
   --hover-blue: #3f82e0;
+  /* --hover-blue: #3f82e0;
+  --default-blue: #1a4f9d; */
 }
 
-/* Dark Mode */
-:root.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --default-blue: #3f82e0; /* Optional: Adjust colors for dark mode */
-  --hover-blue: #699bf7;
+.dark {
+  --hover-dark: #2b3a4a;
+  --text-light: #f1f5f9;
+  --default-light: #94a3b8;
 }
 
 /* Apply theme colors */

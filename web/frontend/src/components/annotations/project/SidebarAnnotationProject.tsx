@@ -143,7 +143,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
                   >
                     <FontAwesomeIcon
                       icon={item.icon}
-                      className={`${isMinimized ? "w-4 h-4" : "w-5 h-5"}`} // Reduced size for minimized icons
+                      className={`${isMinimized ? "w-4 h-4" : "w-5 h-5"}`}
                     />
                   </div>
                   {!isMinimized && (

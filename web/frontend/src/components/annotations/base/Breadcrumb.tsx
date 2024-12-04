@@ -3,7 +3,7 @@ import React from "react";
 interface BreadcrumbItem {
   label: string;
   href?: string;
-  icon?: React.ReactNode; // Optional icon
+  icon?: React.ReactNode;
 }
 
 interface BreadcrumbProps {
@@ -20,9 +20,9 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => (
             index === 0 ? "bg-gray-100" : "bg-white"
           }`}
         >
-          {index > 0 && (
+          {/* {index > 0 && (
             <span className="absolute inset-y-0 -start-px h-10 w-4 bg-gray-100 [clip-path:_polygon(0_0,_0%_100%,_100%_50%)]"></span>
-          )}
+          )} */}
           {item.href ? (
             <a
               href={item.href}
