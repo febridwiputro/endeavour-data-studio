@@ -4,6 +4,7 @@ import AnnotationUploadDataProjectPage from "./AnnotationUploadDataProjectPage";
 import AnnotationAnnotateProjectLabelingPage from "./labeling/AnnotationAnnotateProjectLabelingPage";
 import AnnotationDatasetProjectPage from "./AnnotationDatasetProjectPage";
 import ExternalModelPage from "./externalModel/ExternalModelPage";
+import AnnotationVisualize from "./AnnotationVisualize";
 
 const AnnotationsProjectPage: React.FC = () => {
   const [activePage, setActivePage] = useState("Upload Data");
@@ -16,6 +17,8 @@ const AnnotationsProjectPage: React.FC = () => {
         return <AnnotationDatasetProjectPage />;
       case "External Models":
         return <ExternalModelPage />;
+      case "Visualize":
+        return <AnnotationVisualize />;
       case "Upload Data":
       default:
         return <AnnotationUploadDataProjectPage />;
