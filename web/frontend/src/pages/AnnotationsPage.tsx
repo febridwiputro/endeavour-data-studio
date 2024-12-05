@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Breadcrumb from "@/components/annotations/base/Breadcrumb";
+import Breadcrumb from "@/components/Breadcrumb";
 import CreateButton from "@/components/annotations/base/CreateButton";
 import DefaultContent from "@/components/annotations/base/DefaultContent";
 import CreateProjectModal from "@/components/annotations/CreateProjectModal";
@@ -7,11 +7,14 @@ import ProjectSettingsModal from "@/components/annotations/project/settings/Proj
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHome, faFolder } from "@fortawesome/free-solid-svg-icons";
 
-
 const AnnotationsPage: React.FC = () => {
   const breadcrumbItems = [
     { label: "Home", href: "/", icon: <FontAwesomeIcon icon={faHome} /> },
-    { label: "Annotations", href: "/annotations", icon: <FontAwesomeIcon icon={faFolder} /> },
+    {
+      label: "Annotations",
+      href: "/annotations",
+      icon: <FontAwesomeIcon icon={faFolder} />,
+    },
     { label: "Details" }, // No icon
   ];
 
@@ -29,16 +32,16 @@ const AnnotationsPage: React.FC = () => {
   };
 
   return (
-    <div>
+    <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
       <div className="flex items-center justify-between mb-4">
-      <Breadcrumb items={breadcrumbItems} />
+        <Breadcrumb items={breadcrumbItems} />
 
         {/* Buttons Section */}
         <div className="flex items-center space-x-4">
           {/* Docs Button */}
           <a
             href="#docs"
-            className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-[8px] hover:bg-gray-100 transition"
+            className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-white bg-[#1a4f9d] rounded-[8px] hover:opacity-90 transition"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -76,12 +79,12 @@ export default AnnotationsPage;
 
 
 
+
 // import React, { useState } from "react";
 // import Breadcrumb from "@/components/annotations/base/Breadcrumb";
 // import CreateButton from "@/components/annotations/base/CreateButton";
 // import DefaultContent from "@/components/annotations/base/DefaultContent";
 // import CreateProjectModal from "@/components/annotations/CreateProjectModal";
-
 
 // const AnnotationsPage: React.FC = () => {
 //   const [showModal, setShowModal] = useState(false);
@@ -100,7 +103,6 @@ export default AnnotationsPage;
 // };
 
 // export default AnnotationsPage;
-
 
 // import { useState, useEffect } from "react";
 // import { useDispatch, useSelector } from "react-redux";
@@ -133,37 +135,37 @@ export default AnnotationsPage;
 //   const [showProgressModal, setShowProgressModal] = useState(false);
 //   const [showSuccessModal, setShowSuccessModal] = useState(false);
 //   const [showErrorModal, setShowErrorModal] = useState(false);
-  // const [currentDateTime, setCurrentDateTime] = useState("");
-  // const [searchQuery, setSearchQuery] = useState(""); // State to store search query
-  // const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State to store selected category
-  // const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State to control dropdown visibility
-  // const [showModal, setShowModal] = useState(false);
+// const [currentDateTime, setCurrentDateTime] = useState("");
+// const [searchQuery, setSearchQuery] = useState(""); // State to store search query
+// const [selectedCategory, setSelectedCategory] = useState<string | null>(null); // State to store selected category
+// const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State to control dropdown visibility
+// const [showModal, setShowModal] = useState(false);
 
-  // interface DropdownProps {
-  //   menuData: any[];
-  //   onMenuClick: (menuName: string) => void;
-  // }
+// interface DropdownProps {
+//   menuData: any[];
+//   onMenuClick: (menuName: string) => void;
+// }
 
-  // useEffect(() => {
-  //   const updateDateTime = () => {
-  //     const date = new Date();
-  //     const jakartaTime = date.toLocaleString("en-CA", {
-  //       timeZone: "Asia/Jakarta",
-  //       year: "numeric",
-  //       month: "2-digit",
-  //       day: "2-digit",
-  //       hour: "2-digit",
-  //       minute: "2-digit",
-  //       hour12: true,
-  //     });
-  //     setCurrentDateTime(jakartaTime.replace(",", "")); // Remove the comma between date and time
-  //   };
+// useEffect(() => {
+//   const updateDateTime = () => {
+//     const date = new Date();
+//     const jakartaTime = date.toLocaleString("en-CA", {
+//       timeZone: "Asia/Jakarta",
+//       year: "numeric",
+//       month: "2-digit",
+//       day: "2-digit",
+//       hour: "2-digit",
+//       minute: "2-digit",
+//       hour12: true,
+//     });
+//     setCurrentDateTime(jakartaTime.replace(",", "")); // Remove the comma between date and time
+//   };
 
-  //   updateDateTime();
-  //   const interval = setInterval(updateDateTime, 1000); // Update every second
+//   updateDateTime();
+//   const interval = setInterval(updateDateTime, 1000); // Update every second
 
-  //   return () => clearInterval(interval); // Cleanup interval on component unmount
-  // }, []);
+//   return () => clearInterval(interval); // Cleanup interval on component unmount
+// }, []);
 
 //   useEffect(() => {
 //     dispatch(fetchMenu());
@@ -256,97 +258,97 @@ export default AnnotationsPage;
 //   );
 
 //   // Card design from your example
-  // const renderCard = () => (
-  //   <a href="#" className="block rounded-lg p-4 shadow-sm shadow-indigo-100">
-  //     <img
-  //       alt=""
-  //       src="https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg"
-  //       className="h-56 w-full rounded-md object-cover"
-  //     />
+// const renderCard = () => (
+//   <a href="#" className="block rounded-lg p-4 shadow-sm shadow-indigo-100">
+//     <img
+//       alt=""
+//       src="https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg"
+//       className="h-56 w-full rounded-md object-cover"
+//     />
 
-  //     <div className="mt-2">
-  //       <dl>
-  //         <div>
-  //           <dt className="sr-only">DateTime</dt>
-  //           <dd className="text-sm text-gray-500">{currentDateTime}</dd>
-  //         </div>
+//     <div className="mt-2">
+//       <dl>
+//         <div>
+//           <dt className="sr-only">DateTime</dt>
+//           <dd className="text-sm text-gray-500">{currentDateTime}</dd>
+//         </div>
 
-  //         <div>
-  //           <dt className="sr-only">Address</dt>
-  //           <dd className="font-medium">Automatic License Plate Recognition</dd>
-  //         </div>
-  //       </dl>
+//         <div>
+//           <dt className="sr-only">Address</dt>
+//           <dd className="font-medium">Automatic License Plate Recognition</dd>
+//         </div>
+//       </dl>
 
-  //       <div className="mt-6 flex items-center gap-8 text-xs">
-  //         <div className="sm:inline-flex sm:shrink-0 sm:items-center sm:gap-2">
-  //           <svg
-  //             className="size-4 text-indigo-700"
-  //             xmlns="http://www.w3.org/2000/svg"
-  //             fill="none"
-  //             viewBox="0 0 24 24"
-  //             stroke="currentColor"
-  //           >
-  //             <path
-  //               strokeLinecap="round"
-  //               strokeLinejoin="round"
-  //               strokeWidth="2"
-  //               d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
-  //             />
-  //           </svg>
+//       <div className="mt-6 flex items-center gap-8 text-xs">
+//         <div className="sm:inline-flex sm:shrink-0 sm:items-center sm:gap-2">
+//           <svg
+//             className="size-4 text-indigo-700"
+//             xmlns="http://www.w3.org/2000/svg"
+//             fill="none"
+//             viewBox="0 0 24 24"
+//             stroke="currentColor"
+//           >
+//             <path
+//               strokeLinecap="round"
+//               strokeLinejoin="round"
+//               strokeWidth="2"
+//               d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
+//             />
+//           </svg>
 
-  //           <div className="mt-1.5 sm:mt-0">
-  //             <p className="text-gray-500">Parking</p>
-  //             <p className="font-medium">2 spaces</p>
-  //           </div>
-  //         </div>
+//           <div className="mt-1.5 sm:mt-0">
+//             <p className="text-gray-500">Parking</p>
+//             <p className="font-medium">2 spaces</p>
+//           </div>
+//         </div>
 
-  //         <div className="sm:inline-flex sm:shrink-0 sm:items-center sm:gap-2">
-  //           <svg
-  //             className="size-4 text-indigo-700"
-  //             xmlns="http://www.w3.org/2000/svg"
-  //             fill="none"
-  //             viewBox="0 0 24 24"
-  //             stroke="currentColor"
-  //           >
-  //             <path
-  //               strokeLinecap="round"
-  //               strokeLinejoin="round"
-  //               strokeWidth="2"
-  //               d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-  //             />
-  //           </svg>
+//         <div className="sm:inline-flex sm:shrink-0 sm:items-center sm:gap-2">
+//           <svg
+//             className="size-4 text-indigo-700"
+//             xmlns="http://www.w3.org/2000/svg"
+//             fill="none"
+//             viewBox="0 0 24 24"
+//             stroke="currentColor"
+//           >
+//             <path
+//               strokeLinecap="round"
+//               strokeLinejoin="round"
+//               strokeWidth="2"
+//               d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+//             />
+//           </svg>
 
-  //           <div className="mt-1.5 sm:mt-0">
-  //             <p className="text-gray-500">Bathroom</p>
-  //             <p className="font-medium">2 rooms</p>
-  //           </div>
-  //         </div>
+//           <div className="mt-1.5 sm:mt-0">
+//             <p className="text-gray-500">Bathroom</p>
+//             <p className="font-medium">2 rooms</p>
+//           </div>
+//         </div>
 
-  //         <div className="sm:inline-flex sm:shrink-0 sm:items-center sm:gap-2">
-  //           <svg
-  //             className="size-4 text-indigo-700"
-  //             xmlns="http://www.w3.org/2000/svg"
-  //             fill="none"
-  //             viewBox="0 0 24 24"
-  //             stroke="currentColor"
-  //           >
-  //             <path
-  //               strokeLinecap="round"
-  //               strokeLinejoin="round"
-  //               strokeWidth="2"
-  //               d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-  //             />
-  //           </svg>
+//         <div className="sm:inline-flex sm:shrink-0 sm:items-center sm:gap-2">
+//           <svg
+//             className="size-4 text-indigo-700"
+//             xmlns="http://www.w3.org/2000/svg"
+//             fill="none"
+//             viewBox="0 0 24 24"
+//             stroke="currentColor"
+//           >
+//             <path
+//               strokeLinecap="round"
+//               strokeLinejoin="round"
+//               strokeWidth="2"
+//               d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+//             />
+//           </svg>
 
-  //           <div className="mt-1.5 sm:mt-0">
-  //             <p className="text-gray-500">Bedroom</p>
-  //             <p className="font-medium">4 rooms</p>
-  //           </div>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   </a>
-  // );
+//           <div className="mt-1.5 sm:mt-0">
+//             <p className="text-gray-500">Bedroom</p>
+//             <p className="font-medium">4 rooms</p>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   </a>
+// );
 
 //   const renderCardEditor = () => (
 //     <article className="flex bg-white transition hover:shadow-xl">
@@ -396,125 +398,125 @@ export default AnnotationsPage;
 //     </article>
 //   );
 
-  // const renderDefaultContent = (menuData: any[]) => (
-  //   <section
-  //     style={{ color: "var(--default-blue)" }}
-  //     className="bg-white w-full"
-  //   >
-  //     <div className="px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
-  //       <div className="mx-auto max-w-full text-center">
-  //         <h2
-  //           style={{ color: "var(--default-blue)" }}
-  //           className="text-3xl font-bold sm:text-4xl"
-  //         >
-  //           Begin your process with DS
-  //         </h2>
-  //         <p style={{ color: "var(--default-blue)" }} className="mt-4">
-  //           Lorem ipsum, dolor sit amet consectetur adipisicing elit.
-  //           Consequuntur aliquam doloribus nesciunt eos fugiat. Vitae aperiam
-  //           fugit consequuntur saepe laborum.
-  //         </p>
-  //         <form
-  //           className="w-[600px] mx-auto bg-white p-4 shadow-md rounded-lg"
-  //           onSubmit={handleSubmit}
-  //         >
-  //           <div className="flex">
-  //             <label
-  //               htmlFor="search-dropdown"
-  //               className="mb-2 text-sm font-medium text-gray-900 sr-only"
-  //             >
-  //               Search
-  //             </label>
+// const renderDefaultContent = (menuData: any[]) => (
+//   <section
+//     style={{ color: "var(--default-blue)" }}
+//     className="bg-white w-full"
+//   >
+//     <div className="px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
+//       <div className="mx-auto max-w-full text-center">
+//         <h2
+//           style={{ color: "var(--default-blue)" }}
+//           className="text-3xl font-bold sm:text-4xl"
+//         >
+//           Begin your process with DS
+//         </h2>
+//         <p style={{ color: "var(--default-blue)" }} className="mt-4">
+//           Lorem ipsum, dolor sit amet consectetur adipisicing elit.
+//           Consequuntur aliquam doloribus nesciunt eos fugiat. Vitae aperiam
+//           fugit consequuntur saepe laborum.
+//         </p>
+//         <form
+//           className="w-[600px] mx-auto bg-white p-4 shadow-md rounded-lg"
+//           onSubmit={handleSubmit}
+//         >
+//           <div className="flex">
+//             <label
+//               htmlFor="search-dropdown"
+//               className="mb-2 text-sm font-medium text-gray-900 sr-only"
+//             >
+//               Search
+//             </label>
 
-  //             {/* Dropdown Button */}
-  //             <div className="relative flex-shrink-0">
-  //               <button
-  //                 id="dropdown-button"
-  //                 onClick={handleDropdownToggle}
-  //                 className="inline-flex h-full items-center py-2.5 px-4 text-sm font-medium text-center bg-white border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100"
-  //                 type="button"
-  //                 style={{ color: "var(--default-blue)" }}
-  //               >
-  //                 {selectedCategory || "All categories"}
-  //                 <svg
-  //                   className="w-2.5 h-2.5 ms-2.5"
-  //                   aria-hidden="true"
-  //                   xmlns="http://www.w3.org/2000/svg"
-  //                   fill="none"
-  //                   viewBox="0 0 10 6"
-  //                 >
-  //                   <path
-  //                     stroke="currentColor"
-  //                     strokeLinecap="round"
-  //                     strokeLinejoin="round"
-  //                     strokeWidth="2"
-  //                     d="m1 1 4 4 4-4"
-  //                   />
-  //                 </svg>
-  //               </button>
+//             {/* Dropdown Button */}
+//             <div className="relative flex-shrink-0">
+//               <button
+//                 id="dropdown-button"
+//                 onClick={handleDropdownToggle}
+//                 className="inline-flex h-full items-center py-2.5 px-4 text-sm font-medium text-center bg-white border border-gray-300 rounded-s-lg hover:bg-gray-200 focus:ring-4 focus:outline-none focus:ring-gray-100"
+//                 type="button"
+//                 style={{ color: "var(--default-blue)" }}
+//               >
+//                 {selectedCategory || "All categories"}
+//                 <svg
+//                   className="w-2.5 h-2.5 ms-2.5"
+//                   aria-hidden="true"
+//                   xmlns="http://www.w3.org/2000/svg"
+//                   fill="none"
+//                   viewBox="0 0 10 6"
+//                 >
+//                   <path
+//                     stroke="currentColor"
+//                     strokeLinecap="round"
+//                     strokeLinejoin="round"
+//                     strokeWidth="2"
+//                     d="m1 1 4 4 4-4"
+//                   />
+//                 </svg>
+//               </button>
 
-  //               {/* Dropdown List */}
-  //               {isDropdownOpen && (
-  //                 <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 mt-2">
-  //                   <ul
-  //                     className="py-2 text-sm"
-  //                     style={{ color: "var(--default-blue)" }}
-  //                   >
-  //                     {menuData.map((menuItem, index) => (
-  //                       <li key={index}>
-  //                         <button
-  //                           onClick={() => handleCategoryClick(menuItem.name)}
-  //                           className="block w-full px-4 py-2 text-left hover:bg-gray-100"
-  //                         >
-  //                           {menuItem.name}
-  //                         </button>
-  //                       </li>
-  //                     ))}
-  //                   </ul>
-  //                 </div>
-  //               )}
-  //             </div>
+//               {/* Dropdown List */}
+//               {isDropdownOpen && (
+//                 <div className="absolute z-10 bg-white divide-y divide-gray-100 rounded-lg shadow w-44 mt-2">
+//                   <ul
+//                     className="py-2 text-sm"
+//                     style={{ color: "var(--default-blue)" }}
+//                   >
+//                     {menuData.map((menuItem, index) => (
+//                       <li key={index}>
+//                         <button
+//                           onClick={() => handleCategoryClick(menuItem.name)}
+//                           className="block w-full px-4 py-2 text-left hover:bg-gray-100"
+//                         >
+//                           {menuItem.name}
+//                         </button>
+//                       </li>
+//                     ))}
+//                   </ul>
+//                 </div>
+//               )}
+//             </div>
 
-  //             {/* Search Input */}
-  //             <div className="relative w-full">
-  //               <input
-  //                 type="search"
-  //                 id="search-dropdown"
-  //                 value={searchQuery}
-  //                 onChange={handleSearchChange}
-  //                 className="block h-full p-2.5 w-full z-20 bg-white border border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-e-lg"
-  //                 style={{ color: "var(--default-blue)" }}
-  //                 placeholder="Search Mockups, Logos, Design Templates..."
-  //                 required
-  //               />
+//             {/* Search Input */}
+//             <div className="relative w-full">
+//               <input
+//                 type="search"
+//                 id="search-dropdown"
+//                 value={searchQuery}
+//                 onChange={handleSearchChange}
+//                 className="block h-full p-2.5 w-full z-20 bg-white border border-gray-300 focus:ring-blue-500 focus:border-blue-500 rounded-e-lg"
+//                 style={{ color: "var(--default-blue)" }}
+//                 placeholder="Search Mockups, Logos, Design Templates..."
+//                 required
+//               />
 
-  //               {/* Search Button */}
-  //               <button
-  //                 type="submit"
-  //                 className="absolute top-0 right-0 p-2.5 text-sm font-medium h-full text-white rounded-e-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800"
-  //                 style={{ backgroundColor: "var(--default-blue)" }}
-  //               >
-  //                 <svg
-  //                   className="w-4 h-4"
-  //                   aria-hidden="true"
-  //                   xmlns="http://www.w3.org/2000/svg"
-  //                   fill="none"
-  //                   viewBox="0 0 20 20"
-  //                 >
-  //                   <path
-  //                     stroke="currentColor"
-  //                     strokeLinecap="round"
-  //                     strokeLinejoin="round"
-  //                     strokeWidth="2"
-  //                     d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
-  //                   />
-  //                 </svg>
-  //                 <span className="sr-only">Search</span>
-  //               </button>
-  //             </div>
-  //           </div>
-  //         </form>
-  //       </div>
+//               {/* Search Button */}
+//               <button
+//                 type="submit"
+//                 className="absolute top-0 right-0 p-2.5 text-sm font-medium h-full text-white rounded-e-lg border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800"
+//                 style={{ backgroundColor: "var(--default-blue)" }}
+//               >
+//                 <svg
+//                   className="w-4 h-4"
+//                   aria-hidden="true"
+//                   xmlns="http://www.w3.org/2000/svg"
+//                   fill="none"
+//                   viewBox="0 0 20 20"
+//                 >
+//                   <path
+//                     stroke="currentColor"
+//                     strokeLinecap="round"
+//                     strokeLinejoin="round"
+//                     strokeWidth="2"
+//                     d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"
+//                   />
+//                 </svg>
+//                 <span className="sr-only">Search</span>
+//               </button>
+//             </div>
+//           </div>
+//         </form>
+//       </div>
 
 //         {/* 4 cards in each row (total 8 cards) */}
 //         <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">

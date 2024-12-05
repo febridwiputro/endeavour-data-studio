@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchMenu } from "../features/menu/menuSlice";
 import { RootState, AppDispatch } from "../store/store";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/sidebar/Sidebar";
 import VideoToImage from "../components/video/VideoToImage";
 import ConcatenateVideo from "../components/video/ConcatenateVideo";
 import ImageGrid from "../components/ImageGrid";
