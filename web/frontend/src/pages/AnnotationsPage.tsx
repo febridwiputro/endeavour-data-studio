@@ -6,8 +6,11 @@ import CreateProjectModal from "@/components/annotations/CreateProjectModal";
 import ProjectSettingsModal from "@/components/annotations/project/settings/ProjectSettingsModal";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faHome, faFolder } from "@fortawesome/free-solid-svg-icons";
+import { useDarkMode } from "@/context/DarkModeContext";
+
 
 const AnnotationsPage: React.FC = () => {
+  const { isDarkMode } = useDarkMode();
   const breadcrumbItems = [
     { label: "Home", href: "/", icon: <FontAwesomeIcon icon={faHome} /> },
     {
@@ -32,7 +35,13 @@ const AnnotationsPage: React.FC = () => {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 min-h-screen">
+    <div
+      className={`min-h-screen transition-colors ${
+        isDarkMode
+          ? "bg-gray-900 text-gray-200"
+          : "bg-white text-gray-800"
+      }`}
+    >
       <div className="flex items-center justify-between mb-4">
         <Breadcrumb items={breadcrumbItems} />
 
@@ -41,7 +50,9 @@ const AnnotationsPage: React.FC = () => {
           {/* Docs Button */}
           <a
             href="#docs"
-            className="flex items-center space-x-1 px-4 py-2 text-sm font-medium text-white bg-[#1a4f9d] rounded-[8px] hover:opacity-90 transition"
+            className={`flex items-center space-x-1 px-4 py-2 text-sm font-medium text-white ${
+              isDarkMode ? "bg-blue-700" : "bg-[#1a4f9d]"
+            } rounded-[8px] hover:opacity-90 transition`}
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

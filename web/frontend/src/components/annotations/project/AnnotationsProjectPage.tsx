@@ -26,7 +26,7 @@ const AnnotationsProjectPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Sidebar */}
       <SidebarAnnotationProject
         activePage={activePage}
@@ -34,7 +34,7 @@ const AnnotationsProjectPage: React.FC = () => {
       />
 
       {/* Main Content */}
-      <div className="flex-1">
+      <div className="flex-1 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 transition-colors">
         {renderContent()}
       </div>
     </div>

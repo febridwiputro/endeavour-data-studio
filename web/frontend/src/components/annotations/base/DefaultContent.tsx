@@ -27,7 +27,6 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData }) => {
   >({});
 
   useEffect(() => {
-    // Fetch annotations on component mount
     dispatch(fetchAnnotations());
   }, [dispatch]);
 
@@ -47,19 +46,25 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData }) => {
   }
 
   if (loading) {
-    return <div className="text-center text-gray-500">Loading features...</div>;
+    return (
+      <div className="text-center text-gray-500 dark:text-gray-400">
+        Loading features...
+      </div>
+    );
   }
 
   if (error) {
     return (
-      <div className="text-center text-red-500">
+      <div className="text-center text-red-500 dark:text-red-400">
         Error loading features: {error}
       </div>
     );
   }
 
   return (
-    <section style={{ color: "var(--default-blue)" }} className="bg-white w-full">
+    <section
+      className="bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 w-full"
+    >
       <div className="px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
         {/* Header Section */}
         <div className="mx-auto max-w-full text-center">
@@ -86,13 +91,13 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData }) => {
             <div key={feature.name} className="mt-8">
               {/* Feature Title with Dropdown Icon */}
               <div
-                className="flex items-center justify-between cursor-pointer border-b pb-1 pt-2"
+                className="flex items-center justify-between cursor-pointer border-b pb-1 pt-2 dark:border-gray-700"
                 onClick={() => toggleFeatureExpansion(feature.name)}
               >
-                <h3 className="text-lg sm:text-2xl font-semibold text-gray-800">
+                <h3 className="text-lg sm:text-2xl font-semibold text-gray-800 dark:text-gray-200">
                   {feature.name}
                 </h3>
-                <span className="text-gray-500 text-lg">
+                <span className="text-gray-500 dark:text-gray-400 text-lg">
                   {isExpanded ? (
                     <svg
                       xmlns="http://www.w3.org/2000/svg"

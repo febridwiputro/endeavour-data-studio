@@ -14,16 +14,21 @@ import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
 import AnnotationPage from "@/pages/AnnotationsPage";
 import LoginPage from "./LoginPage";
 import SignUpPage from "./SignUpPage";
+import { useDarkMode } from "@/context/DarkModeContext";
 
 const Home: React.FC = () => {
+  const { isDarkMode } = useDarkMode();
   const dispatch = useDispatch<AppDispatch>();
   const [isAuthenticated, setIsAuthenticated] = useState(false); // Manage login state
   const [isSignUp, setIsSignUp] = useState(false); // Manage toggle between login and sign-up
 
   const { menu = [] } = useSelector((state: RootState) => state.menu);
-  const { loading, progress, images = [], error } = useSelector(
-    (state: RootState) => state.video
-  );
+  const {
+    loading,
+    progress,
+    images = [],
+    error,
+  } = useSelector((state: RootState) => state.video);
 
   const [selectedMenu, setSelectedMenu] = useState(""); // Default state for no menu selected
   const [showProgressModal, setShowProgressModal] = useState(false);
@@ -75,7 +80,11 @@ const Home: React.FC = () => {
 
   // Main content for authenticated users
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 transition-colors">
+    <div
+      className={`min-h-screen ${
+        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"
+      } transition-colors`}
+    >
       <div className="flex">
         <Sidebar
           onMenuClick={handleMenuClick}
@@ -83,7 +92,11 @@ const Home: React.FC = () => {
           menuData={menu}
         />
 
-        <div className="w-full p-6 bg-white dark:bg-gray-800 shadow-md rounded-md ml-4">
+        <div
+          className={`w-full p-6 ${
+            isDarkMode ? "bg-gray-800" : "bg-white"
+          } shadow-md rounded-md ml-4`}
+        >
           {selectedMenu === "Annotations" && <AnnotationPage />}
           {selectedMenu === "Split by Number of Images" && (
             <>
@@ -137,7 +150,6 @@ const Home: React.FC = () => {
 };
 
 export default Home;
-
 
 // import React, { useState, useEffect } from "react";
 // import { useDispatch, useSelector } from "react-redux";
