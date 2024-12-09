@@ -253,22 +253,22 @@ const AnnotationVisualize: React.FC = () => {
             <h3 className="text-sm font-bold mb-2">Samples from Test Set</h3>
             <div className="flex space-x-2 mb-2">
               <img
-                src="https://img.hargatoyota.com/2022/07/01/lY3bFXhL/daftar-plat-nomor-seluruh-indonesia-00e9.png"
+                src="https://blue.kumparan.com/image/upload/fl_progressive,fl_lossy,c_fill,q_auto:best,w_640/v1506912197/b5mrhhwjlp7lrudti9dm.jpg"
                 alt="Sample 1"
                 className="w-10 h-10 object-cover rounded"
               />
               <img
-                src="https://img.hargatoyota.com/2022/07/01/lY3bFXhL/daftar-plat-nomor-seluruh-indonesia-00e9.png"
+                src="https://blue.kumparan.com/image/upload/fl_progressive,fl_lossy,c_fill,q_auto:best,w_640/v1506912197/b5mrhhwjlp7lrudti9dm.jpg"
                 alt="Sample 2"
                 className="w-10 h-10 object-cover rounded"
               />
               <img
-                src="https://img.hargatoyota.com/2022/07/01/lY3bFXhL/daftar-plat-nomor-seluruh-indonesia-00e9.png"
+                src="https://blue.kumparan.com/image/upload/fl_progressive,fl_lossy,c_fill,q_auto:best,w_640/v1506912197/b5mrhhwjlp7lrudti9dm.jpg"
                 alt="Sample 3"
                 className="w-10 h-10 object-cover rounded"
               />
               <img
-                src="https://img.hargatoyota.com/2022/07/01/lY3bFXhL/daftar-plat-nomor-seluruh-indonesia-00e9.png"
+                src="https://blue.kumparan.com/image/upload/fl_progressive,fl_lossy,c_fill,q_auto:best,w_640/v1506912197/b5mrhhwjlp7lrudti9dm.jpg"
                 alt="Sample 4"
                 className="w-10 h-10 object-cover rounded"
               />
@@ -659,22 +659,22 @@ export default AnnotationVisualize;
       //       <h3 className="text-sm font-bold mb-2">Samples from Test Set</h3>
       //       <div className="flex space-x-2 mb-2">
       //         <img
-      //           src="https://img.hargatoyota.com/2022/07/01/lY3bFXhL/daftar-plat-nomor-seluruh-indonesia-00e9.png"
+      //           src="https://blue.kumparan.com/image/upload/fl_progressive,fl_lossy,c_fill,q_auto:best,w_640/v1506912197/b5mrhhwjlp7lrudti9dm.jpg"
       //           alt="Sample 1"
       //           className="w-10 h-10 object-cover rounded"
       //         />
       //         <img
-      //           src="https://img.hargatoyota.com/2022/07/01/lY3bFXhL/daftar-plat-nomor-seluruh-indonesia-00e9.png"
+      //           src="https://blue.kumparan.com/image/upload/fl_progressive,fl_lossy,c_fill,q_auto:best,w_640/v1506912197/b5mrhhwjlp7lrudti9dm.jpg"
       //           alt="Sample 2"
       //           className="w-10 h-10 object-cover rounded"
       //         />
       //         <img
-      //           src="https://img.hargatoyota.com/2022/07/01/lY3bFXhL/daftar-plat-nomor-seluruh-indonesia-00e9.png"
+      //           src="https://blue.kumparan.com/image/upload/fl_progressive,fl_lossy,c_fill,q_auto:best,w_640/v1506912197/b5mrhhwjlp7lrudti9dm.jpg"
       //           alt="Sample 3"
       //           className="w-10 h-10 object-cover rounded"
       //         />
       //         <img
-      //           src="https://img.hargatoyota.com/2022/07/01/lY3bFXhL/daftar-plat-nomor-seluruh-indonesia-00e9.png"
+      //           src="https://blue.kumparan.com/image/upload/fl_progressive,fl_lossy,c_fill,q_auto:best,w_640/v1506912197/b5mrhhwjlp7lrudti9dm.jpg"
       //           alt="Sample 4"
       //           className="w-10 h-10 object-cover rounded"
       //         />

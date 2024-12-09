@@ -11,6 +11,8 @@ import {
   faBrain,
   faCompressAlt,
   faExpandAlt,
+  faChartBar,
+  faTags,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface SidebarProps {
@@ -32,6 +34,8 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
         { name: "Annotate", icon: faPencilAlt },
         { name: "Dataset", icon: faTable, badge: "100" },
         { name: "Versions", icon: faCodeBranch, badge: "Train" },
+        { name: "Analytics", icon: faChartBar },
+        { name: "Classes & Tags", icon: faTags },
       ],
     },
     {
