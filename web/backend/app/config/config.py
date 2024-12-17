@@ -23,8 +23,10 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRES_IN: int
     ACCESS_TOKEN_EXPIRES_IN: int
     JWT_ALGORITHM: str
-
     CLIENT_ORIGIN: str
+
+    YOLO_MODEL_PATH: str
+
 
     class Config:
         env_file = os.path.join(this_path, ".env")  # Specify the environment file
