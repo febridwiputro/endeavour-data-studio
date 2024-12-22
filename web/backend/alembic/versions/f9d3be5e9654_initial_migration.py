@@ -1,8 +1,8 @@
-"""Generate all models
+"""Initial migration
 
-Revision ID: 7bcab6716887
+Revision ID: f9d3be5e9654
 Revises: 
-Create Date: 2024-12-21 11:41:50.603839
+Create Date: 2024-12-23 00:05:09.610140
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '7bcab6716887'
+revision = 'f9d3be5e9654'
 down_revision = None
 branch_labels = None
 depends_on = None

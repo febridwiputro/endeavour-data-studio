@@ -1,23 +1,5 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
-
-interface SubFeature {
-  name: string;
-  description: string;
-  points: string[];
-}
-
-interface MenuItem {
-  name: string;
-  description: string;
-  sub_features: SubFeature[];
-}
-
-interface MenuState {
-  menu: MenuItem[];
-  loading: boolean;
-  error: string | null;
-}
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
 const initialState: MenuState = {
   menu: [],
@@ -26,14 +8,13 @@ const initialState: MenuState = {
 };
 
 // Definisikan fetchMenu dengan createAsyncThunk
-export const fetchMenu = createAsyncThunk('menu/fetchMenu', async () => {
-    const response = await axios.get('http://localhost:8000/menu');
-    return response.data.menu;
-  });
-  
+export const fetchMenu = createAsyncThunk("menu/fetchMenu", async () => {
+  const response = await axios.get("http://localhost:8000/menu");
+  return response.data.menu;
+});
 
 const menuSlice = createSlice({
-  name: 'menu',
+  name: "menu",
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -47,7 +28,7 @@ const menuSlice = createSlice({
       })
       .addCase(fetchMenu.rejected, (state) => {
         state.loading = false;
-        state.error = 'Failed to load menu';
+        state.error = "Failed to load menu";
       });
   },
 });

@@ -187,11 +187,11 @@ const Sidebar: React.FC<SidebarProps> = ({
           toggleDarkMode={toggleDarkMode}
           isOpen={isOpen}
         />
-        {/* <ProfileInfo
+        <ProfileInfo
           isProfileMenuOpen={isProfileMenuOpen}
           toggleProfileMenu={toggleProfileMenu}
           isOpen={isOpen}
-        /> */}
+        />
       </div>
     </div>
   );

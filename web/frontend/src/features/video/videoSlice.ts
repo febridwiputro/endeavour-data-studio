@@ -1,12 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-interface VideoState {
-  loading: boolean;
-  progress: number;
-  images: string[];
-  error: string | null;
-}
 
 const initialState: VideoState = {
   loading: false,

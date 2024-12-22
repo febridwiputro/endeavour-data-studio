@@ -8,14 +8,13 @@ from app.config.database import get_db
 
 # sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.controllers.auth_controller import router as auth_router
-from app.controllers.user_controller import router as user_router
-from app.routes.image_routes import router as image_router
-from app.routes.video_routes import router as video_router
-from app.routes.annotations_routes import router as annotations_router
-# from app.routes.user import user, auth
-from app.routes.menu.menu_router import router as menu_router
-from app.routes.yolo_routes import router as yolo_router
+from app.controllers.auth.auth_controller import router as auth_router
+from app.controllers.user.user_controller import router as user_router
+from app.controllers.images.image_routes import router as image_router
+from app.controllers.videos.video_routes import router as video_router
+from app.controllers.annotations.annotations_controller import router as annotations_router
+from app.controllers.menu.menu_router import router as menu_router
+# from app.routes.yolo_routes import router as yolo_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -53,4 +52,4 @@ app.include_router(annotations_router, prefix="/annotations", tags=["/annotation
 app.include_router(image_router, prefix="/images", tags=["/images"])
 app.include_router(video_router, prefix="/videos", tags=["/videos"])
 app.include_router(menu_router, prefix="/menu", tags=["/menu"])
-app.include_router(yolo_router, prefix="/yolo", tags=["/yolo"])
+# app.include_router(yolo_router, prefix="/yolo", tags=["/yolo"])

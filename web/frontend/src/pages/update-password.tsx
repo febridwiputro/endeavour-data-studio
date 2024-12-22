@@ -1,75 +1,87 @@
-// src/pages/signup.tsx
+// src/pages/update-password.tsx
 
-import React, { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { register } from "../features/auth/authSlice";
-import { RootState } from "../store/store";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { FiEye, FiEyeOff } from "react-icons/fi";
+import { useDispatch } from "react-redux";
+import { passwordUpdate } from "../features/auth/authSlice";
 import AlertBase from "@/components/base/AlertBase";
+import { FiEye, FiEyeOff } from "react-icons/fi";
 
-
-const SignUpPage: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const UpdatePasswordPage: React.FC = () => {
+  const router = useRouter();
+  const { email: queryEmail } = router.query;
+  const [email, setEmail] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [alert, setAlert] = useState({
     show: false,
-    type: "info" as "success" | "error" | "warning" | "info",
+    type: "success" as "success" | "error" | "info" | "warning",
     message: "",
   });
 
   const dispatch = useDispatch<any>();
-  const router = useRouter();
-  const { loading, error } = useSelector((state: RootState) => state.auth);
 
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
-  const toggleConfirmPasswordVisibility = () =>
-    setShowConfirmPassword(!showConfirmPassword);
+  useEffect(() => {
+    if (queryEmail && typeof queryEmail === "string") {
+      setEmail(queryEmail);
+    } else {
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Email is missing. Redirecting to login.",
+      });
+      setTimeout(() => router.push("/login"), 3000);
+    }
+  }, [queryEmail, router]);
 
-  const handleBackToLogin = () => {
-    router.push("/login");
-  };
-
-  const handleAlert = (
-    type: "success" | "error" | "warning" | "info",
-    message: string
-  ) => {
-    setAlert({ show: false, type, message });
-    setTimeout(() => setAlert({ show: true, type, message }), 100);
-  };
-
-  const handleSignUp = async () => {
-    if (!email || !password || !confirmPassword) {
-      handleAlert("warning", "All fields are required!");
+  const handleUpdatePassword = async () => {
+    if (!email || !newPassword || !confirmPassword) {
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Please fill out all fields.",
+      });
       return;
     }
 
-    if (password !== confirmPassword) {
-      handleAlert("error", "Passwords do not match!");
+    if (newPassword !== confirmPassword) {
+      setAlert({
+        show: true,
+        type: "error",
+        message: "Passwords do not match.",
+      });
       return;
     }
 
+    setLoading(true);
     try {
-      const result = await dispatch(
-        register({ email, password, confirm_password: confirmPassword })
-      );
-      if (register.fulfilled.match(result)) {
-        handleAlert("success", "Account created successfully! Redirecting...");
-        setTimeout(() => {
-          router.push({
-            pathname: "/verify-code",
-            query: { email },
-          });
-        }, 3000);
+      const result = await dispatch(passwordUpdate({ email, new_password: newPassword }));
+      if (passwordUpdate.fulfilled.match(result)) {
+        setAlert({
+          show: true,
+          type: "success",
+          message: "Password updated successfully! Redirecting to login...",
+        });
+        setTimeout(() => router.push("/login"), 3000);
       } else {
-        handleAlert("error", result.payload || "Registration failed.");
+        setAlert({
+          show: true,
+          type: "error",
+          message: result.payload || "Failed to update password.",
+        });
       }
     } catch (err) {
       console.error(err);
-      handleAlert("error", "An unexpected error occurred.");
+      setAlert({
+        show: true,
+        type: "error",
+        message: "An unexpected error occurred.",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,54 +114,40 @@ const SignUpPage: React.FC = () => {
       {/* Right Section */}
       <div className="flex flex-col justify-center items-center w-1/2 bg-white p-12">
         <div className="max-w-sm w-full">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Sign Up</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Update Password</h2>
+          <p className="text-sm text-gray-500 mb-6">
+            Enter your new password for <b>{email}</b>
+          </p>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleSignUp();
+              handleUpdatePassword();
             }}
           >
-            <div className="mb-4">
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-600"
-              >
-                Email Address
-              </label>
-              <input
-                type="email"
-                id="email"
-                className="w-full p-3 border rounded-lg mt-2 focus:ring focus:ring-blue-200 focus:outline-none"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
             <div className="mb-4 relative">
               <label
-                htmlFor="password"
+                htmlFor="new-password"
                 className="block text-sm font-medium text-gray-600"
               >
-                Password
+                New Password
               </label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  id="password"
+                  id="new-password"
                   className="w-full p-3 pr-10 border rounded-lg mt-2 focus:ring focus:ring-blue-200 focus:outline-none"
-                  placeholder="Your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
                 />
                 <span
-                  onClick={togglePasswordVisibility}
+                  onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-600"
                 >
                   {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
                 </span>
               </div>
             </div>
-
             <div className="mb-4 relative">
               <label
                 htmlFor="confirm-password"
@@ -162,37 +160,33 @@ const SignUpPage: React.FC = () => {
                   type={showConfirmPassword ? "text" : "password"}
                   id="confirm-password"
                   className="w-full p-3 pr-10 border rounded-lg mt-2 focus:ring focus:ring-blue-200 focus:outline-none"
-                  placeholder="Confirm your password"
+                  placeholder="Confirm new password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
                 <span
-                  onClick={toggleConfirmPasswordVisibility}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-600"
                 >
-                  {showConfirmPassword ? (
-                    <FiEyeOff size={20} />
-                  ) : (
-                    <FiEye size={20} />
-                  )}
+                  {showConfirmPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
                 </span>
               </div>
             </div>
-
-            {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
             <button
               type="submit"
-              className="w-full bg-[#1a4f9d] text-white py-3 rounded-lg hover:bg-blue-500 hover:bg-opacity-70 transition"
+              className={`w-full bg-[#1a4f9d] text-white py-3 rounded-lg hover:bg-blue-500 hover:bg-opacity-70 transition ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
               disabled={loading}
             >
-              {loading ? "Signing up..." : "Sign Up"}
+              {loading ? "Updating Password..." : "Update Password"}
             </button>
           </form>
           <p className="mt-4 text-sm text-gray-500 text-center">
-            Already have an account?{" "}
+            Remembered your password?{" "}
             <span
-              onClick={handleBackToLogin}
-              className="text-blue-600 font-semibold text-sm cursor-pointer hover:underline"
+              onClick={() => router.push("/login")}
+              className="text-[#1a4f9d] font-semibold cursor-pointer hover:underline"
             >
               Log in
             </span>
@@ -211,4 +205,4 @@ const SignUpPage: React.FC = () => {
   );
 };
 
-export default SignUpPage;
+export default UpdatePasswordPage;

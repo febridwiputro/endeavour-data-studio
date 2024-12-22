@@ -1,25 +1,5 @@
-// src/features/auth/authSlice.ts
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-
-// Define types for Auth State and API Responses
-interface AuthState {
-  accessToken: string | null;
-  email: string | null; // Store the registered email
-  loading: boolean;
-  error: string | null;
-  successMessage: string | null;
-}
-
-interface ApiResponse<T = any> {
-  data: T;
-  message: string;
-}
-
-interface ApiError {
-  detail: string | string[];
-}
+import api from "@/services/apiConfig";
 
 // Utility function to get error messages
 const extractErrorMessage = (error: any): string => {
@@ -38,61 +18,26 @@ const isBrowser = typeof window !== "undefined";
 // Initial state
 const initialState: AuthState = {
   accessToken: isBrowser ? localStorage.getItem("accessToken") : null,
-  email: null, // Initialize email as null
+  email: null,
   loading: false,
   error: null,
   successMessage: null,
 };
 
 // Async thunks
-// Login
 export const login = createAsyncThunk(
   "auth/login",
-  async (
-    credentials: { email: string; password: string },
-    { rejectWithValue }
-  ) => {
+  async (credentials: { email: string; password: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.post<ApiResponse<string>>(
-        "http://localhost:8000/auth/login",
-        credentials
-      );
-      const token = response.data.data;
-
-      // Store the token in localStorage
-      if (typeof window !== "undefined") {
-        localStorage.setItem("accessToken", token);
-      }
-
-      return token;
+      const response = await api.post("/auth/login", credentials);
+      const { access_token } = response.data;
+      return access_token;
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error));
     }
   }
 );
-// export const login = createAsyncThunk(
-//   "auth/login",
-//   async (
-//     credentials: { email: string; password: string },
-//     { rejectWithValue }
-//   ) => {
-//     try {
-//       const response = await axios.post<ApiResponse<string>>(
-//         "http://localhost:8000/auth/login",
-//         credentials
-//       );
-//       if (isBrowser) {
-//         localStorage.setItem("accessToken", response.data.data);
-//       }
-//       return response.data.data; // Access token
-//     } catch (error: any) {
-//       return rejectWithValue(extractErrorMessage(error));
-//     }
-//   }
-// );
 
-// Async thunks
-// Register
 export const register = createAsyncThunk(
   "auth/register",
   async (
@@ -100,10 +45,7 @@ export const register = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axios.post<ApiResponse<{ email: string }>>(
-        "http://localhost:8000/auth/register",
-        credentials
-      );
+      const response = await api.post("/auth/register", credentials);
       return response.data.data; // Return the email from the response
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error));
@@ -111,48 +53,60 @@ export const register = createAsyncThunk(
   }
 );
 
-// Forgot Password
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
   async (credentials: { email: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.post<ApiResponse>(
-        "http://localhost:8000/auth/forgot-password",
-        credentials
-      );
-      return response.data.message; // Success message
+      const response = await api.post("/auth/forgot-password", credentials);
+      return response.data.message;
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error));
     }
   }
 );
 
-// Verify Code
 export const verifyCode = createAsyncThunk(
   "auth/verifyCode",
   async (credentials: { email: string; code: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.post<ApiResponse>(
-        "http://localhost:8000/auth/verify-code",
-        credentials
-      );
-      return response.data.message; // Success message
+      const response = await api.post("/auth/verify-code", credentials);
+      return response.data.message;
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error));
     }
   }
 );
 
-// Resend Code
 export const resendCode = createAsyncThunk(
   "auth/resendCode",
   async (credentials: { email: string }, { rejectWithValue }) => {
     try {
-      const response = await axios.post<ApiResponse>(
-        "http://localhost:8000/auth/resend-code",
-        credentials
-      );
-      return response.data.message; // Success message
+      const response = await api.post("/auth/resend-code", credentials);
+      return response.data.message;
+    } catch (error: any) {
+      return rejectWithValue(extractErrorMessage(error));
+    }
+  }
+);
+
+export const passwordReset = createAsyncThunk(
+  "auth/passwordReset",
+  async (credentials: { email: string; code: string }, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/auth/password-reset", credentials);
+      return response.data.message;
+    } catch (error: any) {
+      return rejectWithValue(extractErrorMessage(error));
+    }
+  }
+);
+
+export const passwordUpdate = createAsyncThunk(
+  "auth/passwordUpdate",
+  async (credentials: { email: string; new_password: string }, { rejectWithValue }) => {
+    try {
+      const response = await api.post("/auth/password-update", credentials);
+      return response.data.message;
     } catch (error: any) {
       return rejectWithValue(extractErrorMessage(error));
     }
@@ -178,24 +132,6 @@ const authSlice = createSlice({
       state.successMessage = null;
     },
   },
-// const authSlice = createSlice({
-//   name: "auth",
-//   initialState,
-//   reducers: {
-//     logout(state) {
-//       state.accessToken = null;
-//       state.email = null;
-//       state.error = null;
-//       state.successMessage = null;
-//       if (isBrowser) {
-//         localStorage.removeItem("accessToken");
-//       }
-//     },
-//     resetMessages(state) {
-//       state.error = null;
-//       state.successMessage = null;
-//     },
-//   },
   extraReducers: (builder) => {
     builder
       // Login
@@ -207,6 +143,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.loading = false;
         state.accessToken = action.payload;
+        localStorage.setItem("accessToken", action.payload || "");
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
@@ -220,7 +157,7 @@ const authSlice = createSlice({
       })
       .addCase(register.fulfilled, (state, action) => {
         state.loading = false;
-        state.email = action.payload.email; // Save the email from the response
+        state.email = action.payload.email;
         state.successMessage = "Registration successful! Please verify your email.";
       })
       .addCase(register.rejected, (state, action) => {
@@ -268,6 +205,34 @@ const authSlice = createSlice({
       .addCase(resendCode.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+      })
+      // Password Reset
+      .addCase(passwordReset.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(passwordReset.fulfilled, (state, action) => {
+        state.loading = false;
+        state.successMessage = action.payload as string;
+      })
+      .addCase(passwordReset.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+      })
+      // Password Update
+      .addCase(passwordUpdate.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(passwordUpdate.fulfilled, (state, action) => {
+        state.loading = false;
+        state.successMessage = action.payload as string;
+      })
+      .addCase(passwordUpdate.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });
@@ -278,45 +243,54 @@ export default authSlice.reducer;
 
 
 // import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-// import axios from "axios";
+// import api from "@/services/apiConfig";
 
-// interface AuthState {
-//   accessToken: string | null;
-//   loading: boolean;
-//   error: string | null;
-// }
-
-// const isBrowser = typeof window !== "undefined";
-
-// const initialState: AuthState = {
-//   accessToken: isBrowser ? localStorage.getItem("accessToken") : null,
-//   loading: false,
-//   error: null,
+// // Utility function to get error messages
+// const extractErrorMessage = (error: any): string => {
+//   if (error.response?.data?.detail) {
+//     if (Array.isArray(error.response.data.detail)) {
+//       return error.response.data.detail.join(", ");
+//     }
+//     return error.response.data.detail;
+//   }
+//   return "An unexpected error occurred.";
 // };
 
-// // Define login async thunk
+// // Check if running in browser
+// const isBrowser = typeof window !== "undefined";
+
+// // Define types
+// interface AuthState {
+//   accessToken: string | null;
+//   email: string | null;
+//   loading: boolean;
+//   error: string | null;
+//   successMessage: string | null;
+// }
+
+// // Initial state
+// const initialState: AuthState = {
+//   accessToken: isBrowser ? localStorage.getItem("accessToken") : null,
+//   email: null,
+//   loading: false,
+//   error: null,
+//   successMessage: null,
+// };
+
+// // Async thunks
 // export const login = createAsyncThunk(
 //   "auth/login",
-//   async (
-//     credentials: { email: string; password: string },
-//     { rejectWithValue }
-//   ) => {
+//   async (credentials: { email: string; password: string }, { rejectWithValue }) => {
 //     try {
-//       const response = await axios.post(
-//         "http://localhost:8000/auth/login",
-//         credentials
-//       );
-//       if (isBrowser) {
-//         localStorage.setItem("accessToken", response.data.access_token);
-//       }
-//       return response.data.access_token;
+//       const response = await api.post("/auth/login", credentials);
+//       const { access_token } = response.data;
+//       return access_token;
 //     } catch (error: any) {
-//       return rejectWithValue(error.response?.data?.detail || "Failed to login");
+//       return rejectWithValue(extractErrorMessage(error));
 //     }
 //   }
 // );
 
-// // Define register async thunk
 // export const register = createAsyncThunk(
 //   "auth/register",
 //   async (
@@ -324,80 +298,140 @@ export default authSlice.reducer;
 //     { rejectWithValue }
 //   ) => {
 //     try {
-//       const response = await axios.post("http://localhost:8000/auth/register", credentials);
-//       return response.data;
+//       const response = await api.post("/auth/register", credentials);
+//       return response.data.data; // Return the email from the response
 //     } catch (error: any) {
-//       return rejectWithValue(error.response?.data?.detail || "Registration failed");
+//       return rejectWithValue(extractErrorMessage(error));
 //     }
 //   }
 // );
 
-// // Forgot Password async thunk
 // export const forgotPassword = createAsyncThunk(
 //   "auth/forgotPassword",
 //   async (credentials: { email: string }, { rejectWithValue }) => {
 //     try {
-//       const response = await axios.post(
-//         "http://localhost:8000/auth/forgot-password",
-//         credentials
-//       );
-//       return response.data;
+//       const response = await api.post("/auth/forgot-password", credentials);
+//       return response.data.message;
 //     } catch (error: any) {
-//       return rejectWithValue(
-//         error.response?.data?.detail || "Failed to send reset code"
-//       );
+//       return rejectWithValue(extractErrorMessage(error));
 //     }
 //   }
 // );
 
+// export const verifyCode = createAsyncThunk(
+//   "auth/verifyCode",
+//   async (credentials: { email: string; code: string }, { rejectWithValue }) => {
+//     try {
+//       const response = await api.post("/auth/verify-code", credentials);
+//       return response.data.message;
+//     } catch (error: any) {
+//       return rejectWithValue(extractErrorMessage(error));
+//     }
+//   }
+// );
+
+// export const resendCode = createAsyncThunk(
+//   "auth/resendCode",
+//   async (credentials: { email: string }, { rejectWithValue }) => {
+//     try {
+//       const response = await api.post("/auth/resend-code", credentials);
+//       return response.data.message;
+//     } catch (error: any) {
+//       return rejectWithValue(extractErrorMessage(error));
+//     }
+//   }
+// );
+
+// // Slice
 // const authSlice = createSlice({
 //   name: "auth",
 //   initialState,
 //   reducers: {
 //     logout(state) {
 //       state.accessToken = null;
+//       state.email = null;
 //       state.error = null;
-//       if (isBrowser) {
+//       state.successMessage = null;
+//       if (typeof window !== "undefined") {
 //         localStorage.removeItem("accessToken");
 //       }
+//     },
+//     resetMessages(state) {
+//       state.error = null;
+//       state.successMessage = null;
 //     },
 //   },
 //   extraReducers: (builder) => {
 //     builder
-//       // Login handlers
+//       // Login
 //       .addCase(login.pending, (state) => {
 //         state.loading = true;
 //         state.error = null;
+//         state.successMessage = null;
 //       })
 //       .addCase(login.fulfilled, (state, action) => {
 //         state.loading = false;
 //         state.accessToken = action.payload;
+//         localStorage.setItem("accessToken", action.payload || "");
 //       })
 //       .addCase(login.rejected, (state, action) => {
 //         state.loading = false;
 //         state.error = action.payload as string;
 //       })
-//       // Register handlers
+//       // Register
 //       .addCase(register.pending, (state) => {
 //         state.loading = true;
 //         state.error = null;
+//         state.successMessage = null;
 //       })
-//       .addCase(register.fulfilled, (state) => {
+//       .addCase(register.fulfilled, (state, action) => {
 //         state.loading = false;
+//         state.email = action.payload.email;
+//         state.successMessage = "Registration successful! Please verify your email.";
 //       })
 //       .addCase(register.rejected, (state, action) => {
 //         state.loading = false;
 //         state.error = action.payload as string;
 //       })
-//       // Forgot Password handlers
+//       // Forgot Password
 //       .addCase(forgotPassword.pending, (state) => {
 //         state.loading = true;
 //         state.error = null;
+//         state.successMessage = null;
 //       })
-//       .addCase(forgotPassword.fulfilled, (state) => {
+//       .addCase(forgotPassword.fulfilled, (state, action) => {
 //         state.loading = false;
+//         state.successMessage = action.payload as string;
 //       })
 //       .addCase(forgotPassword.rejected, (state, action) => {
+//         state.loading = false;
+//         state.error = action.payload as string;
+//       })
+//       // Verify Code
+//       .addCase(verifyCode.pending, (state) => {
+//         state.loading = true;
+//         state.error = null;
+//         state.successMessage = null;
+//       })
+//       .addCase(verifyCode.fulfilled, (state, action) => {
+//         state.loading = false;
+//         state.successMessage = action.payload as string;
+//       })
+//       .addCase(verifyCode.rejected, (state, action) => {
+//         state.loading = false;
+//         state.error = action.payload as string;
+//       })
+//       // Resend Code
+//       .addCase(resendCode.pending, (state) => {
+//         state.loading = true;
+//         state.error = null;
+//         state.successMessage = null;
+//       })
+//       .addCase(resendCode.fulfilled, (state, action) => {
+//         state.loading = false;
+//         state.successMessage = action.payload as string;
+//       })
+//       .addCase(resendCode.rejected, (state, action) => {
 //         state.loading = false;
 //         state.error = action.payload as string;
 //       });
@@ -405,5 +439,5 @@ export default authSlice.reducer;
 // });
 
 // // Export actions and reducer
-// export const { logout } = authSlice.actions;
+// export const { logout, resetMessages } = authSlice.actions;
 // export default authSlice.reducer;

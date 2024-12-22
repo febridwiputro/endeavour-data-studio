@@ -3,60 +3,25 @@
 import React, { useEffect } from "react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
-import LoginPage from "./login";
-import SignUpPage from "./signup";
+import { RootState } from "../store/store";
 
 const IndexPage: React.FC = () => {
-  const [currentPage, setCurrentPage] = React.useState<"login" | "signup">("login");
-  const { accessToken } = useSelector((state: any) => state.auth);
+  const { accessToken } = useSelector((state: RootState) => state.auth);
   const router = useRouter();
 
   useEffect(() => {
     const token = accessToken || localStorage.getItem("accessToken");
+
     if (token) {
+      console.log("Token ditemukan. Navigasi ke /home");
       router.push("/home");
+    } else {
+      console.log("Token tidak ditemukan. Navigasi ke /login");
+      router.push("/login");
     }
   }, [accessToken, router]);
 
-  const handleNavigateToSignUp = () => setCurrentPage("signup");
-  const handleNavigateToLogin = () => setCurrentPage("login");
-
-  return (
-    <>
-      {currentPage === "login" ? (
-        <LoginPage onSignUp={handleNavigateToSignUp} />
-      ) : (
-        <SignUpPage onBackToLogin={handleNavigateToLogin} />
-      )}
-    </>
-  );
+  return null;
 };
 
-
-// const IndexPage: React.FC = () => {
-//   const [currentPage, setCurrentPage] = React.useState<"login" | "signup">("login");
-//   const { accessToken } = useSelector((state: any) => state.auth);
-//   const router = useRouter();
-
-//   useEffect(() => {
-//     if (accessToken) {
-//       console.log("Access token detected, navigating to home...");
-//       router.push("/home");
-//     }
-//   }, [accessToken, router]);
-
-//   const handleNavigateToSignUp = () => setCurrentPage("signup");
-//   const handleNavigateToLogin = () => setCurrentPage("login");
-
-//   return (
-//     <>
-//       {currentPage === "login" ? (
-//         <LoginPage onSignUp={handleNavigateToSignUp} />
-//       ) : (
-//         <SignUpPage onBackToLogin={handleNavigateToLogin} />
-//       )}
-//     </>
-//   );
-// };
-
-// export default IndexPage;
+export default IndexPage;

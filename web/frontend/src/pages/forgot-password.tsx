@@ -37,7 +37,7 @@ const ForgotPasswordPage: React.FC = () => {
           message: "Password reset code has been sent to your email.",
         });
         setTimeout(() => {
-          router.push("/login");
+          router.push({ pathname: "/reset-password", query: { email } });
         }, 3000);
       } else {
         setAlert({

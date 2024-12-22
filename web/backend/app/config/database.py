@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.config.config import settings
@@ -16,7 +16,7 @@ Base = declarative_base()
 # Check database connection
 try:
     with engine.connect() as connection:
-        connection.execute("SELECT 1")  # Simple query to test connection
+        connection.execute(text("SELECT 1"))  # Use sqlalchemy.text
         print("Database is connected successfully.")
 except OperationalError as e:
     print("Failed to connect to the database.")

@@ -1,13 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-interface ImagesState {
-  loading: boolean;
-  progress: number;
-  adjustedImages: string[];
-  compressedImages: string[];
-  error: string | null;
-}
 
 const initialState: ImagesState = {
   loading: false,
