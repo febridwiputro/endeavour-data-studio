@@ -9,3 +9,9 @@ if __name__ == "__main__":
         reload=True,
         workers=2,
     )
+
+"""
+alembic revision --autogenerate -m "Initial migration"
+alembic revision --autogenerate -m "Initial annotations"
+alembic upgrade head
+"""

@@ -11,8 +11,8 @@ interface AlertBaseProps {
   show: boolean;
   type: "success" | "error" | "warning" | "info";
   message: string;
-  duration?: number; // Optional duration in milliseconds
-  onClose: () => void; // Callback to close alert
+  duration?: number;
+  onClose: () => void;
 }
 
 const AlertBase: React.FC<AlertBaseProps> = ({
@@ -22,7 +22,6 @@ const AlertBase: React.FC<AlertBaseProps> = ({
   duration = 3000,
   onClose,
 }) => {
-  // Define colors and icons based on alert type
   const alertStyles = {
     success: {
       bgColor: "bg-green-100",
@@ -56,13 +55,12 @@ const AlertBase: React.FC<AlertBaseProps> = ({
 
   const { bgColor, textColor, borderColor, icon } = alertStyles[type];
 
-  // Auto-close the alert after a specified duration
   useEffect(() => {
     if (show) {
       const timer = setTimeout(() => {
         onClose();
       }, duration);
-      return () => clearTimeout(timer); // Cleanup on unmount
+      return () => clearTimeout(timer);
     }
   }, [show, duration, onClose]);
 

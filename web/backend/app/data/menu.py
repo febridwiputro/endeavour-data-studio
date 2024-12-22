@@ -12,7 +12,6 @@ from app.data.features_json_editor import features_json_editor
 from app.data.features_image_color_picker import features_image_color_picker
 from app.data.features_regex_editor import features_regex_editor
 from app.data.features_cryptography_generator import features_cryptography_generator
-# from app.data.features_
 
 menu = {
   "menu": [

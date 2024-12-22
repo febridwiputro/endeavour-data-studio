@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface DarkModeContextType {
   isDarkMode: boolean;
@@ -12,9 +12,18 @@ const DarkModeContext = createContext<DarkModeContextType | undefined>(
 export const DarkModeProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [isDarkMode, setIsDarkMode] = useState(
-    typeof window !== "undefined" && localStorage.getItem("theme") === "dark"
-  );
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isClient, setIsClient] = useState(false); // Track if we're on the client
+
+  useEffect(() => {
+    setIsClient(true); // Indicate that we're now rendering on the client
+    const savedTheme = localStorage.getItem("theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const initialTheme = savedTheme === "dark" || (savedTheme === null && prefersDark);
+
+    setIsDarkMode(initialTheme);
+    document.documentElement.classList.toggle("dark", initialTheme);
+  }, []);
 
   const toggleDarkMode = () => {
     const newMode = !isDarkMode;
@@ -22,6 +31,11 @@ export const DarkModeProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("theme", newMode ? "dark" : "light");
     document.documentElement.classList.toggle("dark", newMode);
   };
+
+  // Prevent rendering on the server to avoid hydration issues
+  if (!isClient) {
+    return null;
+  }
 
   return (
     <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
@@ -37,6 +51,47 @@ export const useDarkMode = (): DarkModeContextType => {
   }
   return context;
 };
+
+
+// import React, { createContext, useContext, useState } from "react";
+
+// interface DarkModeContextType {
+//   isDarkMode: boolean;
+//   toggleDarkMode: () => void;
+// }
+
+// const DarkModeContext = createContext<DarkModeContextType | undefined>(
+//   undefined
+// );
+
+// export const DarkModeProvider: React.FC<{ children: React.ReactNode }> = ({
+//   children,
+// }) => {
+//   const [isDarkMode, setIsDarkMode] = useState(
+//     typeof window !== "undefined" && localStorage.getItem("theme") === "dark"
+//   );
+
+//   const toggleDarkMode = () => {
+//     const newMode = !isDarkMode;
+//     setIsDarkMode(newMode);
+//     localStorage.setItem("theme", newMode ? "dark" : "light");
+//     document.documentElement.classList.toggle("dark", newMode);
+//   };
+
+//   return (
+//     <DarkModeContext.Provider value={{ isDarkMode, toggleDarkMode }}>
+//       {children}
+//     </DarkModeContext.Provider>
+//   );
+// };
+
+// export const useDarkMode = (): DarkModeContextType => {
+//   const context = useContext(DarkModeContext);
+//   if (!context) {
+//     throw new Error("useDarkMode must be used within a DarkModeProvider");
+//   }
+//   return context;
+// };
 
 
 // import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";

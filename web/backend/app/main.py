@@ -1,17 +1,20 @@
-import os
+import os, sys
 import uvicorn
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
 from app.config.database import get_db
 
+# sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from app.controllers.auth_controller import router as auth_router
+from app.controllers.user_controller import router as user_router
 from app.routes.image_routes import router as image_router
 from app.routes.video_routes import router as video_router
-from app.routes.menu_routes import router as menu_router
 from app.routes.annotations_routes import router as annotations_router
 # from app.routes.user import user, auth
+from app.routes.menu.menu_router import router as menu_router
 from app.routes.yolo_routes import router as yolo_router
 
 logging.basicConfig(level=logging.INFO)
@@ -44,9 +47,8 @@ if not os.path.exists(output_dir):
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-
-# app.include_router(auth.router, tags=['Auth'], prefix='/api/v1/auth')
-# app.include_router(user.router, tags=['Users'], prefix='/api/v1/users')
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(user_router, prefix="/user", tags=["user"])
 app.include_router(annotations_router, prefix="/annotations", tags=["/annotations"])
 app.include_router(image_router, prefix="/images", tags=["/images"])
 app.include_router(video_router, prefix="/videos", tags=["/videos"])
