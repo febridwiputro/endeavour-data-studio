@@ -21,13 +21,21 @@ sys.path.append(this_path)
 
 class Settings(BaseSettings):
     # JWT configuration
-    JWT_ALGORITHM: str = "RS256"  # Default algorithm
-    SECRET_KEY: str  # Required for symmetric algorithms
-    JWT_PRIVATE_KEY: str = None  # Required for asymmetric algorithms
-    JWT_PUBLIC_KEY: str = None  # Required for asymmetric algorithms
+    JWT_ALGORITHM: str = "RS256"    
+    SECRET_KEY: str
+    JWT_PRIVATE_KEY: str = None
+    JWT_PUBLIC_KEY: str = None
     ACCESS_TOKEN_EXPIRES_IN: int = 900  # 15 minutes by default
     REFRESH_TOKEN_EXPIRES_IN: int = 3600  # 1 hour by default
 
+    # Database configuration
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_HOST: str
+    DATABASE_PORT: int
+    POSTGRES_DB: str
+
+    # Server configuration
     SERVER_HOST: str
     SERVER_PORT: int
     CLIENT_ORIGIN: str
@@ -52,43 +60,5 @@ class Settings(BaseSettings):
         else:
             raise ValidationError(f"Unsupported JWT algorithm: {algorithm}")
 
-
 settings = Settings()
 settings.validate_jwt_configuration()
-
-# # app/config/config.py
-# import os
-# import sys
-# from pydantic_settings import BaseSettings  # Correct import
-
-# # Set the path for the project root directory
-# this_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-# sys.path.append(this_path)
-
-# class Settings(BaseSettings):
-#     SERVER_HOST: str
-#     SERVER_PORT: int
-
-#     DATABASE_PORT: int
-#     POSTGRES_PASSWORD: str
-#     POSTGRES_USER: str
-#     POSTGRES_DB: str
-#     POSTGRES_HOST: str
-#     POSTGRES_HOSTNAME: str
-
-#     JWT_PUBLIC_KEY: str
-#     JWT_PRIVATE_KEY: str
-#     REFRESH_TOKEN_EXPIRES_IN: int
-#     ACCESS_TOKEN_EXPIRES_IN: int
-#     JWT_ALGORITHM: str
-#     CLIENT_ORIGIN: str
-
-#     YOLO_MODEL_PATH: str
-
-
-#     class Config:
-#         env_file = os.path.join(this_path, ".env")  # Specify the environment file
-#         env_file_encoding = "utf-8"  # Specify encoding for the .env file
-#         extra = "allow"  # Allow extra fields in the .env file
-
-# settings = Settings()
