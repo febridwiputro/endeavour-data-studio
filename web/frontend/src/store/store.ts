@@ -3,6 +3,7 @@ import menuReducer from "../features/menu/menuSlice";
 import videoReducer from "../features/video/videoSlice";
 import imagesReducer from "../features/images/imageSlice";
 import annotationsReducer from "../features/annotations/annotationsSlice";
+import projectAnnotationReducer from "../features/annotations/project/projectAnnotationSlice";
 import authReducer from "../features/auth/authSlice";
 
 export const store = configureStore({
@@ -11,6 +12,7 @@ export const store = configureStore({
     video: videoReducer,
     images: imagesReducer,
     annotations: annotationsReducer,
+    projectAnnotations: projectAnnotationReducer,
     auth: authReducer,
   },
 });

@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: f9d3be5e9654
+Revision ID: ff75ff2649d0
 Revises: 
-Create Date: 2024-12-23 00:05:09.610140
+Create Date: 2024-12-24 15:04:20.408362
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'f9d3be5e9654'
+revision = 'ff75ff2649d0'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -34,11 +34,29 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_index(op.f('ix_users_phone_number'), 'users', ['phone_number'], unique=True)
+    op.create_table('annotation_type_tbl',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('code_name', sa.String(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('logo_url', sa.String(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('updated_by', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('code_name'),
+    sa.UniqueConstraint('name')
+    )
+    op.create_index(op.f('ix_annotation_type_tbl_id'), 'annotation_type_tbl', ['id'], unique=False)
     op.create_table('menu_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('type', sa.Enum('ANNOTATIONS', 'VIDEO_EDITOR', 'IMAGE_EDITOR', 'TEXT_EDITOR', 'AUDIO_EDITOR', 'DATASET_SPLIT', 'DOCUMENT_EDITOR', 'JSON_EDITOR', 'URL_EXTRACTOR', 'IMAGE_COLOR_PICKER', 'REGEX_EDITOR', 'CRYPTOGRAPHY_GENERATOR', name='menustype'), nullable=False),
+    sa.Column('type', sa.String(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('menu_metadata', sa.JSON(), nullable=True),
     sa.Column('logo_url', sa.String(), nullable=True),
@@ -70,14 +88,14 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('annotation_type', sa.Enum('COMPUTER_VISION', 'NLP', 'AUDIO', 'CONVERSATIONAL_AI', 'RANKING_SCORING', 'STRUCTURED_DATA_PARSING', 'TIME_SERIES_ANALYSIS', 'VIDEO', 'GENERATIVE_AI', name='annotationtype'), nullable=False),
-    sa.Column('project_photo_url', sa.String(), nullable=True),
+    sa.Column('annotation_type_id', sa.Integer(), nullable=False),
     sa.Column('menu_id', sa.Integer(), nullable=False),
     sa.Column('created_by', sa.Integer(), nullable=False),
     sa.Column('updated_by', sa.Integer(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('project_photo_url', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['annotation_type_id'], ['annotation_type_tbl.id'], ),
     sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['menu_id'], ['menu_tbl.id'], ),
     sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
@@ -283,6 +301,8 @@ def downgrade() -> None:
     op.drop_table('verification_codes')
     op.drop_index(op.f('ix_menu_tbl_id'), table_name='menu_tbl')
     op.drop_table('menu_tbl')
+    op.drop_index(op.f('ix_annotation_type_tbl_id'), table_name='annotation_type_tbl')
+    op.drop_table('annotation_type_tbl')
     op.drop_index(op.f('ix_users_phone_number'), table_name='users')
     op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')

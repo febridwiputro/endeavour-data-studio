@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from app.models.menu.menu_model import MenuModel
+from app.models.menu.menus_model import MenuModel
 from app.schemas.menu.menu_schema import MenuCreate
 
 def get_all_menus(

@@ -1,6 +1,7 @@
 import uvicorn
 from app.config.config import settings
 
+
 if __name__ == "__main__":
     uvicorn.run(
         "app.main:app",
@@ -14,4 +15,9 @@ if __name__ == "__main__":
 alembic revision --autogenerate -m "Initial migration"
 alembic revision --autogenerate -m "Initial annotations"
 alembic upgrade head
+"""
+
+"""
+https://www.svgrepo.com/show/65453/avatar.svg
+
 """

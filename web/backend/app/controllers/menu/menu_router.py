@@ -15,6 +15,57 @@ router = APIRouter()
 async def get_menu():
     return menu
 
+@router.post("/", response_model=MenuResponse, summary="Create Menu", description="Create a new menu entry.")
+def create_menu_endpoint(
+    menu_data: MenuCreate,
+    db: Session = Depends(get_db),
+    user_id: Optional[int] = 1,  # Default user_id to 1 if not provided
+):
+    """
+    Create a new menu.
+
+    Parameters:
+    - `menu_data` (MenuCreate): Data for the new menu.
+    - `db` (Session): Database session.
+    - `user_id` (int): ID of the user creating the menu (from query parameter or default).
+
+    Returns:
+    - `MenuResponse`: The created menu entry.
+    """
+    if user_id is None:
+        raise HTTPException(status_code=400, detail="User ID is required.")
+
+    try:
+        # Call service to create menu
+        new_menu = create_menu(db, menu_data, user_id)
+        return new_menu
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create menu: {str(e)}")
+
+
+# @router.post("/", response_model=MenuResponse)
+# def create_menu_endpoint(
+#     menu_data: MenuCreate,
+#     db: Session = Depends(get_db),
+#     user_id: int = 1,  # Replace with actual user ID from authentication
+# ):
+#     """
+#     Create a new menu.
+
+#     Parameters:
+#     - `menu_data` (MenuCreate): Data for the new menu.
+#     - `db` (Session): Database session.
+#     - `user_id` (int): ID of the user creating the menu (from authentication).
+
+#     Returns:
+#     - `MenuResponse`: The created menu entry.
+#     """
+#     try:
+#         new_menu = create_menu(db, menu_data, user_id)
+#         return new_menu
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Failed to create menu: {str(e)}")
+
 # @router.get("/", response_model=List[MenuResponse])
 # def fetch_menus(
 #     menu_type: Optional[str] = None,
@@ -39,25 +90,3 @@ async def get_menu():
 #     except Exception as e:
 #         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/", response_model=MenuResponse)
-def create_menu_endpoint(
-    menu_data: MenuCreate,
-    db: Session = Depends(get_db),
-    user_id: int = 1,  # Replace with actual user ID from authentication
-):
-    """
-    Create a new menu.
-
-    Parameters:
-    - `menu_data` (MenuCreate): Data for the new menu.
-    - `db` (Session): Database session.
-    - `user_id` (int): ID of the user creating the menu (from authentication).
-
-    Returns:
-    - `MenuResponse`: The created menu entry.
-    """
-    try:
-        new_menu = create_menu(db, menu_data, user_id)
-        return new_menu
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to create menu: {str(e)}")
