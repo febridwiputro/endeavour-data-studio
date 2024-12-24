@@ -47,3 +47,55 @@ my_fastapi_app/
 ├── alembic.ini                  
 ├── requirements.txt             
 └── README.md                    
+
+select * from public.users u 
+
+select * from public.verification_codes vc 
+
+select * from public.menu_tbl mt 
+
+select * from public.annotation_projects_tbl apt 
+
+select * from public.annotation_type_tbl att
+
+select * from public.menu_tbl mt 
+
+SELECT n.nspname AS schema, t.typname AS type
+FROM pg_type t 
+JOIN pg_enum e ON t.oid = e.enumtypid  
+JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace;
+--WHERE t.typname = 'menustype';
+
+DROP TYPE IF EXISTS menustype, annotationtype, annotateresulttypeenum, deliverytype CASCADE;
+
+
+
+INSERT INTO annotation_type_tbl (name, code_name, description, is_active, created_by, created_at)
+VALUES
+    ('Computer Vision', 'COMPUTER_VISION', 'Computer vision-related projects', true, 1, NOW()),
+    ('Natural Language Processing (NLP)', 'NLP', 'NLP-related projects', true, 1, NOW()),
+    ('Audio', 'AUDIO', 'Audio processing-related projects', true, 1, NOW()),
+    ('Conversational AI', 'CONVERSATIONAL_AI', 'Conversational AI-related projects', true, 1, NOW()),
+    ('Ranking & Scoring', 'RANKING_SCORING', 'Ranking and scoring-related projects', true, 1, NOW()),
+    ('Structured Data Parsing', 'STRUCTURED_DATA_PARSING', 'Structured data parsing projects', true, 1, NOW()),
+    ('Time Series Analysis', 'TIME_SERIES_ANALYSIS', 'Time series analysis-related projects', true, 1, NOW()),
+    ('Video', 'VIDEO', 'Video-related projects', true, 1, NOW()),
+    ('Generative AI', 'GENERATIVE_AI', 'Generative AI-related projects', true, 1, NOW());
+
+
+
+INSERT INTO menu_tbl (name, description, type, is_active, menu_metadata, logo_url, created_by, created_at)
+VALUES
+    ('Annotations', 'Annotations tool for various tasks.', 'ANNOTATIONS', TRUE, NULL, 'https://www.svgrepo.com/show/310716/annotations.svg', 1, NOW()),
+    ('Image Editor', 'Image Editor tool for various tasks.', 'IMAGE_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/274053/image.svg', 1, NOW()),
+    ('Text Editor', 'Text Editor tool for various tasks.', 'TEXT_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/105333/text.svg', 1, NOW()),
+    ('Audio Editor', 'Audio Editor tool for various tasks.', 'AUDIO_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/20559/audio.svg', 1, NOW()),
+    ('Video Editor', 'Video Editor tool for various tasks.', 'VIDEO_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/277067/video.svg', 1, NOW()),
+    ('Numeric Data Editor', 'Numeric Data Editor tool for various tasks.', 'NUMERIC_DATA_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/17112/data.svg', 1, NOW()),
+    ('Dataset Split', 'Dataset Split tool for various tasks.', 'DATASET_SPLIT', TRUE, NULL, 'https://www.svgrepo.com/show/219892/dataset.svg', 1, NOW()),
+    ('Document Editor', 'Document Editor tool for various tasks.', 'DOCUMENT_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/16144/document.svg', 1, NOW()),
+    ('URL Extractor', 'URL Extractor tool for various tasks.', 'URL_EXTRACTOR', TRUE, NULL, 'https://www.svgrepo.com/show/12325/url.svg', 1, NOW()),
+    ('JSON Editor', 'JSON Editor tool for various tasks.', 'JSON_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/349117/json.svg', 1, NOW()),
+    ('Image Color Picker', 'Image Color Picker tool for various tasks.', 'IMAGE_COLOR_PICKER', TRUE, NULL, 'https://www.svgrepo.com/show/419889/color-picker.svg', 1, NOW()),
+    ('Regex Editor', 'Regex Editor tool for various tasks.', 'REGEX_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/203836/regex.svg', 1, NOW()),
+    ('Cryptography Generator', 'Cryptography Generator tool for various tasks.', 'CRYPTOGRAPHY_GENERATOR', TRUE, NULL, 'https://www.svgrepo.com/show/407117/cryptography.svg', 1, NOW());
