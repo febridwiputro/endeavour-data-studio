@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUpload,
@@ -18,11 +18,17 @@ import {
 interface SidebarProps {
   activePage: string;
   setActivePage: (page: string) => void;
+  selectedAnnotation?: { 
+    name: string; 
+    project_photo_url?: string
+    annotation_type?: string
+   };
 }
 
 const SidebarAnnotationProject: React.FC<SidebarProps> = ({
   activePage,
   setActivePage,
+  selectedAnnotation,
 }) => {
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -75,7 +81,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
         {/* Title */}
         {!isMinimized && (
           <h1 className="text-lg font-semibold text-gray-800">
-            Computer Vision
+            {selectedAnnotation?.annotation_type || "Annotation Type"}
           </h1>
         )}
 
@@ -97,7 +103,10 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
       {/* Project Section */}
       <div className={`p-4 ${isMinimized ? "text-center" : ""}`}>
         <img
-          src="https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg"
+          src={
+            selectedAnnotation?.project_photo_url ||
+            "https://via.placeholder.com/150"
+          }
           alt="Project"
           className={`rounded-lg ${
             isMinimized ? "mx-auto w-12 h-12" : "w-full h-32"
@@ -106,7 +115,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
         {!isMinimized && (
           <div className="mt-3">
             <h1 className="text-base font-semibold text-gray-800">
-              Automatic License Plate Recognition
+              {selectedAnnotation?.name || "Project Name"}
             </h1>
             <p className="text-sm text-gray-500">Object Detection</p>
           </div>

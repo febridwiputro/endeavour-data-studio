@@ -48,6 +48,10 @@ my_fastapi_app/
 ├── requirements.txt             
 └── README.md                    
 
+
+https://www.svgrepo.com/show/119561/avatar.svg
+
+
 select * from public.users u 
 
 select * from public.verification_codes vc 
@@ -99,3 +103,28 @@ VALUES
     ('Image Color Picker', 'Image Color Picker tool for various tasks.', 'IMAGE_COLOR_PICKER', TRUE, NULL, 'https://www.svgrepo.com/show/419889/color-picker.svg', 1, NOW()),
     ('Regex Editor', 'Regex Editor tool for various tasks.', 'REGEX_EDITOR', TRUE, NULL, 'https://www.svgrepo.com/show/203836/regex.svg', 1, NOW()),
     ('Cryptography Generator', 'Cryptography Generator tool for various tasks.', 'CRYPTOGRAPHY_GENERATOR', TRUE, NULL, 'https://www.svgrepo.com/show/407117/cryptography.svg', 1, NOW());
+
+
+INSERT INTO annotation_projects_tbl (name, description, annotation_type, project_photo_url, menu_id, created_by) VALUES
+('Automatic License Plate Recognition', 'Detects and recognizes license plates in vehicle images.', 'COMPUTER_VISION', 'https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg', 10, 1),
+('Object Detection for Street Signs', 'Detects and classifies different types of street signs.', 'COMPUTER_VISION', 'https://upload.wikimedia.org/wikipedia/commons/6/69/Street_sign_in_Germany.jpg', 11, 2),
+('Fruit Detection in Markets', 'Detects and identifies fruits in market images.', 'COMPUTER_VISION', 'https://images.unsplash.com/photo-1572441719534-2c5c93d5ed32', 12, 1),
+('Helmet Detection for Riders', 'Detects whether motorbike riders are wearing helmets.', 'COMPUTER_VISION', 'https://images.unsplash.com/photo-1531916990615-cb61b8b5950f', 13, 3),
+('Animal Detection in Wildlife', 'Detects and classifies wild animals in forest images.', 'COMPUTER_VISION', 'https://images.unsplash.com/photo-1546182990-dffeafbe841d', 14, 2),
+('Facial Mask Detection', 'Detects if individuals in images are wearing face masks.', 'COMPUTER_VISION', 'https://images.unsplash.com/photo-1605902711622-cfb43c4437d7', 15, 1);
+
+INSERT INTO annotation_projects_tbl (name, description, annotation_type_id, project_photo_url, menu_id, created_by) VALUES
+('Sentiment Analysis Tool', 'Analyzes the sentiment of user reviews and comments.', 11, 'https://images.unsplash.com/photo-1547658716-571c01c0b7b9', 1, 1),
+('Named Entity Recognition', 'Identifies named entities like names, dates, and locations in text.', 11, 'https://images.unsplash.com/photo-1581091870634-76f36ff54c5c', 1, 1),
+('Chatbot Development', 'A chatbot designed for answering frequently asked questions.', 11, 'https://images.unsplash.com/photo-1516574187841-cb9cc2ca948b', 1, 1),
+('Text Summarization', 'Generates concise summaries from long documents.', 11, 'https://images.unsplash.com/photo-1559028012-d36657a1d4a2', 1, 1),
+('Language Translation Model', 'Translates text from one language to another.', 11, 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c', 1, 1),
+('Speech-to-Text Conversion', 'Converts spoken audio into text format.', 11, 'https://images.unsplash.com/photo-1522071820081-009f0129c71c', 1, 1);
+
+INSERT INTO annotation_projects_tbl (name, description, annotation_type_id, project_photo_url, menu_id, created_by) VALUES
+('Audio Transcription', 'Transcribes spoken audio into text format.', 12, 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846', 1, 1),
+('Speaker Identification', 'Identifies speakers in an audio recording.', 12, 'https://images.unsplash.com/photo-1522071820081-009f0129c71c', 1, 1),
+('Noise Classification', 'Classifies different types of noise in audio files.', 12, 'https://images.unsplash.com/photo-1547658716-571c01c0b7b9', 1, 1),
+('Audio Event Detection', 'Detects specific events or sounds in audio recordings.', 12, 'https://images.unsplash.com/photo-1503428593586-e225b39bddfe', 1, 1),
+('Speech Emotion Recognition', 'Analyzes emotions expressed in speech.', 12, 'https://images.unsplash.com/photo-1604908177872-2c00ef3f1117', 1, 1),
+('Keyword Spotting', 'Identifies specific keywords in audio data.', 12, 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c', 1, 1);

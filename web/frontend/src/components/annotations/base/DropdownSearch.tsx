@@ -1,7 +1,8 @@
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 
 interface DropdownSearchProps {
-  menuData: { name: string }[]; // Define the structure of menu data
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   selectedCategory: string | null;
@@ -9,13 +10,17 @@ interface DropdownSearchProps {
 }
 
 const DropdownSearch: React.FC<DropdownSearchProps> = ({
-  menuData,
   searchQuery,
   setSearchQuery,
   selectedCategory,
   setSelectedCategory,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // Accessing annotationTypes from Redux store
+  const { annotationTypes } = useSelector(
+    (state: RootState) => state.projectAnnotations
+  );
 
   const handleDropdownToggle = () => {
     setIsDropdownOpen(!isDropdownOpen);
@@ -37,10 +42,10 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
   };
 
   return (
-    <form
-      className="w-[600px] mx-auto bg-white p-4 shadow-md rounded-lg"
-      onSubmit={handleSubmit}
-    >
+    // <form
+    //   className="w-[600px] mx-auto bg-white p-4 shadow-md rounded-lg"
+    //   onSubmit={handleSubmit}
+    // >
       <div className="flex">
         <label
           htmlFor="search-dropdown"
@@ -83,13 +88,13 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
                 className="py-2 text-sm"
                 style={{ color: "var(--default-blue)" }}
               >
-                {menuData.map((menuItem, index) => (
-                  <li key={index}>
+                {annotationTypes.map((type) => (
+                  <li key={type.id}>
                     <button
-                      onClick={() => handleCategoryClick(menuItem.name)}
+                      onClick={() => handleCategoryClick(type.name)}
                       className="block w-full px-4 py-2 text-left hover:bg-gray-100"
                     >
-                      {menuItem.name}
+                      {type.name}
                     </button>
                   </li>
                 ))}
@@ -136,7 +141,7 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
           </button>
         </div>
       </div>
-    </form>
+    // </form>
   );
 };
 

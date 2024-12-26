@@ -59,6 +59,7 @@ async def get_me(payload: dict = Depends(jwt_bearer), db: Session = Depends(get_
         status_code=status.HTTP_200_OK,
         message_code="USER_DETAILS_RETRIEVED",
         data={
+            "id": user.id,
             "email": user.email,
             "full_name": user.full_name,
             "user_photo": user.user_photo,

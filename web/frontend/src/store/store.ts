@@ -5,6 +5,7 @@ import imagesReducer from "../features/images/imageSlice";
 import annotationsReducer from "../features/annotations/annotationsSlice";
 import projectAnnotationReducer from "../features/annotations/project/projectAnnotationSlice";
 import authReducer from "../features/auth/authSlice";
+import userReducer from "../features/user/userSlice";
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +15,7 @@ export const store = configureStore({
     annotations: annotationsReducer,
     projectAnnotations: projectAnnotationReducer,
     auth: authReducer,
+    user: userReducer
   },
 });
 

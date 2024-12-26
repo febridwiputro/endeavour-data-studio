@@ -10,7 +10,17 @@ import ClassesAndTagsPage from "./classesAndTags/ClassesAndTagsPage";
 import DataAnalyticsPage from "./dataAnalytics/DataAnalyticsPage";
 import ModelsPage from "./models/ModelsPage";
 
-const AnnotationsProjectPage: React.FC = () => {
+interface AnnotationsProjectPageProps {
+  selectedAnnotation: {
+    name: string;
+    project_photo_url?: string;
+    annotation_type?: string;
+  };
+}
+
+const AnnotationsProjectPage: React.FC<AnnotationsProjectPageProps> = ({
+  selectedAnnotation,
+}) => {
   const [activePage, setActivePage] = useState("Upload Data");
 
   const renderContent = () => {
@@ -24,13 +34,13 @@ const AnnotationsProjectPage: React.FC = () => {
       case "Visualize":
         return <AnnotationVisualize />;
       case "Versions":
-        return <DataVersionPage/>
+        return <DataVersionPage />;
       case "Analytics":
-        return <DataAnalyticsPage/>
+        return <DataAnalyticsPage />;
       case "Classes & Tags":
-        return <ClassesAndTagsPage/>
+        return <ClassesAndTagsPage />;
       case "Models":
-        return <ModelsPage/>
+        return <ModelsPage />;
       case "Upload Data":
       default:
         return <AnnotationUploadDataProjectPage />;
@@ -43,6 +53,7 @@ const AnnotationsProjectPage: React.FC = () => {
       <SidebarAnnotationProject
         activePage={activePage}
         setActivePage={setActivePage}
+        selectedAnnotation={selectedAnnotation}
       />
 
       {/* Main Content */}
