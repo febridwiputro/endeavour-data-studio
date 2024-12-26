@@ -87,7 +87,6 @@ VALUES
     ('Generative AI', 'GENERATIVE_AI', 'Generative AI-related projects', true, 1, NOW());
 
 
-
 INSERT INTO menu_tbl (name, description, type, is_active, menu_metadata, logo_url, created_by, created_at)
 VALUES
     ('Annotations', 'Annotations tool for various tasks.', 'ANNOTATIONS', TRUE, NULL, 'https://www.svgrepo.com/show/310716/annotations.svg', 1, NOW()),
