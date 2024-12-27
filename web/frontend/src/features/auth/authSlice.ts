@@ -3,12 +3,25 @@ import api from "@/services/apiConfig";
 
 // Utility function to get error messages
 const extractErrorMessage = (error: any): string => {
-  if (error.response?.data?.detail) {
-    if (Array.isArray(error.response.data.detail)) {
-      return error.response.data.detail.join(", ");
+  if (error.response?.data) {
+    const responseData = error.response.data;
+
+    // Handle specific message_code like EMAIL_ALREADY_REGISTERED
+    if (responseData.message_code === "EMAIL_ALREADY_REGISTERED") {
+      return `Email "${responseData.data?.email}" is already registered.`;
     }
-    return error.response.data.detail;
+
+    // Generic error message
+    if (responseData.detail) {
+      if (Array.isArray(responseData.detail)) {
+        return responseData.detail.join(", ");
+      }
+      return responseData.detail;
+    }
+
+    return responseData.message || "An unexpected error occurred.";
   }
+
   return "An unexpected error occurred.";
 };
 
@@ -38,6 +51,21 @@ export const login = createAsyncThunk(
   }
 );
 
+// export const register = createAsyncThunk(
+//   "auth/register",
+//   async (
+//     credentials: { email: string; password: string; confirm_password: string },
+//     { rejectWithValue }
+//   ) => {
+//     try {
+//       const response = await api.post("/auth/register", credentials);
+//       return response.data.data; // Return the email from the response
+//     } catch (error: any) {
+//       return rejectWithValue(extractErrorMessage(error));
+//     }
+//   }
+// );
+
 export const register = createAsyncThunk(
   "auth/register",
   async (
@@ -48,10 +76,12 @@ export const register = createAsyncThunk(
       const response = await api.post("/auth/register", credentials);
       return response.data.data; // Return the email from the response
     } catch (error: any) {
+      // Use updated extractErrorMessage to handle backend-specific errors
       return rejectWithValue(extractErrorMessage(error));
     }
   }
 );
+
 
 export const forgotPassword = createAsyncThunk(
   "auth/forgotPassword",
