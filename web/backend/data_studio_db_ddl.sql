@@ -73,3 +73,111 @@ INSERT INTO annotation_projects_tbl (name, description, annotation_type_id, proj
 ('Audio Event Detection', 'Detects specific events or sounds in audio recordings.', 3, 'https://images.unsplash.com/photo-1503428593586-e225b39bddfe', 1, 1),
 ('Speech Emotion Recognition', 'Analyzes emotions expressed in speech.', 3, 'https://images.unsplash.com/photo-1604908177872-2c00ef3f1117', 1, 1),
 ('Keyword Spotting', 'Identifies specific keywords in audio data.', 3, 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c', 1, 1);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-- Insert into menu_tbl
+INSERT INTO menu_tbl (name, description, is_active, created_by, created_at)
+VALUES
+('Annotations', 'Various features to annotate and label data using computer vision techniques, including object detection, segmentation, and face recognition.', TRUE, 1, NOW());
+
+-- Insert into annotation_feature_tbl
+INSERT INTO annotation_feature_tbl (name, description, menu_id, is_active, created_by, created_at)
+VALUES
+('Computer Vision', 'Computer vision-based annotation features for labeling and processing images and videos.',
+ (SELECT id FROM menu_tbl WHERE name = 'Annotations'), TRUE, 1, NOW());
+
+-- Insert into sub_feature_1_tbl
+INSERT INTO sub_feature_1_tbl (name, description, feature_id, created_by, created_at)
+VALUES
+('Basic Annotations', 'Basic techniques for image segmentation, object detection, and labeling.',
+ (SELECT id FROM annotation_feature_tbl WHERE name = 'Computer Vision'), 1, NOW()),
+('Advanced Cases', 'More advanced use cases and techniques for annotation in computer vision.',
+ (SELECT id FROM annotation_feature_tbl WHERE name = 'Computer Vision'), 1, NOW()),
+('Special Cases', 'Specialized cases such as face recognition, license plate recognition, and manufacturing inspection.',
+ (SELECT id FROM annotation_feature_tbl WHERE name = 'Computer Vision'), 1, NOW());
+
+-- Insert into sub_feature_2_tbl for "Basic Annotations"
+INSERT INTO sub_feature_2_tbl (name, description, sub_feature_1_id, created_by, created_at)
+VALUES
+('Semantic Segmentation', 'Label segments within an image using various annotation techniques.',
+ (SELECT id FROM sub_feature_1_tbl WHERE name = 'Basic Annotations'), 1, NOW()),
+('Object Detection', 'Detect objects in images and label them with bounding boxes.',
+ (SELECT id FROM sub_feature_1_tbl WHERE name = 'Basic Annotations'), 1, NOW()),
+('Keypoint Labeling', 'Label important points on objects or humans for pose estimation and tracking.',
+ (SELECT id FROM sub_feature_1_tbl WHERE name = 'Basic Annotations'), 1, NOW()),
+('Image Captioning', 'Add descriptions and tags to images for context and classification.',
+ (SELECT id FROM sub_feature_1_tbl WHERE name = 'Basic Annotations'), 1, NOW()),
+('Image Classification', 'Classify images using multiple classes or labels.',
+ (SELECT id FROM sub_feature_1_tbl WHERE name = 'Basic Annotations'), 1, NOW());
+
+-- Insert into sub_feature_3_tbl for "Semantic Segmentation"
+INSERT INTO sub_feature_3_tbl (name, description, sub_feature_2_id, created_by, created_at)
+VALUES
+('Polygons', 'Mark areas in images using polygons to define specific segments.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Semantic Segmentation'), 1, NOW()),
+('Masks', 'Use masks to isolate and mark regions of an image.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Semantic Segmentation'), 1, NOW()),
+('Freehand Segmentation', 'Annotate complex areas using freehand tools like brushes.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Semantic Segmentation'), 1, NOW()),
+('Boundary Box Refinement', 'Manually refine object boundaries using edge detection algorithms.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Semantic Segmentation'), 1, NOW()),
+('Multi-class Segmentation', 'Support for multi-class segmentation where a single image can have different object classes.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Semantic Segmentation'), 1, NOW());
+
+-- Insert into sub_feature_3_tbl for "Object Detection"
+INSERT INTO sub_feature_3_tbl (name, description, sub_feature_2_id, created_by, created_at)
+VALUES
+('Bounding Boxes', 'Mark objects in images using rectangular bounding boxes.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Object Detection'), 1, NOW()),
+('3D Bounding Boxes', 'Annotate objects using 3D bounding boxes for 3D images or lidar.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Object Detection'), 1, NOW()),
+('Confidence Scoring', 'Add confidence scores to detected objects.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Object Detection'), 1, NOW()),
+('Instance Segmentation', 'Individually segment objects within the same class.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Object Detection'), 1, NOW()),
+('Occlusion Detection', 'Annotate parts of objects that are occluded by other objects.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Object Detection'), 1, NOW());
+
+-- Insert into sub_feature_3_tbl for "Keypoint Labeling"
+INSERT INTO sub_feature_3_tbl (name, description, sub_feature_2_id, created_by, created_at)
+VALUES
+('Human Pose Estimation', 'Label keypoints on the human body for pose estimation.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Keypoint Labeling'), 1, NOW()),
+('Facial Keypoint Detection', 'Label keypoints on facial features such as eyes, nose, and lips.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Keypoint Labeling'), 1, NOW()),
+('Object Keypoints', 'Label keypoints on non-human objects such as vehicles or tools.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Keypoint Labeling'), 1, NOW()),
+('Skeleton Tracking', 'Track the skeleton or structure of humans or objects in motion.',
+ (SELECT id FROM sub_feature_2_tbl WHERE name = 'Keypoint Labeling'), 1, NOW());
+
+-- Insert into annotation_projects_tbl
+INSERT INTO annotation_projects_tbl (name, description, annotation_feature_id, created_by, project_photo_url, created_at)
+VALUES
+('Automatic License Plate Recognition', 'Detects and recognizes license plates in vehicle images.',
+ (SELECT id FROM annotation_feature_tbl WHERE name = 'Computer Vision'), 1,
+ 'https://www.batamnews.co.id/foto_berita/2023/04/2023-04-10-kenapa-mobil-di-batam-tak-boleh-dibawa-keluar-pulau-batam-atau-mudik.jpeg', NOW()),
+('Object Detection for Street Signs', 'Detects and classifies different types of street signs.',
+ (SELECT id FROM annotation_feature_tbl WHERE name = 'Computer Vision'), 1,
+ 'https://upload.wikimedia.org/wikipedia/commons/6/69/Street_sign_in_Germany.jpg', NOW());

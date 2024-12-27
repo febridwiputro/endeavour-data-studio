@@ -13,6 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.config.database import Base
+from app.enums.annotateResultTypeEnum import AnnotateResultTypeEnum
 
 
 class MenuModel(Base):
@@ -21,6 +22,8 @@ class MenuModel(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
     description = Column(Text, nullable=True)
+    # type = Column(SQLAlchemyEnum(MenusType), nullable=False)
+    type = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
     menu_metadata = Column(JSON, nullable=True)
     logo_url = Column(String, nullable=True)
@@ -29,21 +32,22 @@ class MenuModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    features = relationship(
-        "AnnotationFeatureModel",
+    # Hubungan ke AnnotationProjectModel
+    annotation_projects = relationship(
+        "AnnotationProjectModel",
         back_populates="menu",
-        cascade="all, delete-orphan",
         lazy="selectin",
+        cascade="all, delete-orphan",
     )
 
 
-class AnnotationFeatureModel(Base):
-    __tablename__ = "annotation_feature_tbl"
+class AnnotationTypeModel(Base):
+    __tablename__ = "annotation_type_tbl"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, unique=True)
+    code_name = Column(String, nullable=False, unique=True)
     description = Column(Text, nullable=True)
-    menu_id = Column(Integer, ForeignKey("menu_tbl.id"), nullable=False)
     is_active = Column(Boolean, default=True)
     logo_url = Column(String, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -52,125 +56,29 @@ class AnnotationFeatureModel(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    menu = relationship("MenuModel", back_populates="features")
-    sub_features_1 = relationship(
-        "SubFeature1Model",
-        back_populates="feature",
-        cascade="all, delete-orphan",
-        lazy="selectin",
-    )
-    # Add this line
-    project = relationship(
+    annotation_projects = relationship(
         "AnnotationProjectModel",
-        back_populates="annotation_feature",
-        lazy="selectin",
-    )
-
-
-class SubFeature1Model(Base):
-    __tablename__ = "sub_feature_1_tbl"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
-    feature_id = Column(
-        Integer, ForeignKey("annotation_feature_tbl.id"), nullable=False
-    )
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    feature = relationship("AnnotationFeatureModel", back_populates="sub_features_1")
-    sub_features_2 = relationship(
-        "SubFeature2Model",
-        back_populates="sub_feature_1",
+        back_populates="annotation_type_rel",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-
-
-class SubFeature2Model(Base):
-    __tablename__ = "sub_feature_2_tbl"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
-    sub_feature_1_id = Column(
-        Integer, ForeignKey("sub_feature_1_tbl.id"), nullable=False
-    )
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    sub_feature_1 = relationship("SubFeature1Model", back_populates="sub_features_2")
-    sub_features_3 = relationship(
-        "SubFeature3Model",
-        back_populates="sub_feature_2",
-        cascade="all, delete-orphan",
-        lazy="selectin",
-    )
-
-
-class SubFeature3Model(Base):
-    __tablename__ = "sub_feature_3_tbl"
-
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
-    sub_feature_2_id = Column(
-        Integer, ForeignKey("sub_feature_2_tbl.id"), nullable=False
-    )
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    sub_feature_2 = relationship("SubFeature2Model", back_populates="sub_features_3")
-    projects = relationship(
-        "AnnotationProjectModel",
-        back_populates="sub_feature_3",
-        cascade="all, delete-orphan",
-        lazy="selectin",
-    )
-
-
-class AnnotationProjectFeatureModel(Base):
-    __tablename__ = "annotation_project_features_tbl"
-
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(
-        Integer, ForeignKey("annotation_projects_tbl.id"), nullable=False
-    )
-    feature_name = Column(String, nullable=False)
-    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    project = relationship("AnnotationProjectModel", back_populates="features")
 
 
 class AnnotationProjectModel(Base):
     __tablename__ = "annotation_projects_tbl"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
+    name = Column(String, nullable=False, unique=True)
     description = Column(Text, nullable=True)
-    annotation_feature_id = Column(
-        Integer, ForeignKey("annotation_feature_tbl.id"), nullable=False
-    )
-    project_photo_url = Column(String, nullable=True)
-    sub_feature_3_id = Column(
-        Integer, ForeignKey("sub_feature_3_tbl.id"), nullable=True
-    )
+    annotation_type_id = Column(
+        Integer, ForeignKey("annotation_type_tbl.id"), nullable=False
+    )  # Referencing the ID column of annotation_type_tbl
+    menu_id = Column(Integer, ForeignKey("menu_tbl.id"), nullable=False)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    project_photo_url = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    sub_feature_3 = relationship("SubFeature3Model", back_populates="projects")
 
     # Relationships
     model_managements = relationship(
@@ -179,7 +87,7 @@ class AnnotationProjectModel(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-
+    menu = relationship("MenuModel", back_populates="annotation_projects")
     data = relationship(
         "AnnotationProjectDataModel",
         back_populates="project",
@@ -190,14 +98,73 @@ class AnnotationProjectModel(Base):
         back_populates="project",
         cascade="all, delete-orphan",
     )
-    features = relationship(
-        "AnnotationProjectFeatureModel",
+    features = relationship(  # Add this relationship
+        "AnnotationProjectFeaturesModel",
         back_populates="project",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
-    
-    annotation_feature = relationship("AnnotationFeatureModel", back_populates="project")
+
+    # Relationship to AnnotationTypeModel
+    annotation_type_rel = relationship(
+        "AnnotationTypeModel",
+        back_populates="annotation_projects",
+        lazy="selectin",
+    )
+
+
+class AnnotationProjectFeaturesModel(Base):
+    __tablename__ = "annotation_project_features_tbl"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    image_url = Column(String, nullable=True)  # URL for feature image
+    project_id = Column(
+        Integer, ForeignKey("annotation_projects_tbl.id"), nullable=False
+    )  # Relation to AnnotationProjectModel
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    project = relationship(  # Correct back_populates
+        "AnnotationProjectModel",
+        back_populates="features",
+        lazy="selectin",
+    )
+    sub_features = relationship(
+        "AnnotationProjectSubFeaturesModel",
+        back_populates="feature",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+
+class AnnotationProjectSubFeaturesModel(Base):
+    __tablename__ = "annotation_project_sub_features_tbl"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    image_url = Column(String, nullable=True)  # URL for sub-feature image
+    feature_id = Column(
+        Integer, ForeignKey("annotation_project_features_tbl.id"), nullable=False
+    )
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    feature = relationship(
+        "AnnotationProjectFeaturesModel",
+        back_populates="sub_features",
+        lazy="selectin",
+    )
 
 
 class AnnotateResultModel(Base):
@@ -205,7 +172,7 @@ class AnnotateResultModel(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     annotate_id = Column(Integer, ForeignKey("annotate_tbl.id"), nullable=False)
-    result_type = Column(String, nullable=False)
+    result_type = Column(SQLAlchemyEnum(AnnotateResultTypeEnum), nullable=False)
     x1 = Column(Integer, nullable=True)
     y1 = Column(Integer, nullable=True)
     x2 = Column(Integer, nullable=True)
@@ -436,3 +403,47 @@ class VersionModel(Base):
     version_number = Column(String, nullable=False)
 
     data = relationship("AnnotationProjectDataModel", back_populates="version")
+
+
+
+
+
+
+
+
+
+
+# from enum import Enum
+# from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum as SQLAlchemyEnum, DateTime, Text, JSON
+# from datetime import datetime
+# from app.config.database import Base
+# from web.backend.app.enums.menus_type_enum import FeatureType
+
+
+# class Feature(Base):
+#     __tablename__ = "features"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     name = Column(String, nullable=False, unique=True)
+#     description = Column(Text, nullable=True)
+#     type = Column(SQLAlchemyEnum(FeatureType), nullable=False)
+#     is_active = Column(Boolean, default=True)
+#     metadata = Column(JSON, nullable=True)
+#     logo_url = Column(String, nullable=True)
+#     created_at = Column(DateTime, default=datetime.utcnow)
+#     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+# class SubFeature(Base):
+#     __tablename__ = "sub_features"
+
+#     id = Column(Integer, primary_key=True, index=True)
+#     feature_id = Column(Integer, ForeignKey("features.id"), nullable=False)
+#     name = Column(String, nullable=False)
+#     description = Column(Text, nullable=True)
+#     level = Column(Integer, default=1)
+#     parent_id = Column(Integer, ForeignKey("sub_features.id"), nullable=True)
+#     metadata = Column(JSON, nullable=True)
+#     is_active = Column(Boolean, default=True)
+#     logo_url = Column(String, nullable=True)
+#     created_at = Column(DateTime, default=datetime.utcnow)
+#     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

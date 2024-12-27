@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: 5ee6ba366efd
+Revision ID: da65ddc1b638
 Revises: 
-Create Date: 2024-12-26 19:47:25.351742
+Create Date: 2024-12-27 18:24:05.304885
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '5ee6ba366efd'
+revision = 'da65ddc1b638'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -34,29 +34,10 @@ def upgrade() -> None:
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_index(op.f('ix_users_phone_number'), 'users', ['phone_number'], unique=True)
-    op.create_table('annotation_type_tbl',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('code_name', sa.String(), nullable=False),
-    sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('logo_url', sa.String(), nullable=True),
-    sa.Column('created_by', sa.Integer(), nullable=False),
-    sa.Column('updated_by', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('code_name'),
-    sa.UniqueConstraint('name')
-    )
-    op.create_index(op.f('ix_annotation_type_tbl_id'), 'annotation_type_tbl', ['id'], unique=False)
     op.create_table('menu_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('type', sa.String(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
     sa.Column('menu_metadata', sa.JSON(), nullable=True),
     sa.Column('logo_url', sa.String(), nullable=True),
@@ -84,23 +65,85 @@ def upgrade() -> None:
     op.create_index(op.f('ix_verification_codes_email'), 'verification_codes', ['email'], unique=False)
     op.create_index(op.f('ix_verification_codes_id'), 'verification_codes', ['id'], unique=False)
     op.create_index(op.f('ix_verification_codes_phone_number'), 'verification_codes', ['phone_number'], unique=False)
-    op.create_table('annotation_projects_tbl',
+    op.create_table('annotation_feature_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('annotation_type_id', sa.Integer(), nullable=False),
     sa.Column('menu_id', sa.Integer(), nullable=False),
+    sa.Column('is_active', sa.Boolean(), nullable=True),
+    sa.Column('logo_url', sa.String(), nullable=True),
     sa.Column('created_by', sa.Integer(), nullable=False),
     sa.Column('updated_by', sa.Integer(), nullable=True),
-    sa.Column('project_photo_url', sa.String(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['annotation_type_id'], ['annotation_type_tbl.id'], ),
     sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['menu_id'], ['menu_tbl.id'], ),
     sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
+    )
+    op.create_index(op.f('ix_annotation_feature_tbl_id'), 'annotation_feature_tbl', ['id'], unique=False)
+    op.create_table('sub_feature_1_tbl',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('feature_id', sa.Integer(), nullable=False),
+    sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('updated_by', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['feature_id'], ['annotation_feature_tbl.id'], ),
+    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_sub_feature_1_tbl_id'), 'sub_feature_1_tbl', ['id'], unique=False)
+    op.create_table('sub_feature_2_tbl',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('sub_feature_1_id', sa.Integer(), nullable=False),
+    sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('updated_by', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['sub_feature_1_id'], ['sub_feature_1_tbl.id'], ),
+    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_sub_feature_2_tbl_id'), 'sub_feature_2_tbl', ['id'], unique=False)
+    op.create_table('sub_feature_3_tbl',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('sub_feature_2_id', sa.Integer(), nullable=False),
+    sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('updated_by', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['sub_feature_2_id'], ['sub_feature_2_tbl.id'], ),
+    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_sub_feature_3_tbl_id'), 'sub_feature_3_tbl', ['id'], unique=False)
+    op.create_table('annotation_projects_tbl',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(), nullable=False),
+    sa.Column('description', sa.Text(), nullable=True),
+    sa.Column('annotation_feature_id', sa.Integer(), nullable=False),
+    sa.Column('project_photo_url', sa.String(), nullable=True),
+    sa.Column('sub_feature_3_id', sa.Integer(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('updated_by', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['annotation_feature_id'], ['annotation_feature_tbl.id'], ),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['sub_feature_3_id'], ['sub_feature_3_tbl.id'], ),
+    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_annotation_projects_tbl_id'), 'annotation_projects_tbl', ['id'], unique=False)
     op.create_table('annotation_project_data_tbl',
@@ -135,11 +178,8 @@ def upgrade() -> None:
     op.create_index(op.f('ix_annotation_project_deployments_tbl_id'), 'annotation_project_deployments_tbl', ['id'], unique=False)
     op.create_table('annotation_project_features_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('image_url', sa.String(), nullable=True),
     sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('feature_name', sa.String(), nullable=False),
     sa.Column('created_by', sa.Integer(), nullable=False),
     sa.Column('updated_by', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
@@ -200,23 +240,6 @@ def upgrade() -> None:
     sa.UniqueConstraint('inner_id')
     )
     op.create_index(op.f('ix_annotate_tbl_id'), 'annotate_tbl', ['id'], unique=False)
-    op.create_table('annotation_project_sub_features_tbl',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('image_url', sa.String(), nullable=True),
-    sa.Column('feature_id', sa.Integer(), nullable=False),
-    sa.Column('created_by', sa.Integer(), nullable=False),
-    sa.Column('updated_by', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['feature_id'], ['annotation_project_features_tbl.id'], ),
-    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_annotation_project_sub_features_tbl_id'), 'annotation_project_sub_features_tbl', ['id'], unique=False)
     op.create_table('classes_and_tags_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('data_id', sa.Integer(), nullable=False),
@@ -278,7 +301,7 @@ def upgrade() -> None:
     op.create_table('annotate_result_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('annotate_id', sa.Integer(), nullable=False),
-    sa.Column('result_type', sa.Enum('OBJECT_DETECTION', 'SEMANTIC_SEGMENTATION', 'TEXT_CLASSIFICATION', 'AUDIO_TRANSCRIPTION', 'AUDIO_CLASSIFICATION', 'NLP_ENTITIES', name='annotateresulttypeenum'), nullable=False),
+    sa.Column('result_type', sa.String(), nullable=False),
     sa.Column('x1', sa.Integer(), nullable=True),
     sa.Column('y1', sa.Integer(), nullable=True),
     sa.Column('x2', sa.Integer(), nullable=True),
@@ -317,8 +340,6 @@ def downgrade() -> None:
     op.drop_table('dataset_tbl')
     op.drop_index(op.f('ix_classes_and_tags_tbl_id'), table_name='classes_and_tags_tbl')
     op.drop_table('classes_and_tags_tbl')
-    op.drop_index(op.f('ix_annotation_project_sub_features_tbl_id'), table_name='annotation_project_sub_features_tbl')
-    op.drop_table('annotation_project_sub_features_tbl')
     op.drop_index(op.f('ix_annotate_tbl_id'), table_name='annotate_tbl')
     op.drop_table('annotate_tbl')
     op.drop_index(op.f('ix_active_learning_tbl_id'), table_name='active_learning_tbl')
@@ -333,14 +354,20 @@ def downgrade() -> None:
     op.drop_table('annotation_project_data_tbl')
     op.drop_index(op.f('ix_annotation_projects_tbl_id'), table_name='annotation_projects_tbl')
     op.drop_table('annotation_projects_tbl')
+    op.drop_index(op.f('ix_sub_feature_3_tbl_id'), table_name='sub_feature_3_tbl')
+    op.drop_table('sub_feature_3_tbl')
+    op.drop_index(op.f('ix_sub_feature_2_tbl_id'), table_name='sub_feature_2_tbl')
+    op.drop_table('sub_feature_2_tbl')
+    op.drop_index(op.f('ix_sub_feature_1_tbl_id'), table_name='sub_feature_1_tbl')
+    op.drop_table('sub_feature_1_tbl')
+    op.drop_index(op.f('ix_annotation_feature_tbl_id'), table_name='annotation_feature_tbl')
+    op.drop_table('annotation_feature_tbl')
     op.drop_index(op.f('ix_verification_codes_phone_number'), table_name='verification_codes')
     op.drop_index(op.f('ix_verification_codes_id'), table_name='verification_codes')
     op.drop_index(op.f('ix_verification_codes_email'), table_name='verification_codes')
     op.drop_table('verification_codes')
     op.drop_index(op.f('ix_menu_tbl_id'), table_name='menu_tbl')
     op.drop_table('menu_tbl')
-    op.drop_index(op.f('ix_annotation_type_tbl_id'), table_name='annotation_type_tbl')
-    op.drop_table('annotation_type_tbl')
     op.drop_index(op.f('ix_users_phone_number'), table_name='users')
     op.drop_index(op.f('ix_users_id'), table_name='users')
     op.drop_index(op.f('ix_users_email'), table_name='users')
