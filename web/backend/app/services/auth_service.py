@@ -8,10 +8,13 @@ from fastapi import HTTPException
 from app.models.user_model import UserModel
 from app.schemas.auth_schema import LoginRequest
 from app.utils.jwt_util import generate_jwt, decode_jwt  # Import utility functions
-from app.config.config import settings  # Assuming settings include secret keys and other configs
+from app.config.config import (
+    settings,
+)  # Assuming settings include secret keys and other configs
 
 ACCESS_TOKEN_LIFETIME_SECONDS = 15 * 60  # 15 minutes
 REFRESH_TOKEN_LIFETIME_SECONDS = 60 * 60  # 1 hour
+
 
 def authenticate_user(db: Session, email: str, password: str) -> UserModel:
     """Authenticate the user."""
@@ -24,6 +27,7 @@ def authenticate_user(db: Session, email: str, password: str) -> UserModel:
         raise HTTPException(status_code=400, detail="User account is not verified")
     return user
 
+
 def generate_tokens(user):
     """
     Generate access and refresh tokens for a user.
@@ -32,16 +36,21 @@ def generate_tokens(user):
     :return: Dict containing access and refresh tokens.
     """
     access_token = generate_jwt(
-        data={"sub": user.email, "type": "access"},
+        data={"id": user.id, "sub": user.email, "type": "access"},
         lifetime_seconds=settings.ACCESS_TOKEN_EXPIRES_IN,
     )
 
     refresh_token = generate_jwt(
-        data={"sub": user.email, "type": "refresh"},
+        data={"id": user.id, "sub": user.email, "type": "refresh"},
         lifetime_seconds=settings.REFRESH_TOKEN_EXPIRES_IN,
     )
 
-    return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+    }
+
 
 def refresh_access_token(refresh_token: str) -> str:
     """Refresh access token using a valid refresh token."""

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import {
-  fetchAnnotationTypes,
+  fetchAnnotationFeatures,
   fetchProjectAnnotationsByType,
 } from "@/features/annotations/project/projectAnnotationSlice";
 import RenderCard from "./RenderCard";
@@ -36,7 +36,7 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData }) => {
   >({});
   const [loadingTypes, setLoadingTypes] = useState<Record<string, boolean>>({});
   const [errorTypes, setErrorTypes] = useState<Record<string, boolean>>({});
-  const { annotationTypes, status } = useSelector(
+  const { annotationFeatures, status } = useSelector(
     (state: RootState) => state.projectAnnotations
   );
   const [expandedTypes, setExpandedTypes] = useState<Record<string, boolean>>(
@@ -44,7 +44,7 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData }) => {
   );
 
   useEffect(() => {
-    dispatch(fetchAnnotationTypes());
+    dispatch(fetchAnnotationFeatures());
   }, [dispatch]);
 
   const toggleTypeExpansion = async (codeName: string) => {
@@ -114,7 +114,7 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData }) => {
             setSelectedCategory={setSelectedCategory}
           />
 
-          {annotationTypes.map((type) => {
+          {annotationFeatures.map((type) => {
             const {
               code_name: codeName,
               name: typeName,

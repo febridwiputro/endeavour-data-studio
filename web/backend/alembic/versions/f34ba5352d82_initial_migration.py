@@ -1,8 +1,8 @@
 """Initial migration
 
-Revision ID: da65ddc1b638
+Revision ID: f34ba5352d82
 Revises: 
-Create Date: 2024-12-27 18:24:05.304885
+Create Date: 2024-12-28 01:24:37.495825
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'da65ddc1b638'
+revision = 'f34ba5352d82'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -68,6 +68,7 @@ def upgrade() -> None:
     op.create_table('annotation_feature_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
+    sa.Column('code_name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('menu_id', sa.Integer(), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=True),
@@ -80,6 +81,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['menu_id'], ['menu_tbl.id'], ),
     sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('code_name'),
     sa.UniqueConstraint('name')
     )
     op.create_index(op.f('ix_annotation_feature_tbl_id'), 'annotation_feature_tbl', ['id'], unique=False)
@@ -113,35 +115,18 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_sub_feature_2_tbl_id'), 'sub_feature_2_tbl', ['id'], unique=False)
-    op.create_table('sub_feature_3_tbl',
+    op.create_table('annotation_projects_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('sub_feature_2_id', sa.Integer(), nullable=False),
+    sa.Column('project_photo_url', sa.String(), nullable=True),
+    sa.Column('sub_feature_2_id', sa.Integer(), nullable=True),
     sa.Column('created_by', sa.Integer(), nullable=False),
     sa.Column('updated_by', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['sub_feature_2_id'], ['sub_feature_2_tbl.id'], ),
-    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_sub_feature_3_tbl_id'), 'sub_feature_3_tbl', ['id'], unique=False)
-    op.create_table('annotation_projects_tbl',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(), nullable=False),
-    sa.Column('description', sa.Text(), nullable=True),
-    sa.Column('annotation_feature_id', sa.Integer(), nullable=False),
-    sa.Column('project_photo_url', sa.String(), nullable=True),
-    sa.Column('sub_feature_3_id', sa.Integer(), nullable=True),
-    sa.Column('created_by', sa.Integer(), nullable=False),
-    sa.Column('updated_by', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['annotation_feature_id'], ['annotation_feature_tbl.id'], ),
-    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['sub_feature_3_id'], ['sub_feature_3_tbl.id'], ),
     sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
@@ -354,8 +339,6 @@ def downgrade() -> None:
     op.drop_table('annotation_project_data_tbl')
     op.drop_index(op.f('ix_annotation_projects_tbl_id'), table_name='annotation_projects_tbl')
     op.drop_table('annotation_projects_tbl')
-    op.drop_index(op.f('ix_sub_feature_3_tbl_id'), table_name='sub_feature_3_tbl')
-    op.drop_table('sub_feature_3_tbl')
     op.drop_index(op.f('ix_sub_feature_2_tbl_id'), table_name='sub_feature_2_tbl')
     op.drop_table('sub_feature_2_tbl')
     op.drop_index(op.f('ix_sub_feature_1_tbl_id'), table_name='sub_feature_1_tbl')

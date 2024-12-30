@@ -13,6 +13,7 @@ from app.controllers.user.user_controller import router as user_router
 from app.controllers.images.image_routes import router as image_router
 from app.controllers.videos.video_routes import router as video_router
 from app.controllers.annotations.annotations_controller import router as annotations_router
+from app.controllers.annotations.annotation_project_controller import router as annotation_project
 from app.controllers.menu.menu_router import router as menu_router
 # from app.routes.yolo_routes import router as yolo_router
 
@@ -48,8 +49,9 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(user_router, prefix="/user", tags=["user"])
-app.include_router(annotations_router, prefix="/annotations", tags=["/annotations"])
-app.include_router(image_router, prefix="/images", tags=["/images"])
-app.include_router(video_router, prefix="/videos", tags=["/videos"])
-app.include_router(menu_router, prefix="/menu", tags=["/menu"])
+app.include_router(annotations_router, prefix="/annotations", tags=["annotations"])
+app.include_router(annotations_router, prefix="/annotations", tags=["annotations/annotation-project"])
+app.include_router(image_router, prefix="/images", tags=["images"])
+app.include_router(video_router, prefix="/videos", tags=["videos"])
+app.include_router(menu_router, prefix="/menu", tags=["menu"])
 # app.include_router(yolo_router, prefix="/yolo", tags=["/yolo"])

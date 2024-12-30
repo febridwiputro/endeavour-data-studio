@@ -6,21 +6,14 @@ export const createAnnotationProject = createAsyncThunk(
   "projectAnnotations/create",
   async (newProject: {
     name: string;
-    description: string;
-    annotation_type: string;
-    project_photo_url: string;
-    menu_id: number;
-    created_by: number;
+    description?: string;
+    project_photo_url?: string;
+    sub_feature_2_id?: number;
   }) => {
-    const response = await api.post("/annotations/", newProject);
-    return response.data;
-  }
-);
-
-export const fetchProjectAnnotationsByType = createAsyncThunk(
-  "projectAnnotations/fetchByType",
-  async (codeName: string) => {
-    const response = await api.get(`/annotations/type/${codeName}`);
+    const response = await api.post(
+      "/annotations/annotation-project",
+      newProject
+    );
     return response.data;
   }
 );
@@ -33,10 +26,60 @@ export const fetchAllAnnotations = createAsyncThunk(
   }
 );
 
-export const fetchAnnotationTypes = createAsyncThunk(
-  "projectAnnotations/fetchTypes",
+export const fetchProjectAnnotationsByType = createAsyncThunk(
+  "projectAnnotations/fetchByType",
+  async (codeName: string) => {
+    const response = await api.get(
+      `/annotations/annotations/annotation-projects/by-feature-code/${codeName}`
+    );
+    return response.data;
+  }
+);
+
+export const fetchAnnotationFeatures = createAsyncThunk(
+  "projectAnnotations/fetchFeatures",
   async () => {
-    const response = await api.get("/annotations/types");
+    const response = await api.get("/annotations/annotation-features");
+    return response.data;
+  }
+);
+
+// Fetch Sub Features 1
+export const fetchSubFeatures1 = createAsyncThunk(
+  "projectAnnotations/fetchSubFeatures1",
+  async () => {
+    const response = await api.get("/annotations/sub-features-1");
+    return response.data;
+  }
+);
+
+// Fetch Sub Features 1 by Feature ID
+export const fetchSubFeatures1ByFeature = createAsyncThunk(
+  "projectAnnotations/fetchSubFeatures1ByFeature",
+  async (featureId: number) => {
+    const response = await api.get(
+      `/annotations/sub-feature1/by-feature/${featureId}`
+    );
+    return response.data;
+  }
+);
+
+// Fetch Sub Features 2
+export const fetchSubFeatures2 = createAsyncThunk(
+  "projectAnnotations/fetchSubFeatures2",
+  async () => {
+    const response = await api.get("/annotations/sub-features-2");
+    return response.data;
+  }
+);
+
+// Fetch Sub Features 2 by Sub Feature 1 ID
+export const fetchSubFeatures2BySubFeature1 = createAsyncThunk(
+  "projectAnnotations/fetchSubFeatures2BySubFeature1",
+  async (subFeature1Id: number) => {
+    const response = await api.get(
+      `/annotations/sub-feature2/by-sub-feature1/${subFeature1Id}`
+    );
     return response.data;
   }
 );
@@ -48,14 +91,42 @@ const projectAnnotationSlice = createSlice({
       id: number;
       name: string;
       project_photo_url?: string;
-      annotation_type?: string;
+      sub_feature_2_id?: number;
     }>,
-    annotationTypes: [] as Array<{
+    annotationFeatures: [] as Array<{
       id: number;
       name: string;
       code_name: string;
+      logo_url: string;
       description?: string;
-      logo_url?: string;
+    }>,
+    subAnnotationFeatures1: [] as Array<{
+      id: number;
+      name: string;
+      description: string;
+      feature_id: number;
+      created_by: number;
+      created_at: string;
+    }>,
+    subAnnotationFeatures1ByFeature: [] as Array<{
+      id: number;
+      name: string;
+      description: string;
+      feature_id: number;
+    }>,
+    subAnnotationFeatures2: [] as Array<{
+      id: number;
+      name: string;
+      description: string;
+      sub_feature_1_id: number;
+      created_by: number;
+      created_at: string;
+    }>,
+    subAnnotationFeatures2BySubFeature1: [] as Array<{
+      id: number;
+      name: string;
+      description: string;
+      sub_feature_1_id: number;
     }>,
     dataCount: 0,
     status: "idle",
@@ -91,16 +162,65 @@ const projectAnnotationSlice = createSlice({
         state.status = "failed";
       })
 
-      // Fetch Annotation Types
-      .addCase(fetchAnnotationTypes.pending, (state) => {
+      // Fetch Annotation Features
+      .addCase(fetchAnnotationFeatures.pending, (state) => {
         state.status = "loading";
       })
-      .addCase(fetchAnnotationTypes.fulfilled, (state, action) => {
-        state.annotationTypes = action.payload.data;
+      .addCase(fetchAnnotationFeatures.fulfilled, (state, action) => {
+        state.annotationFeatures = action.payload.data;
+        state.status = "succeeded";
+      })
+      .addCase(fetchAnnotationFeatures.rejected, (state) => {
+        state.status = "failed";
+      })
+
+      // Fetch Sub Features 1
+      .addCase(fetchSubFeatures1.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchSubFeatures1.fulfilled, (state, action) => {
+        state.subAnnotationFeatures1 = action.payload.data;
         state.dataCount = action.payload.data_count;
         state.status = "succeeded";
       })
-      .addCase(fetchAnnotationTypes.rejected, (state) => {
+      .addCase(fetchSubFeatures1.rejected, (state) => {
+        state.status = "failed";
+      })
+
+      // Fetch Sub Features 1 by Feature
+      .addCase(fetchSubFeatures1ByFeature.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchSubFeatures1ByFeature.fulfilled, (state, action) => {
+        state.subAnnotationFeatures1ByFeature = action.payload.data;
+        state.status = "succeeded";
+      })
+      .addCase(fetchSubFeatures1ByFeature.rejected, (state) => {
+        state.status = "failed";
+      })
+
+      // Fetch Sub Features 2
+      .addCase(fetchSubFeatures2.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchSubFeatures2.fulfilled, (state, action) => {
+        state.subAnnotationFeatures2 = action.payload.data;
+        state.dataCount = action.payload.data_count;
+        state.status = "succeeded";
+      })
+      .addCase(fetchSubFeatures2.rejected, (state) => {
+        state.status = "failed";
+      })
+
+      // Fetch Sub Features 2 by Sub Feature 1
+      .addCase(fetchSubFeatures2BySubFeature1.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(fetchSubFeatures2BySubFeature1.fulfilled, (state, action) => {
+        state.subAnnotationFeatures2BySubFeature1 = action.payload.data;
+        state.status = "succeeded";
+      })
+      .addCase(fetchSubFeatures2BySubFeature1.rejected, (state) => {
         state.status = "failed";
       })
 
@@ -116,99 +236,10 @@ const projectAnnotationSlice = createSlice({
       })
       .addCase(createAnnotationProject.rejected, (state, action) => {
         state.creationStatus = "failed";
-        state.creationError = action.error.message || "Failed to create project.";
+        state.creationError =
+          action.error.message || "Failed to create project.";
       });
   },
 });
 
 export default projectAnnotationSlice.reducer;
-
-
-// import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-// import api from "@/services/apiConfig";
-
-// export const fetchProjectAnnotationsByType = createAsyncThunk(
-//   "projectAnnotations/fetchByType",
-//   async (codeName: string) => {
-//     const response = await api.get(`/annotations/type/${codeName}`);
-//     return response.data;
-//   }
-// );
-
-// // Async thunk to fetch all annotations
-// export const fetchAllAnnotations = createAsyncThunk(
-//   "projectAnnotations/fetchAll",
-//   async () => {
-//     const response = await api.get("/annotations/annotations");
-//     return response.data;
-//   }
-// );
-
-// // Async thunk to fetch annotation types
-// export const fetchAnnotationTypes = createAsyncThunk(
-//   "projectAnnotations/fetchTypes",
-//   async () => {
-//     const response = await api.get("/annotations/types");
-//     return response.data;
-//   }
-// );
-
-// const projectAnnotationSlice = createSlice({
-//   name: "projectAnnotations",
-//   initialState: {
-//     annotations: [] as Array<{
-//       id: number;
-//       name: string;
-//       project_photo_url?: string;
-//       annotation_type?: string;
-//     }>,
-//     annotationTypes: [] as Array<{
-//       id: number;
-//       name: string;
-//       code_name: string;
-//       description?: string;
-//       logo_url?: string;
-//     }>,
-//     dataCount: 0,
-//     status: "idle",
-//   },
-//   reducers: {},
-//   extraReducers: (builder) => {
-//     builder
-//       .addCase(fetchProjectAnnotationsByType.pending, (state) => {
-//         state.status = "loading";
-//       })
-//       .addCase(fetchProjectAnnotationsByType.fulfilled, (state, action) => {
-//         state.annotations = action.payload.data;
-//         state.dataCount = action.payload.data_count;
-//         state.status = "succeeded";
-//       })
-//       .addCase(fetchProjectAnnotationsByType.rejected, (state) => {
-//         state.status = "failed";
-//       })
-//       .addCase(fetchAllAnnotations.pending, (state) => {
-//         state.status = "loading";
-//       })
-//       .addCase(fetchAllAnnotations.fulfilled, (state, action) => {
-//         state.annotations = action.payload.data;
-//         state.dataCount = action.payload.data_count;
-//         state.status = "succeeded";
-//       })
-//       .addCase(fetchAllAnnotations.rejected, (state) => {
-//         state.status = "failed";
-//       })
-//       .addCase(fetchAnnotationTypes.pending, (state) => {
-//         state.status = "loading";
-//       })
-//       .addCase(fetchAnnotationTypes.fulfilled, (state, action) => {
-//         state.annotationTypes = action.payload.data;
-//         state.dataCount = action.payload.data_count;
-//         state.status = "succeeded";
-//       })
-//       .addCase(fetchAnnotationTypes.rejected, (state) => {
-//         state.status = "failed";
-//       });
-//   },
-// });
-
-// export default projectAnnotationSlice.reducer;

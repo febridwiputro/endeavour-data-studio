@@ -14,7 +14,7 @@ import Modal from "../components/video/Modal";
 import { resetProgress } from "../features/video/videoSlice";
 import CompressImagesInFolder from "../components/images/CompressImagesInFolder";
 import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
-import AnnotationPage from "@/pages/AnnotationsPage";
+import AnnotationsPage from "@/pages/AnnotationsPage";
 import { useDarkMode } from "@/context/DarkModeContext";
 
 const HomePage: React.FC = () => {
@@ -87,7 +87,7 @@ const HomePage: React.FC = () => {
           isDarkMode ? "bg-gray-800" : "bg-white"
         } shadow-md rounded-md ml-4`}
       >
-        {selectedMenu === "Annotations" && <AnnotationPage />}
+        {selectedMenu === "Annotations" && <AnnotationsPage />}
         {selectedMenu === "Split by Number of Images" && (
           <>
             <VideoToImage />
