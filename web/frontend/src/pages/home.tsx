@@ -14,7 +14,7 @@ import Modal from "../components/video/Modal";
 import { resetProgress } from "../features/video/videoSlice";
 import CompressImagesInFolder from "../components/images/CompressImagesInFolder";
 import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
-import AnnotationsPage from "@/pages/AnnotationsPage";
+import AnnotationsPage from "@/pages/annotations";
 import { useDarkMode } from "@/context/DarkModeContext";
 
 const HomePage: React.FC = () => {
@@ -27,7 +27,7 @@ const HomePage: React.FC = () => {
     (state: RootState) => state.video
   );
 
-  const [selectedMenu, setSelectedMenu] = useState<string>("");
+  const [selectedMenu, setSelectedMenu] = useState<string>("Annotations");
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);

@@ -61,3 +61,12 @@ https://www.svgrepo.com/show/65453/avatar.svg
 """
 
 https://www.svgrepo.com/show/119561/avatar.svg
+
+
+
+| **Relasi**      | **Foreign Key**                   | **Relationship Arah**   | **Tabel Perantara** |
+|------------------|-----------------------------------|--------------------------|----------------------|
+| **One-to-One**   | Satu FK di salah satu tabel       | Kedua arah (back_populates) | Tidak perlu          |
+| **One-to-Many**  | FK di sisi "banyak"              | Dari "satu" ke "banyak"  | Tidak perlu          |
+| **Many-to-One**  | FK di sisi "banyak"              | Dari "banyak" ke "satu"  | Tidak perlu          |
+| **Many-to-Many** | FK di tabel perantara            | Kedua arah               | Diperlukan           |

@@ -17,8 +17,8 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Accessing annotationTypes from Redux store
-  const { annotationTypes } = useSelector(
+  // Accessing annotationFeatures from Redux store
+  const { annotationFeatures } = useSelector(
     (state: RootState) => state.projectAnnotations
   );
 
@@ -88,7 +88,7 @@ const DropdownSearch: React.FC<DropdownSearchProps> = ({
                 className="py-2 text-sm"
                 style={{ color: "var(--default-blue)" }}
               >
-                {annotationTypes.map((type) => (
+                {annotationFeatures.map((type) => (
                   <li key={type.id}>
                     <button
                       onClick={() => handleCategoryClick(type.name)}

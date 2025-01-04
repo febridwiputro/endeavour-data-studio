@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Enum as SQLAlchemyEnum,
 )
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.config.database import Base
 
@@ -27,3 +28,7 @@ class MenuModel(Base):
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    annotation_features = relationship(
+        "AnnotationFeatureModel", back_populates="menu", lazy="joined"
+    )

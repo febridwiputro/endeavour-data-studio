@@ -11,7 +11,7 @@ export const createAnnotationProject = createAsyncThunk(
     sub_feature_2_id?: number;
   }) => {
     const response = await api.post(
-      "/annotations/annotation-project",
+      "/annotations/annotation-projects",
       newProject
     );
     return response.data;
@@ -30,7 +30,7 @@ export const fetchProjectAnnotationsByType = createAsyncThunk(
   "projectAnnotations/fetchByType",
   async (codeName: string) => {
     const response = await api.get(
-      `/annotations/annotations/annotation-projects/by-feature-code/${codeName}`
+      `/annotations/annotation-projects/by-feature-code/${codeName}`
     );
     return response.data;
   }

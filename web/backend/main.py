@@ -46,7 +46,8 @@ async def get_menu():
     return menu_data
 
 
-app.mount("/output", StaticFiles(directory="output"), name="output")
+# app.mount("/output", StaticFiles(directory="output"), name="output")
+app.mount("/image_output", StaticFiles(directory="image_output"), name="image_output")
 
 progress_status = {}
 

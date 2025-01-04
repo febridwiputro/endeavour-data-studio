@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { api } from "@/services/apiConfig"; // Import Axios instance
+import { api } from "@/services/apiConfig";
 
 // Define the shape of the state
 interface PredictionResult {
@@ -38,7 +38,7 @@ const initialState: AnnotationsState = {
 export const testApiConnection = createAsyncThunk(
   "annotations/testApiConnection",
   async () => {
-    const response = await api.get("/yolo"); // Gunakan api instance
+    const response = await api.get("/yolo");
     return response.data.message;
   }
 );
@@ -63,7 +63,7 @@ export const predictImage = createAsyncThunk(
 export const fetchAnnotations = createAsyncThunk(
   "annotations/fetchAnnotations",
   async (): Promise<AnnotationData[]> => {
-    const response = await api.get("/annotations/"); // Gunakan api instance
+    const response = await api.get("/annotations/annotation-features"); // Gunakan api instance
     return response.data.data;
   }
 );

@@ -1,5 +1,14 @@
 select * from public.users u 
 
+UPDATE users
+SET 
+    user_photo = 'https://www.svgrepo.com/show/65453/avatar.svg',
+    full_name = 'Febri Dwi Putro',
+    phone_number = '+6289677888558',
+    updated_at = NOW()
+WHERE id = 1;
+
+
 select * from public.verification_codes vc 
 
 select * from public.menu_tbl mt 
@@ -132,8 +141,8 @@ VALUES
     (
         'Animal Detection in Wildlife', 
         'Detects and classifies wild animals in forest images.', 
-        NULL, -- No project_photo_url provided
-        NULL, -- No sub_feature_2_id associated
+        NULL,
+        NULL,
         1, 
         NOW(), 
         NOW()

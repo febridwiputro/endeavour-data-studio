@@ -40,7 +40,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
         { name: "Annotate", icon: faPencilAlt },
         { name: "Dataset", icon: faTable, badge: "100" },
         { name: "Versions", icon: faCodeBranch, badge: "Train" },
-        { name: "Analytics", icon: faChartBar },
+        { name: "Analytics (EDA)", icon: faChartBar },
         { name: "Classes & Tags", icon: faTags },
       ],
     },
@@ -81,7 +81,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
         {/* Title */}
         {!isMinimized && (
           <h1 className="text-lg font-semibold text-gray-800">
-            {selectedAnnotation?.annotation_type || "Annotation Type"}
+            {selectedAnnotation?.annotation_type || "Annotation Feature"}
           </h1>
         )}
 

@@ -1,40 +1,64 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
 import { FaQuestionCircle, FaEdit, FaPlus } from "react-icons/fa";
 import ClassAndTagsAddModal from "./ClassAndTagsAddModal";
 import ClassesAndTagsModifyClassesModal from "./ClassesAndTagsModifyClassesModal";
+import { RootState } from "@/store/store";
+import { api } from "@/services/apiConfig";
 
 const ClassesAndTagsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState("classes");
   const [isLocked, setIsLocked] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isModifyModalOpen, setIsModifyModalOpen] = useState(false);
-  const [classes, setClasses] = useState([
-    { color: "bg-red-500", name: "head", count: 90 },
-    { color: "bg-purple-500", name: "helmet", count: 287 },
-    { color: "bg-lime-500", name: "person", count: 9 },
-  ]);
-  const tags = []; // Empty tags array
+  const [classes, setClasses] = useState<any[]>([]);
+  const tags = [];
+  const { accessToken } = useSelector((state: RootState) => state.auth);
 
-  const handleAddClasses = (newClasses: string[]) => {
-    const updatedClasses = [
-      ...classes,
-      ...newClasses.map((name) => ({
-        color: "bg-gray-500", // Default color for new classes
-        name,
-        count: 0,
-      })),
-    ];
-    setClasses(updatedClasses);
+  useEffect(() => {
+    const fetchClasses = async () => {
+      if (!accessToken) {
+        console.error("Access token is missing. Please log in.");
+        return;
+      }
+
+      try {
+        const response = await api.get(`/annotations/classes-and-tags/1`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const { data } = response.data;
+        setClasses(
+          data.map((cls: any) => ({
+            id: cls.id,
+            project_id: cls.project_id,
+            color: cls.class_color || "#cccccc",
+            name: cls.class_name,
+            count: cls.count || 0,
+          }))
+        );
+      } catch (error: any) {
+        console.error(
+          "Error fetching classes and tags:",
+          error.response?.data || error.message
+        );
+      }
+    };
+
+    if (activeTab === "classes") {
+      fetchClasses();
+    }
+  }, [activeTab, accessToken]);
+
+  const handleAddClasses = (newClass: { id: number; name: string; color: string }[]) => {
+    setClasses((prevClasses) => [...prevClasses, ...newClass]);
     setIsAddModalOpen(false);
   };
 
   const handleApplyChanges = (updatedClasses: any[]) => {
-    const filteredClasses = updatedClasses.filter((cls) => !cls.delete);
-    const renamedClasses = filteredClasses.map((cls) => ({
-      ...cls,
-      name: cls.rename || cls.name,
-    }));
-    setClasses(renamedClasses);
+    setClasses(updatedClasses);
     setIsModifyModalOpen(false);
   };
 
@@ -120,7 +144,10 @@ const ClassesAndTagsPage: React.FC = () => {
               {classes.map((cls, index) => (
                 <tr key={index} className="border-b hover:bg-gray-50">
                   <td className="px-6 py-3">
-                    <div className={`w-4 h-4 rounded-full ${cls.color}`}></div>
+                    <div
+                      className="w-4 h-4 rounded-full"
+                      style={{ backgroundColor: cls.color }}
+                    ></div>
                   </td>
                   <td className="px-6 py-3 text-gray-800 text-sm font-medium">
                     {cls.name}

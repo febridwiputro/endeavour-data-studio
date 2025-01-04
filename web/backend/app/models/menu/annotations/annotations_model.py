@@ -11,8 +11,10 @@ from sqlalchemy import (
     Enum as SQLAlchemyEnum,
 )
 
+from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.config.database import Base
+from app.models.menu.annotations.classes_and_tags_model import ClassesAndTagsModel
 
 
 class AnnotationFeatureModel(Base):
@@ -30,6 +32,11 @@ class AnnotationFeatureModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    menu = relationship("MenuModel", back_populates="annotation_features")
+    sub_features = relationship(
+        "SubFeature1Model", back_populates="feature", lazy="joined"
+    )
+
 
 class SubFeature1Model(Base):
     __tablename__ = "sub_feature_1_tbl"
@@ -44,6 +51,11 @@ class SubFeature1Model(Base):
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    feature = relationship("AnnotationFeatureModel", back_populates="sub_features")
+    sub_features_2 = relationship(
+        "SubFeature2Model", back_populates="sub_feature_1", lazy="joined"
+    )
 
 
 class SubFeature2Model(Base):
@@ -60,6 +72,8 @@ class SubFeature2Model(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    sub_feature_1 = relationship("SubFeature1Model", back_populates="sub_features_2")
+
 
 class AnnotationProjectModel(Base):
     __tablename__ = "annotation_projects_tbl"
@@ -75,6 +89,76 @@ class AnnotationProjectModel(Base):
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    sub_feature_2 = relationship("SubFeature2Model", lazy="joined")
+    project_data = relationship(
+        "AnnotationProjectDataModel", back_populates="project", lazy="joined"
+    )
+    uploads = relationship("UploadDataModel", back_populates="project")
+    tags = relationship(
+        "ClassesAndTagsModel",
+        back_populates="project"
+    )
+
+class AnnotationProjectDataModel(Base):
+    __tablename__ = "annotation_project_data_tbl"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(
+        Integer, ForeignKey("annotation_projects_tbl.id"), nullable=False
+    )
+    name = Column(String, nullable=False)
+    description = Column(Text, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    project = relationship(
+        "AnnotationProjectModel",
+        back_populates="project_data",
+    )
+    # tags = relationship("ClassesAndTagsModel", back_populates="project_data")
+    datasets = relationship("DatasetModel", back_populates="project_data")
+    training = relationship("TrainModel", back_populates="project_data")
+    # uploads = relationship("UploadDataModel", back_populates="project_data")
+    versions = relationship("VersionModel", back_populates="project_data")
+
+
+class UploadDataModel(Base):
+    __tablename__ = "upload_data_tbl"
+
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(
+        Integer, ForeignKey("annotation_projects_tbl.id"), nullable=False
+    )
+    # data_id = Column(
+    #     Integer, ForeignKey("annotation_project_data_tbl.id"), nullable=True
+    # )  # Optional if not always tied to project data
+    file_name = Column(String, nullable=False)
+    img_url = Column(Text, nullable=True)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    project = relationship("AnnotationProjectModel", back_populates="uploads")
+    # project_data = relationship("AnnotationProjectDataModel", back_populates="uploads")
+
+class DatasetModel(Base):
+    __tablename__ = "dataset_tbl"
+
+    id = Column(Integer, primary_key=True, index=True)
+    data_id = Column(
+        Integer, ForeignKey("annotation_project_data_tbl.id"), nullable=False
+    )
+    name = Column(String, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    project_data = relationship("AnnotationProjectDataModel", back_populates="datasets")
 
 
 class AnnotationProjectFeatureModel(Base):
@@ -124,6 +208,7 @@ class AnnotationProjectModelManagement(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+    models = relationship("ModelsModel", back_populates="project_model")
 
 class AnnotateModel(Base):
     __tablename__ = "annotate_tbl"
@@ -143,27 +228,15 @@ class AnnotateModel(Base):
     prediction_results = Column(Text, nullable=True)
     upload_filename = Column(String, nullable=True)
     storage_filename = Column(String, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     lead_time = Column(Integer, nullable=True)
     drafts = Column(Text, nullable=True)
     image = Column(String, nullable=True)
-
-
-class AnnotationProjectDataModel(Base):
-    __tablename__ = "annotation_project_data_tbl"
-
-    id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(
-        Integer, ForeignKey("annotation_projects_tbl.id"), nullable=False
-    )
-    name = Column(String, nullable=False)
-    description = Column(Text, nullable=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    project_data = relationship("AnnotationProjectDataModel")
 
 
 class AnnotationProjectDeploymentModel(Base):
@@ -180,25 +253,8 @@ class AnnotationProjectDeploymentModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-
-class ClassesAndTagsModel(Base):
-    __tablename__ = "classes_and_tags_tbl"
-
-    id = Column(Integer, primary_key=True, index=True)
-    data_id = Column(
-        Integer, ForeignKey("annotation_project_data_tbl.id"), nullable=False
-    )
-    tag_name = Column(String, nullable=False)
-
-
-class DatasetModel(Base):
-    __tablename__ = "dataset_tbl"
-
-    id = Column(Integer, primary_key=True, index=True)
-    data_id = Column(
-        Integer, ForeignKey("annotation_project_data_tbl.id"), nullable=False
-    )
-    name = Column(String, nullable=False)
+    deployments = relationship("DeploymentModel", back_populates="deployment")
+    active_learning = relationship("ActiveLearningModel", back_populates="deployment")
 
 
 class DeploymentModel(Base):
@@ -209,6 +265,12 @@ class DeploymentModel(Base):
         Integer, ForeignKey("annotation_project_deployments_tbl.id"), nullable=False
     )
     status = Column(String, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    deployment = relationship("AnnotationProjectDeploymentModel", back_populates="deployments")
 
 
 class ModelsModel(Base):
@@ -220,6 +282,12 @@ class ModelsModel(Base):
     )
     model_type = Column(String, nullable=False)  # in_model or ex_model
     name = Column(String, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    project_model = relationship("AnnotationProjectModelManagement", back_populates="models")
 
 
 class TrainModel(Base):
@@ -230,18 +298,12 @@ class TrainModel(Base):
         Integer, ForeignKey("annotation_project_data_tbl.id"), nullable=False
     )
     status = Column(String, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-
-# Upload Data Model
-class UploadDataModel(Base):
-    __tablename__ = "upload_data_tbl"
-
-    id = Column(Integer, primary_key=True, index=True)
-    data_id = Column(
-        Integer, ForeignKey("annotation_project_data_tbl.id"), nullable=False
-    )
-    file_name = Column(String, nullable=False)
-    uploaded_at = Column(DateTime, default=datetime.utcnow)
+    project_data = relationship("AnnotationProjectDataModel", back_populates="training")
 
 
 # Version Model
@@ -253,6 +315,12 @@ class VersionModel(Base):
         Integer, ForeignKey("annotation_project_data_tbl.id"), nullable=False
     )
     version_number = Column(String, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    project_data = relationship("AnnotationProjectDataModel", back_populates="versions")
 
 
 class ActiveLearningModel(Base):
@@ -263,3 +331,9 @@ class ActiveLearningModel(Base):
         Integer, ForeignKey("annotation_project_deployments_tbl.id"), nullable=False
     )
     strategy = Column(String, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+    updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    deployment = relationship("AnnotationProjectDeploymentModel", back_populates="active_learning")

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import SidebarAnnotationProject from "./SidebarAnnotationProject";
 import AnnotationUploadDataProjectPage from "./AnnotationUploadDataProjectPage";
-import AnnotationAnnotateProjectLabelingPage from "./labeling/AnnotationAnnotateProjectLabelingPage";
-import AnnotationDatasetProjectPage from "./AnnotationDatasetProjectPage";
+import AnnotationAnnotateProjectLabelingPage from "./annotate/AnnotationAnnotateProjectLabelingPage";
+import AnnotationDatasetProjectPage from "./dataset/AnnotationDatasetProjectPage";
 import ExternalModelPage from "./externalModel/ExternalModelPage";
 import AnnotationVisualize from "./AnnotationVisualize";
 import DataVersionPage from "./dataVersion/DataVersionPage";
@@ -35,7 +35,7 @@ const AnnotationsProjectPage: React.FC<AnnotationsProjectPageProps> = ({
         return <AnnotationVisualize />;
       case "Versions":
         return <DataVersionPage />;
-      case "Analytics":
+      case "Analytics (EDA)":
         return <DataAnalyticsPage />;
       case "Classes & Tags":
         return <ClassesAndTagsPage />;
