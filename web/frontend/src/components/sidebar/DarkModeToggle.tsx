@@ -1,5 +1,5 @@
 import React from "react";
-import { FaMoon, FaSun } from "react-icons/fa";
+import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
 
 interface DarkModeToggleProps {
   isDarkMode: boolean;
@@ -19,9 +19,9 @@ const DarkModeToggle: React.FC<DarkModeToggleProps> = ({
         className="text-white bg-blue-500 hover:bg-blue-600 rounded-full p-2 transition duration-300"
       >
         {isDarkMode ? (
-          <FaSun className="w-5 h-5 text-yellow-400" />
+          <SunIcon className="w-5 h-5 text-yellow-400" />
         ) : (
-          <FaMoon className="w-5 h-5" />
+          <MoonIcon className="w-5 h-5 text-white" />
         )}
       </button>
       {isOpen && (

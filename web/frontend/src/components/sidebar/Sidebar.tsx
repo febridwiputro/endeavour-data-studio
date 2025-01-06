@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import {
-  FaPenFancy,
-  FaVideo,
-  FaImage,
-  FaFileAlt,
-  FaMusic,
-  FaCalculator,
-  FaCut,
-  FaFile,
-  FaLink,
-  FaCode,
-  FaPalette,
-  FaSearch,
-  FaLock,
-} from "react-icons/fa";
+  PencilSquareIcon,
+  PhotoIcon,
+  DocumentTextIcon,
+  MusicalNoteIcon,
+  VideoCameraIcon,
+  CalculatorIcon,
+  ScissorsIcon,
+  DocumentIcon,
+  LinkIcon,
+  CodeBracketIcon,
+  PaintBrushIcon,
+  MagnifyingGlassIcon,
+  LockClosedIcon,
+} from "@heroicons/react/24/outline";
 
 import SidebarHeader from "./SidebarHeader";
 import SidebarMenu from "./SidebarMenu";
@@ -106,26 +106,27 @@ const Sidebar: React.FC<SidebarProps> = ({
     const iconSize = isOpen ? "w-6 h-6" : "w-4 h-4";
     return (
       <div className="cursor-pointer" onClick={() => handleMenuClick(menuName)}>
-        {menuIcons[menuName] || <FaFileAlt className={iconSize} />}
+        {menuIcons[menuName] || <DocumentTextIcon className={iconSize} />}
       </div>
     );
   };
 
   const menuIcons: { [key: string]: JSX.Element } = {
-    Annotations: <FaPenFancy />,
-    "Image Editor": <FaImage />,
-    "Text Editor": <FaFileAlt />,
-    "Audio Editor": <FaMusic />,
-    "Video Editor": <FaVideo />,
-    "Numeric Data Editor": <FaCalculator />,
-    "Dataset Split": <FaCut />,
-    "Document Editor": <FaFile />,
-    "URL Extractor": <FaLink />,
-    "JSON Editor": <FaCode />,
-    "Image Color Picker": <FaPalette />,
-    "Regex Editor": <FaSearch />,
-    "Cryptography Generator": <FaLock />,
+    Annotations: <PencilSquareIcon className="w-6 h-6" />,
+    "Image Editor": <PhotoIcon className="w-6 h-6" />,
+    "Text Editor": <DocumentTextIcon className="w-6 h-6" />,
+    "Audio Editor": <MusicalNoteIcon className="w-6 h-6" />,
+    "Video Editor": <VideoCameraIcon className="w-6 h-6" />,
+    "Numeric Data Editor": <CalculatorIcon className="w-6 h-6" />,
+    "Dataset Split": <ScissorsIcon className="w-6 h-6" />,
+    "Document Editor": <DocumentIcon className="w-6 h-6" />,
+    "URL Extractor": <LinkIcon className="w-6 h-6" />,
+    "JSON Editor": <CodeBracketIcon className="w-6 h-6" />,
+    "Image Color Picker": <PaintBrushIcon className="w-6 h-6" />,
+    "Regex Editor": <MagnifyingGlassIcon className="w-6 h-6" />,
+    "Cryptography Generator": <LockClosedIcon className="w-6 h-6" />,
   };
+
 
   const applyHoverStyles = (
     e: React.MouseEvent<HTMLDivElement | HTMLAnchorElement, MouseEvent>

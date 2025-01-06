@@ -1,28 +1,28 @@
-import React, { useState, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import React, { useState } from "react";
 import {
-  faUpload,
-  faPencilAlt,
-  faTable,
-  faCodeBranch,
-  faCube,
-  faEye,
-  faServer,
-  faBrain,
-  faCompressAlt,
-  faExpandAlt,
-  faChartBar,
-  faTags,
-} from "@fortawesome/free-solid-svg-icons";
+  ArrowDownTrayIcon,
+  PencilIcon,
+  TableCellsIcon,
+  Squares2X2Icon,
+  CubeIcon,
+  EyeIcon,
+  ServerStackIcon,
+  AcademicCapIcon,
+  ArrowsPointingOutIcon,
+  ArrowsPointingInIcon,
+  ChartBarSquareIcon,
+  TagIcon,
+} from "@heroicons/react/24/outline";
+
 
 interface SidebarProps {
   activePage: string;
   setActivePage: (page: string) => void;
-  selectedAnnotation?: { 
-    name: string; 
-    project_photo_url?: string
-    annotation_type?: string
-   };
+  selectedAnnotation?: {
+    name: string;
+    project_photo_url?: string;
+    annotation_type?: string;
+  };
 }
 
 const SidebarAnnotationProject: React.FC<SidebarProps> = ({
@@ -36,27 +36,27 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
     {
       category: "Data",
       items: [
-        { name: "Upload Data", icon: faUpload },
-        { name: "Annotate", icon: faPencilAlt },
-        { name: "Dataset", icon: faTable, badge: "100" },
-        { name: "Versions", icon: faCodeBranch, badge: "Train" },
-        { name: "Analytics (EDA)", icon: faChartBar },
-        { name: "Classes & Tags", icon: faTags },
+        { name: "Upload Data", icon: ArrowDownTrayIcon },
+        { name: "Annotate", icon: PencilIcon },
+        { name: "Dataset", icon: TableCellsIcon, badge: "100" },
+        { name: "Versions", icon: Squares2X2Icon, badge: "Train" },
+        { name: "Analytics (EDA)", icon: ChartBarSquareIcon },
+        { name: "Classes & Tags", icon: TagIcon },
       ],
     },
     {
       category: "Models",
       items: [
-        { name: "Models", icon: faCube },
-        { name: "External Models", icon: faCube },
-        { name: "Visualize", icon: faEye },
+        { name: "Models", icon: CubeIcon },
+        { name: "External Models", icon: CubeIcon },
+        { name: "Visualize", icon: EyeIcon },
       ],
     },
     {
       category: "Deploy",
       items: [
-        { name: "Deployments", icon: faServer },
-        { name: "Active Learning", icon: faBrain },
+        { name: "Deployments", icon: ServerStackIcon },
+        { name: "Active Learning", icon: AcademicCapIcon },
       ],
     },
   ];
@@ -93,10 +93,11 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
           } bg-white rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-200 focus:outline-none transition-all`}
           title={isMinimized ? "Expand Sidebar" : "Collapse Sidebar"}
         >
-          <FontAwesomeIcon
-            icon={isMinimized ? faExpandAlt : faCompressAlt}
-            className="w-5 h-5"
-          />
+          {isMinimized ? (
+            <ArrowsPointingOutIcon className="h-5 w-5" />
+          ) : (
+            <ArrowsPointingInIcon className="h-5 w-5" />
+          )}
         </button>
       </div>
 
@@ -132,7 +133,6 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
               isMinimized ? "justify-center" : "justify-start"
             } mb-3`}
           >
-            {/* Category Text */}
             {!isMinimized && (
               <h2 className="text-xs font-semibold text-gray-500 uppercase">
                 {section.category}
@@ -154,9 +154,10 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
                       isMinimized ? "w-full h-full" : ""
                     }`}
                   >
-                    <FontAwesomeIcon
-                      icon={item.icon}
-                      className={`${isMinimized ? "w-4 h-4" : "w-5 h-5"}`}
+                    <item.icon
+                      className={`${
+                        isMinimized ? "w-4 h-4" : "w-5 h-5"
+                      } text-gray-500`}
                     />
                   </div>
                   {!isMinimized && (

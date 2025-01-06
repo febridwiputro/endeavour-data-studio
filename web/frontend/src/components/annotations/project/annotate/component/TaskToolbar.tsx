@@ -1,13 +1,12 @@
 import React from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faSearchPlus,
-  faSearchMinus,
-  faHandPaper,
-  faArrowsAlt,
-  faGripLines,
-  faExpand,
-} from "@fortawesome/free-solid-svg-icons";
+  MagnifyingGlassPlusIcon,
+  MagnifyingGlassMinusIcon,
+  HandRaisedIcon,
+  ArrowsPointingOutIcon,
+  Bars3Icon,
+  ArrowsPointingInIcon,
+} from "@heroicons/react/24/outline";
 import ToolbarButton from "./ToolbarButton";
 
 interface TaskToolbarProps {
@@ -35,43 +34,43 @@ const TaskToolbar: React.FC<TaskToolbarProps> = ({
     <ToolbarButton
       onClick={handleZoomIn}
       isActive={activeTool === "zoomIn"}
-      icon={<FontAwesomeIcon icon={faSearchPlus} style={{ color: "#1a4e9d" }} />}
+      icon={<MagnifyingGlassPlusIcon className="h-6 w-6 text-blue-500" />}
       tooltip="Zoom In"
     />
     <ToolbarButton
       onClick={handleZoomOut}
       isActive={activeTool === "zoomOut"}
-      icon={<FontAwesomeIcon icon={faSearchMinus} style={{ color: "#1a4e9d" }} />}
+      icon={<MagnifyingGlassMinusIcon className="h-6 w-6 text-blue-500" />}
       tooltip="Zoom Out"
     />
     <ToolbarButton
       onClick={handleMove}
       isActive={activeTool === "move"}
-      icon={<FontAwesomeIcon icon={faHandPaper} style={{ color: "#1a4e9d" }} />}
+      icon={<HandRaisedIcon className="h-6 w-6 text-blue-500" />}
       tooltip="Move"
     />
     <ToolbarButton
       onClick={handlePan}
       isActive={activeTool === "pan"}
-      icon={<FontAwesomeIcon icon={faArrowsAlt} style={{ color: "#1a4e9d" }} />}
+      icon={<ArrowsPointingOutIcon className="h-6 w-6 text-blue-500" />}
       tooltip="Pan"
     />
     <ToolbarButton
       onClick={handleDashLineCursor}
       isActive={activeTool === "dashLine"}
-      icon={<FontAwesomeIcon icon={faGripLines} style={{ color: "#1a4e9d" }} />}
+      icon={<Bars3Icon className="h-6 w-6 text-blue-500" />}
       tooltip="Dashed Line Cursor"
     />
     <ToolbarButton
       onClick={handleZoomToFit}
       isActive={activeTool === "zoomToFit"}
-      icon={<FontAwesomeIcon icon={faExpand} style={{ color: "#1a4e9d" }} />}
+      icon={<ArrowsPointingInIcon className="h-6 w-6 text-blue-500" />}
       tooltip="Zoom to Fit"
     />
     <ToolbarButton
       onClick={handleZoomToActualSize}
       isActive={activeTool === "zoomToActualSize"}
-      icon={<FontAwesomeIcon icon={faSearchPlus} style={{ color: "#1a4e9d" }} />}
+      icon={<MagnifyingGlassPlusIcon className="h-6 w-6 text-blue-500" />}
       tooltip="Zoom to Actual Size"
     />
   </div>

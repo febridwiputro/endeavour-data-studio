@@ -1,8 +1,8 @@
-"""Initial migration
+"""initial migrate
 
-Revision ID: a0f54f0c32cd
+Revision ID: f0d0fe872812
 Revises: 
-Create Date: 2024-12-31 12:18:17.688934
+Create Date: 2025-01-04 23:56:23.478788
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'a0f54f0c32cd'
+revision = 'f0d0fe872812'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -190,6 +190,37 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_annotation_project_models_tbl_id'), 'annotation_project_models_tbl', ['id'], unique=False)
+    op.create_table('classes_and_tags_tbl',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('tag_name', sa.String(), nullable=True),
+    sa.Column('class_name', sa.String(), nullable=True),
+    sa.Column('class_color', sa.String(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('updated_by', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['project_id'], ['annotation_projects_tbl.id'], ),
+    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_classes_and_tags_tbl_id'), 'classes_and_tags_tbl', ['id'], unique=False)
+    op.create_table('upload_data_tbl',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('project_id', sa.Integer(), nullable=False),
+    sa.Column('file_name', sa.String(), nullable=False),
+    sa.Column('img_url', sa.Text(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('updated_by', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['project_id'], ['annotation_projects_tbl.id'], ),
+    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_upload_data_tbl_id'), 'upload_data_tbl', ['id'], unique=False)
     op.create_table('active_learning_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('deployment_id', sa.Integer(), nullable=False),
@@ -233,20 +264,6 @@ def upgrade() -> None:
     sa.UniqueConstraint('inner_id')
     )
     op.create_index(op.f('ix_annotate_tbl_id'), 'annotate_tbl', ['id'], unique=False)
-    op.create_table('classes_and_tags_tbl',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('data_id', sa.Integer(), nullable=False),
-    sa.Column('tag_name', sa.String(), nullable=False),
-    sa.Column('created_by', sa.Integer(), nullable=False),
-    sa.Column('updated_by', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['data_id'], ['annotation_project_data_tbl.id'], ),
-    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_classes_and_tags_tbl_id'), 'classes_and_tags_tbl', ['id'], unique=False)
     op.create_table('dataset_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('data_id', sa.Integer(), nullable=False),
@@ -304,20 +321,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_train_tbl_id'), 'train_tbl', ['id'], unique=False)
-    op.create_table('upload_data_tbl',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('data_id', sa.Integer(), nullable=False),
-    sa.Column('file_name', sa.String(), nullable=False),
-    sa.Column('created_by', sa.Integer(), nullable=False),
-    sa.Column('updated_by', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('updated_at', sa.DateTime(), nullable=True),
-    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['data_id'], ['annotation_project_data_tbl.id'], ),
-    sa.ForeignKeyConstraint(['updated_by'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_upload_data_tbl_id'), 'upload_data_tbl', ['id'], unique=False)
     op.create_table('version_tbl',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('data_id', sa.Integer(), nullable=False),
@@ -362,8 +365,6 @@ def downgrade() -> None:
     op.drop_table('annotate_result_tbl')
     op.drop_index(op.f('ix_version_tbl_id'), table_name='version_tbl')
     op.drop_table('version_tbl')
-    op.drop_index(op.f('ix_upload_data_tbl_id'), table_name='upload_data_tbl')
-    op.drop_table('upload_data_tbl')
     op.drop_index(op.f('ix_train_tbl_id'), table_name='train_tbl')
     op.drop_table('train_tbl')
     op.drop_index(op.f('ix_models_tbl_id'), table_name='models_tbl')
@@ -372,12 +373,14 @@ def downgrade() -> None:
     op.drop_table('deployment_tbl')
     op.drop_index(op.f('ix_dataset_tbl_id'), table_name='dataset_tbl')
     op.drop_table('dataset_tbl')
-    op.drop_index(op.f('ix_classes_and_tags_tbl_id'), table_name='classes_and_tags_tbl')
-    op.drop_table('classes_and_tags_tbl')
     op.drop_index(op.f('ix_annotate_tbl_id'), table_name='annotate_tbl')
     op.drop_table('annotate_tbl')
     op.drop_index(op.f('ix_active_learning_tbl_id'), table_name='active_learning_tbl')
     op.drop_table('active_learning_tbl')
+    op.drop_index(op.f('ix_upload_data_tbl_id'), table_name='upload_data_tbl')
+    op.drop_table('upload_data_tbl')
+    op.drop_index(op.f('ix_classes_and_tags_tbl_id'), table_name='classes_and_tags_tbl')
+    op.drop_table('classes_and_tags_tbl')
     op.drop_index(op.f('ix_annotation_project_models_tbl_id'), table_name='annotation_project_models_tbl')
     op.drop_table('annotation_project_models_tbl')
     op.drop_index(op.f('ix_annotation_project_features_tbl_id'), table_name='annotation_project_features_tbl')
