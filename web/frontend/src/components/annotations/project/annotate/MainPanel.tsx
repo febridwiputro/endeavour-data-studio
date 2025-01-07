@@ -1,27 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 import TaskDetails from "./component/TaskDetails";
 import TaskToolbar from "./component/TaskToolbar";
 import ClassesSection from "./component/ClassesSection";
 import ToolbarActions from "./component/ToolbarActions";
 import ModalBase from "@/components/base/ModalBaseV2";
 import AlertBase from "@/components/base/AlertBase";
-import { api } from "@/services/apiConfig";
-
-interface Task {
-  id: number;
-  image: string;
-  completed: boolean;
-  annotatedBy: string;
-}
-
-interface BoundingBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  color: string;
-  label: string;
-}
+import { Task } from "./types";
+import { BoundingBox } from "./types";
+import DetailsPanel from "./DetailsPanel";
 
 interface MainPanelProps {
   tasks: Task[];
@@ -48,6 +35,15 @@ interface MainPanelProps {
   handleZoomToFit: () => void;
   handleZoomToActualSize: () => void;
   accessToken: string;
+  boundingBoxes: BoundingBox[];
+  setBoundingBoxes: React.Dispatch<React.SetStateAction<BoundingBox[]>>;
+  classes: any[];
+  setClasses: React.Dispatch<React.SetStateAction<any[]>>;
+  selectedColors: Record<string, boolean>;
+  setSelectedColors: React.Dispatch<
+    React.SetStateAction<Record<string, boolean>>
+  >;
+  handleDashLineCursor: () => void;
 }
 
 const MainPanel: React.FC<MainPanelProps> = ({
@@ -67,18 +63,16 @@ const MainPanel: React.FC<MainPanelProps> = ({
   handleZoomToFit,
   handleZoomToActualSize,
   accessToken,
+  boundingBoxes,
+  setBoundingBoxes,
+  classes,
 }) => {
-  const toggleDashLineMode = () => {
-    setIsDashLineMode((prev) => !prev);
-  };
   const selectedTask =
     tasks.find((task) => task.id === selectedTaskId) || tasks[0];
-  const [classes, setClasses] = useState<any[]>([]);
   const [selectedColors, setSelectedColors] = useState<Record<string, boolean>>(
     {}
   );
   const [activeClass, setActiveClass] = useState<string | null>(null);
-  const [boundingBoxes, setBoundingBoxes] = useState<BoundingBox[]>([]);
   const [undoStack, setUndoStack] = useState<BoundingBox[][]>([]);
   const [redoStack, setRedoStack] = useState<BoundingBox[][]>([]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -115,34 +109,54 @@ const MainPanel: React.FC<MainPanelProps> = ({
   } | null>(null);
   const [currentPanOffset, setCurrentPanOffset] = useState({ x: 0, y: 0 });
   const [cursorStyle, setCursorStyle] = useState("default");
+  const [isMoveMode, setIsMoveMode] = useState(false);
 
-  const imageContainerRef = useRef<HTMLDivElement | null>(null);
+  const [activeMainTab, setActiveMainTab] = useState<"info" | "history">(
+    "info"
+  );
+  const [activeSubTab, setActiveSubTab] = useState<"regions" | "relations">(
+    "regions"
+  );
+
+  const [selectedLabelIndex, setSelectedLabelIndex] = useState<number | null>(
+    null
+  );
+
+  const toggleDashLineMode = () => {
+    setIsDashLineMode((prev) => !prev);
+  };
+
+  const toggleMoveMode = () => {
+    setIsMoveMode((prev) => !prev); // Toggle isMoveMode
+    setCursorStyle((prev) =>
+      prev === "grabbing" || prev === "grab" ? "default" : "grab"
+    ); // Set grab saat mode aktif
+  };
+
+  // const toggleMoveMode = () => {
+  //   setIsMoveMode((prev) => !prev); // Toggle isMoveMode
+  //   setCursorStyle((prev) => (prev === "grabbing" ? "grab" : "default")); // Set grab saat mode aktif
+  // };
 
   useEffect(() => {
-    // Update cursor style based on activeTool
-    switch (activeTool) {
-      case "move":
-        setCursorStyle(isPanning ? "grabbing" : "grab");
-        break;
-      case "pan":
-        setCursorStyle("move");
-        break;
-      default:
-        setCursorStyle("default");
-        break;
+    if (isMoveMode) {
+      setCursorStyle(isPanning ? "grabbing" : "grab"); // Gunakan grab saat mode aktif
+    } else {
+      setCursorStyle("default"); // Reset ke default saat mode nonaktif
     }
-  }, [activeTool, isPanning]);
+  }, [isMoveMode, isPanning]);
 
+  // Event handler untuk mouse events
   const handleMouseDownForMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (activeTool !== "move") return;
+    if (!isMoveMode) return;
 
     setIsPanning(true);
     setLastMousePosition({ x: e.clientX, y: e.clientY });
-    setCursorStyle("grabbing"); // Change cursor to grabbing
+    setCursorStyle("grabbing"); // Ubah kursor menjadi grabbing
   };
 
   const handleMouseMoveForMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isPanning || activeTool !== "move" || !lastMousePosition) return;
+    if (!isPanning || !isMoveMode || !lastMousePosition) return;
 
     const dx = e.clientX - lastMousePosition.x;
     const dy = e.clientY - lastMousePosition.y;
@@ -157,44 +171,15 @@ const MainPanel: React.FC<MainPanelProps> = ({
   const handleMouseUpForMove = () => {
     if (isPanning) {
       setIsPanning(false);
-      setCursorStyle("grab"); // Reset cursor to grab
+      setCursorStyle(isMoveMode ? "grab" : "default"); // Kembali ke grab saat mouse dilepas
     }
     setLastMousePosition(null);
   };
 
+  // Reset cursor
   const resetCursor = () => {
-    setCursorStyle("default"); // Reset cursor to default when disabling
+    setCursorStyle("default");
   };
-
-  // Fetch annotation classes
-  const fetchClasses = async () => {
-    if (!accessToken) return;
-
-    try {
-      const response = await api.get(`/annotations/classes-and-tags/1`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-      const { data } = response.data;
-      const fetchedClasses = data.map((cls: any) => ({
-        id: cls.id,
-        color: cls.class_color || "#cccccc",
-        name: cls.class_name,
-      }));
-      setClasses(fetchedClasses);
-
-      const initialColors = fetchedClasses.reduce(
-        (acc: any, cls: any) => ({ ...acc, [cls.name]: false }),
-        {}
-      );
-      setSelectedColors(initialColors);
-    } catch (error) {
-      console.error("Error fetching classes and tags:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchClasses();
-  }, [accessToken]);
 
   // Reset bounding boxes when a new task is selected
   useEffect(() => {
@@ -214,6 +199,16 @@ const MainPanel: React.FC<MainPanelProps> = ({
       return updatedColors;
     });
   };
+
+  useEffect(() => {
+    if (classes) {
+      const initialColors = classes.reduce(
+        (acc: any, cls: any) => ({ ...acc, [cls.name]: false }),
+        {}
+      );
+      setSelectedColors(initialColors);
+    }
+  }, [classes]);
 
   // Push the current state to undo stack and clear redo stack
   const saveState = () => {
@@ -272,13 +267,10 @@ const MainPanel: React.FC<MainPanelProps> = ({
 
   const detectResizeHandle = (x: number, y: number, box: BoundingBox) => {
     const handleSize = 10; // Resize handle size
-    if (isPointNear(x, y, box.x, box.y, handleSize)) return "top-left";
-    if (isPointNear(x, y, box.x + box.width, box.y, handleSize))
-      return "top-right";
-    if (isPointNear(x, y, box.x, box.y + box.height, handleSize))
-      return "bottom-left";
-    if (isPointNear(x, y, box.x + box.width, box.y + box.height, handleSize))
-      return "bottom-right";
+    if (isPointNear(x, y, box.x1, box.y1, handleSize)) return "top-left";
+    if (isPointNear(x, y, box.x2, box.y1, handleSize)) return "top-right";
+    if (isPointNear(x, y, box.x1, box.y2, handleSize)) return "bottom-left";
+    if (isPointNear(x, y, box.x2, box.y2, handleSize)) return "bottom-right";
     return null;
   };
 
@@ -297,39 +289,36 @@ const MainPanel: React.FC<MainPanelProps> = ({
   };
 
   const isPointInBox = (x: number, y: number, box: BoundingBox) => {
-    return (
-      x >= box.x &&
-      x <= box.x + box.width &&
-      y >= box.y &&
-      y <= box.y + box.height
-    );
+    return x >= box.x1 && x <= box.x2 && y >= box.y1 && y <= box.y2;
   };
 
   // Handle canvas mouse down
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const { x, y } = adjustCoordinates(e);
+    if (activeTool === "move") return; // Prevent actions in move mode
 
-    // Check if a resize handle is clicked
-    for (let i = 0; i < boundingBoxes.length; i++) {
-      const box = boundingBoxes[i];
-      const corner = detectResizeHandle(x, y, box);
-      if (corner) {
-        setResizingHandle({ index: i, corner });
-        return;
-      }
-    }
+    const { x, y } = adjustCoordinates(e);
 
     // Check if a bounding box is clicked
     const clickedBoxIndex = boundingBoxes.findIndex((box) =>
       isPointInBox(x, y, box)
     );
 
+    // // Check if a resize handle is clicked
+    // for (let i = 0; i < boundingBoxes.length; i++) {
+    //   const box = boundingBoxes[i];
+    //   const corner = detectResizeHandle(x, y, box);
+    //   if (corner) {
+    //     setResizingHandle({ index: i, corner });
+    //     return;
+    //   }
+    // }
+
     if (clickedBoxIndex !== -1) {
       // Set the clicked bounding box as selected
       setSelectedBoxIndex(clickedBoxIndex);
       setDraggingOffset({
-        x: x - boundingBoxes[clickedBoxIndex].x,
-        y: y - boundingBoxes[clickedBoxIndex].y,
+        x: x - boundingBoxes[clickedBoxIndex].x1,
+        y: y - boundingBoxes[clickedBoxIndex].y1,
       });
       return;
     }
@@ -362,45 +351,55 @@ const MainPanel: React.FC<MainPanelProps> = ({
     }
     e.currentTarget.style.cursor = cursorStyle;
 
+    // Handle resizing
     if (resizingHandle) {
-      // Handle resizing
       setBoundingBoxes((prev) => {
         const updatedBoxes = [...prev];
         const box = updatedBoxes[resizingHandle.index];
         const { corner } = resizingHandle;
 
         if (corner === "top-left") {
-          box.width += box.x - x;
-          box.height += box.y - y;
-          box.x = x;
-          box.y = y;
+          box.x1 = x;
+          box.y1 = y;
         } else if (corner === "top-right") {
-          box.width = x - box.x;
-          box.height += box.y - y;
-          box.y = y;
+          box.x2 = x;
+          box.y1 = y;
         } else if (corner === "bottom-left") {
-          box.width += box.x - x;
-          box.height = y - box.y;
-          box.x = x;
+          box.x1 = x;
+          box.y2 = y;
         } else if (corner === "bottom-right") {
-          box.width = x - box.x;
-          box.height = y - box.y;
+          box.x2 = x;
+          box.y2 = y;
         }
+
+        // Update width and height
+        box.w = Math.abs(box.x2 - box.x1);
+        box.h = Math.abs(box.y2 - box.y1);
 
         return updatedBoxes;
       });
       return;
     }
 
+    // Handle dragging
     if (draggingOffset && selectedBoxIndex !== null) {
-      // Handle dragging
       setBoundingBoxes((prev) => {
         const updatedBoxes = [...prev];
+        const box = updatedBoxes[selectedBoxIndex];
+
+        const newX1 = x - draggingOffset.x;
+        const newY1 = y - draggingOffset.y;
+        const newX2 = newX1 + box.w;
+        const newY2 = newY1 + box.h;
+
         updatedBoxes[selectedBoxIndex] = {
-          ...updatedBoxes[selectedBoxIndex],
-          x: x - draggingOffset.x,
-          y: y - draggingOffset.y,
+          ...box,
+          x1: newX1,
+          y1: newY1,
+          x2: newX2,
+          y2: newY2,
         };
+
         return updatedBoxes;
       });
       return;
@@ -414,16 +413,17 @@ const MainPanel: React.FC<MainPanelProps> = ({
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    // Redraw all bounding boxes
     boundingBoxes.forEach((box, index) =>
       drawBoundingBox(ctx, box, index === selectedBoxIndex)
     );
 
+    // Draw dashed lines if the mode is active
     if (isDashLineMode) {
-      // Draw dashed lines
       ctx.save();
       ctx.setLineDash([5, 5]); // Define dash pattern
-      ctx.strokeStyle = "white"; // Set dashed line color to white
-      ctx.lineWidth = 1; // Reduce dashed line thickness
+      ctx.strokeStyle = "white"; // Set dashed line color
+      ctx.lineWidth = 1; // Set dashed line thickness
 
       // Vertical dashed line
       ctx.beginPath();
@@ -440,6 +440,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
       ctx.restore();
     }
 
+    // Handle live drawing of a new bounding box
     if (isDrawing && startPoint) {
       ctx.strokeStyle =
         classes.find((cls) => cls.name === activeClass)?.color || "#000000";
@@ -455,6 +456,8 @@ const MainPanel: React.FC<MainPanelProps> = ({
 
   // Handle canvas mouse up
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (activeTool === "move") return; // Prevent bounding box creation in move mode
+
     if (resizingHandle) {
       setResizingHandle(null);
       return;
@@ -469,11 +472,19 @@ const MainPanel: React.FC<MainPanelProps> = ({
 
     const { x, y } = adjustCoordinates(e);
 
+    const x1 = Math.min(startPoint.x, x);
+    const y1 = Math.min(startPoint.y, y);
+    const x2 = Math.max(startPoint.x, x);
+    const y2 = Math.max(startPoint.y, y);
+
     const newBox: BoundingBox = {
-      x: Math.min(startPoint.x, x),
-      y: Math.min(startPoint.y, y),
-      width: Math.abs(x - startPoint.x),
-      height: Math.abs(y - startPoint.y),
+      id: uuidv4(),
+      x1,
+      y1,
+      x2,
+      y2,
+      w: x2 - x1,
+      h: y2 - y1,
       color:
         classes.find((cls) => cls.name === activeClass)?.color || "#000000",
       label: activeClass!,
@@ -491,52 +502,56 @@ const MainPanel: React.FC<MainPanelProps> = ({
     box: BoundingBox,
     isSelected: boolean
   ) => {
-    // Highlight the selected bounding box with a red outline
     ctx.strokeStyle = isSelected ? "#FF0000" : box.color; // Outline color
     ctx.lineWidth = isSelected ? 2 : 1; // Reduced bounding box thickness
-    ctx.strokeRect(box.x, box.y, box.width, box.height);
+    ctx.strokeRect(box.x1, box.y1, box.w, box.h);
 
     // Draw the label background
     ctx.fillStyle = box.color;
-    ctx.fillRect(box.x, box.y - 20, ctx.measureText(box.label).width + 10, 20);
+    ctx.fillRect(
+      box.x1,
+      box.y1 - 20,
+      ctx.measureText(box.label).width + 10,
+      20
+    );
 
     // Draw the label text
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(box.label, box.x + 5, box.y - 5);
+    ctx.fillText(box.label, box.x1 + 5, box.y1 - 5);
 
     // Draw resize handles
     const handleSize = 8;
-    const handleColor = isSelected ? "#FFFFFF" : "#000000"; // White if selected, black otherwise
+    const handleColor = isSelected ? "#FFFFFF" : "#000000";
     ctx.fillStyle = handleColor;
 
     // Top-left corner
     ctx.fillRect(
-      box.x - handleSize / 2,
-      box.y - handleSize / 2,
+      box.x1 - handleSize / 2,
+      box.y1 - handleSize / 2,
       handleSize,
       handleSize
     );
 
     // Top-right corner
     ctx.fillRect(
-      box.x + box.width - handleSize / 2,
-      box.y - handleSize / 2,
+      box.x1 + box.w - handleSize / 2,
+      box.y1 - handleSize / 2,
       handleSize,
       handleSize
     );
 
     // Bottom-left corner
     ctx.fillRect(
-      box.x - handleSize / 2,
-      box.y + box.height - handleSize / 2,
+      box.x1 - handleSize / 2,
+      box.y1 + box.h - handleSize / 2,
       handleSize,
       handleSize
     );
 
     // Bottom-right corner
     ctx.fillRect(
-      box.x + box.width - handleSize / 2,
-      box.y + box.height - handleSize / 2,
+      box.x1 + box.w - handleSize / 2,
+      box.y1 + box.h - handleSize / 2,
       handleSize,
       handleSize
     );
@@ -551,6 +566,8 @@ const MainPanel: React.FC<MainPanelProps> = ({
     if (!ctx) return;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Redraw all bounding boxes with selection highlighting
     boundingBoxes.forEach((box, index) =>
       drawBoundingBox(ctx, box, index === selectedBoxIndex)
     );
@@ -571,90 +588,6 @@ const MainPanel: React.FC<MainPanelProps> = ({
       drawBoundingBox(ctx, box, index === selectedBoxIndex)
     );
   };
-
-  // return (
-  //   <div
-  //     className="bg-white"
-  //     style={{
-  //       width: `${panelWidth}%`,
-  //       transition: isDragging ? "none" : "width 0.2s ease",
-  //     }}
-  //   >
-  //     {selectedTask ? (
-  //       <>
-  //         <TaskDetails taskId={selectedTask.id} />
-  //         <div
-  //           className="relative bg-gray-100 border border-gray-200 rounded overflow-hidden"
-  //           style={{ cursor: cursorStyle }}
-  //           onMouseDown={handleMouseDownForMove}
-  //           onMouseMove={handleMouseMoveForMove}
-  //           onMouseUp={handleMouseUpForMove}
-  //           onMouseLeave={handleMouseUpForMove}
-  //         >
-  //           <div
-  //             className="transform"
-  //             style={{
-  //               transform: `scale(${zoomLevel}) translate(${currentPanOffset.x}px, ${currentPanOffset.y}px)`,
-  //               transformOrigin: "center",
-  //               transition: isPanning ? "none" : "transform 0.2s ease-in-out",
-  //             }}
-  //           >
-  //             <img
-  //               src={selectedTask.image}
-  //               alt={`Task ${selectedTask.id}`}
-  //               className="w-full object-contain"
-  //             />
-  //           </div>
-  //           {/* </div> */}
-  //           <TaskToolbar
-  //             activeTool={isDashLineMode ? "dashLine" : activeTool}
-  //             handleZoomIn={handleZoomIn}
-  //             handleZoomOut={handleZoomOut}
-  //             handleMove={handleMove}
-  //             handlePan={handlePan}
-  //             handleDashLineCursor={toggleDashLineMode}
-  //             handleZoomToFit={handleZoomToFit}
-  //             handleZoomToActualSize={handleZoomToActualSize}
-  //           />
-  //         </div>
-  //         <ToolbarActions
-  //           onUndo={handleUndo}
-  //           onRedo={handleRedo}
-  //           onReset={handleReset}
-  //           onSettings={() => console.log("Settings clicked")}
-  //           onSubmit={() => {
-  //             console.log("Bounding Boxes Submitted:", boundingBoxes);
-  //           }}
-  //           onDelete={handleDelete}
-  //           isUndoDisabled={undoStack.length === 0}
-  //           isRedoDisabled={redoStack.length === 0}
-  //           isDeleteDisabled={selectedBoxIndex === null}
-  //         />
-  //         <ClassesSection
-  //           classes={classes}
-  //           selectedColors={selectedColors}
-  //           toggleColor={toggleColor}
-  //         />
-  //       </>
-  //     ) : (
-  //       <p className="text-gray-500 text-center">No tasks available</p>
-  //     )}
-  //     <ModalBase
-  //       show={showModal}
-  //       title="Reset Confirmation"
-  //       message="Are you sure you want to clear all bounding boxes? This action cannot be undone."
-  //       onClose={cancelReset}
-  //       onConfirm={confirmReset}
-  //     />
-  //     <AlertBase
-  //       show={showAlert}
-  //       type="success"
-  //       message="Bounding boxes reset successfully!"
-  //       onClose={() => setShowAlert(false)}
-  //     />
-  //   </div>
-  // );
-
 
   return (
     <div
@@ -700,13 +633,12 @@ const MainPanel: React.FC<MainPanelProps> = ({
               onMouseLeave={handleMouseLeave}
             />
             <TaskToolbar
-              activeTool={isDashLineMode ? "dashLine" : activeTool}
+              activeTool={
+                isDashLineMode ? "dashLine" : isMoveMode ? "move" : activeTool
+              }
               handleZoomIn={handleZoomIn}
               handleZoomOut={handleZoomOut}
-              handleMove={() => {
-                handleMove();
-                resetCursor(); // Reset cursor when toggling move off
-              }}
+              handleMove={toggleMoveMode}
               handlePan={handlePan}
               handleDashLineCursor={toggleDashLineMode}
               handleZoomToFit={handleZoomToFit}
@@ -731,6 +663,21 @@ const MainPanel: React.FC<MainPanelProps> = ({
             selectedColors={selectedColors}
             toggleColor={toggleColor}
           />
+          <DetailsPanel
+            selectedTask={selectedTask}
+            annotations={classes.map((cls) => ({
+              id: cls.id,
+              type: cls.name,
+              color: cls.color,
+            }))}
+            activeMainTab={activeMainTab}
+            setActiveMainTab={setActiveMainTab}
+            activeSubTab={activeSubTab}
+            setActiveSubTab={setActiveSubTab}
+            boundingBoxes={boundingBoxes}
+            selectedBoxIndex={selectedBoxIndex}
+          />
+          ;
         </>
       ) : (
         <p className="text-gray-500 text-center">No tasks available</p>
@@ -769,133 +716,6 @@ const MainPanel: React.FC<MainPanelProps> = ({
       />
     </div>
   );
-
-
-
-  // return (
-  //   <div
-  //     className="bg-white"
-  //     style={{
-  //       width: `${panelWidth}%`,
-  //       transition: isDragging ? "none" : "width 0.2s ease",
-  //     }}
-  //   >
-  //     {selectedTask ? (
-  //       <>
-  //         <TaskDetails taskId={selectedTask.id} />
-  //         {/* <div className="relative bg-gray-100 border border-gray-200 rounded overflow-hidden"> */}
-  //         <div
-  //           className="relative bg-gray-100 border border-gray-200 rounded overflow-hidden"
-  //           style={{ cursor: cursorStyle }}
-  //           onMouseDown={handleMouseDownForMove}
-  //           onMouseMove={handleMouseMoveForMove}
-  //           onMouseUp={handleMouseUpForMove}
-  //           onMouseLeave={handleMouseUpForMove}
-  //         >
-  //           {showDashLines && (
-  //             <div
-  //               className="absolute inset-0 pointer-events-none"
-  //               style={{
-  //                 backgroundImage: `linear-gradient(to bottom, transparent 49%, rgba(0, 0, 0, 0.5) 50%, transparent 51%),
-  //                   linear-gradient(to right, transparent 49%, rgba(0, 0, 0, 0.5) 50%, transparent 51
-  //                   )`,
-  //                 backgroundSize: "100% 1px, 1px 100%",
-  //                 backgroundPosition: `${cursorPosition.x}px 0, 0 ${cursorPosition.y}px`,
-  //                 backgroundRepeat: "no-repeat",
-  //               }}
-  //             />
-  //           )}
-  //           <div
-  //             className="transform"
-  //             style={{
-  //               transform: `scale(${zoomLevel}) translate(${currentPanOffset.x}px, ${currentPanOffset.y}px)`,
-  //               transformOrigin: "center",
-  //               transition: isPanning ? "none" : "transform 0.2s ease-in-out",
-  //             }}
-  //           >
-  //             <img
-  //               src={selectedTask.image}
-  //               alt={`Task ${selectedTask.id}`}
-  //               className="w-full object-contain"
-  //             />
-  //           </div>
-  //           <canvas
-  //             ref={canvasRef}
-  //             className="absolute top-0 left-0 w-full h-full"
-  //             width={800}
-  //             height={500}
-  //             onMouseDown={handleMouseDown}
-  //             onMouseMove={handleMouseMove}
-  //             onMouseUp={handleMouseUp}
-  //             onMouseLeave={handleMouseLeave}
-  //           />
-  //           <TaskToolbar
-  //             activeTool={isDashLineMode ? "dashLine" : activeTool}
-  //             handleZoomIn={handleZoomIn}
-  //             handleZoomOut={handleZoomOut}
-  //             handleMove={handleMove}
-  //             handlePan={handlePan}
-  //             handleDashLineCursor={toggleDashLineMode}
-  //             handleZoomToFit={handleZoomToFit}
-  //             handleZoomToActualSize={handleZoomToActualSize}
-  //           />
-  //         </div>
-  //         <ToolbarActions
-  //           onUndo={handleUndo}
-  //           onRedo={handleRedo}
-  //           onReset={handleReset}
-  //           onSettings={() => console.log("Settings clicked")}
-  //           onSubmit={() => {
-  //             console.log("Bounding Boxes Submitted:", boundingBoxes);
-  //           }}
-  //           onDelete={handleDelete}
-  //           isUndoDisabled={undoStack.length === 0}
-  //           isRedoDisabled={redoStack.length === 0}
-  //           isDeleteDisabled={selectedBoxIndex === null}
-  //         />
-  //         <ClassesSection
-  //           classes={classes}
-  //           selectedColors={selectedColors}
-  //           toggleColor={toggleColor}
-  //         />
-  //       </>
-  //     ) : (
-  //       <p className="text-gray-500 text-center">No tasks available</p>
-  //     )}
-  //     {/* Modal for Reset Confirmation */}
-  //     <ModalBase
-  //       show={showModal}
-  //       title="Reset Confirmation"
-  //       message="Are you sure you want to clear all bounding boxes? This action cannot be undone."
-  //       onClose={cancelReset}
-  //       onConfirm={confirmReset}
-  //     />
-
-  //     {showModal && (
-  //       <div className="fixed inset-0 flex items-center justify-center">
-  //         <button
-  //           onClick={confirmReset}
-  //           className="bg-red-600 text-white px-4 py-2 rounded-lg mr-4"
-  //         >
-  //           Confirm
-  //         </button>
-  //         <button
-  //           onClick={cancelReset}
-  //           className="bg-gray-600 text-white px-4 py-2 rounded-lg"
-  //         >
-  //           Cancel
-  //         </button>
-  //       </div>
-  //     )}
-  //     {/* Success Alert */}
-  //     <AlertBase
-  //       show={showAlert}
-  //       type="success"
-  //       message="Bounding boxes reset successfully!"
-  //       onClose={() => setShowAlert(false)}
-  //     />
-  //   </div>
-  // );
 };
 
 export default MainPanel;
