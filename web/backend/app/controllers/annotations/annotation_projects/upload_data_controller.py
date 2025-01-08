@@ -251,73 +251,130 @@ async def get_all_data_by_user(
         previous_page=paginated_result["previous_page"],
     )
 
+
 @router.get("/{project_id}", summary="Get Uploaded Files")
 async def get_uploaded_data(
     project_id: int,
     request: Request,
     payload: dict = Depends(jwt_bearer),
     db: Session = Depends(get_db),
-    page: int = 1,
-    per_page: PerPageOptions = PerPageOptions.TEN,
 ):
     """
-    Retrieve uploaded files for a specific project ID with pagination.
+    Retrieve uploaded files for a specific project ID without pagination.
 
     Args:
         project_id (int): The ID of the project to retrieve files for.
         request (Request): The incoming HTTP request object.
         payload (dict): JWT payload containing user info.
         db (Session): Database session dependency.
-        page (int): Current page number.
-        per_page (PerPageOptions): Number of items per page.
 
     Returns:
-        dict: A paginated response containing the list of uploaded files.
+        dict: A standard response containing the list of uploaded files.
     """
     user_id = payload.get("id")
     if not user_id:
-        return standard_pagination_response(
+        return standard_response(
             status="error",
             status_code=401,
             message_code="INVALID_OR_EXPIRED_TOKEN",
             data=[],
-            count=0,
-            per_page=per_page.value,
-            total_pages=0,
         )
 
-    query = db.query(UploadDataModel).filter_by(project_id=project_id)
-    paginated_result = paginate_query(query, page, per_page.value, request)
+    files = db.query(UploadDataModel).filter_by(project_id=project_id).all()
 
-    if not paginated_result["items"]:
-        return standard_pagination_response(
+    if not files:
+        return standard_response(
             status="error",
             status_code=404,
             message_code="FILES_NOT_FOUND",
             data=[],
-            count=0,
-            per_page=per_page.value,
-            total_pages=0,
         )
 
     response_data = [
         {
-            "upload_id": upload.id,
-            "file_name": upload.file_name,
-            "img_url": upload.img_url,
-            "uploaded_at": upload.created_at,
+            "upload_id": file.id,
+            "file_name": file.file_name,
+            "img_url": file.img_url,
+            "uploaded_at": file.created_at,
         }
-        for upload in paginated_result["items"]
+        for file in files
     ]
 
-    return standard_pagination_response(
+    return standard_response(
         status="success",
         status_code=200,
         message_code="FILES_RETRIEVED_SUCCESSFULLY",
         data=response_data,
-        count=paginated_result["total_count"],
-        per_page=per_page.value,
-        total_pages=paginated_result["total_pages"],
-        next_page=paginated_result["next_page"],
-        previous_page=paginated_result["previous_page"],
     )
+
+
+# @router.get("/{project_id}", summary="Get Uploaded Files")
+# async def get_uploaded_data(
+#     project_id: int,
+#     request: Request,
+#     payload: dict = Depends(jwt_bearer),
+#     db: Session = Depends(get_db),
+#     page: int = 1,
+#     per_page: PerPageOptions = PerPageOptions.TEN,
+# ):
+#     """
+#     Retrieve uploaded files for a specific project ID with pagination.
+
+#     Args:
+#         project_id (int): The ID of the project to retrieve files for.
+#         request (Request): The incoming HTTP request object.
+#         payload (dict): JWT payload containing user info.
+#         db (Session): Database session dependency.
+#         page (int): Current page number.
+#         per_page (PerPageOptions): Number of items per page.
+
+#     Returns:
+#         dict: A paginated response containing the list of uploaded files.
+#     """
+#     user_id = payload.get("id")
+#     if not user_id:
+#         return standard_pagination_response(
+#             status="error",
+#             status_code=401,
+#             message_code="INVALID_OR_EXPIRED_TOKEN",
+#             data=[],
+#             count=0,
+#             per_page=per_page.value,
+#             total_pages=0,
+#         )
+
+#     query = db.query(UploadDataModel).filter_by(project_id=project_id)
+#     paginated_result = paginate_query(query, page, per_page.value, request)
+
+#     if not paginated_result["items"]:
+#         return standard_pagination_response(
+#             status="error",
+#             status_code=404,
+#             message_code="FILES_NOT_FOUND",
+#             data=[],
+#             count=0,
+#             per_page=per_page.value,
+#             total_pages=0,
+#         )
+
+#     response_data = [
+#         {
+#             "upload_id": upload.id,
+#             "file_name": upload.file_name,
+#             "img_url": upload.img_url,
+#             "uploaded_at": upload.created_at,
+#         }
+#         for upload in paginated_result["items"]
+#     ]
+
+#     return standard_pagination_response(
+#         status="success",
+#         status_code=200,
+#         message_code="FILES_RETRIEVED_SUCCESSFULLY",
+#         data=response_data,
+#         count=paginated_result["total_count"],
+#         per_page=per_page.value,
+#         total_pages=paginated_result["total_pages"],
+#         next_page=paginated_result["next_page"],
+#         previous_page=paginated_result["previous_page"],
+#     )

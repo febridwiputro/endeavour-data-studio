@@ -29,6 +29,7 @@ def process_split_video_to_img(video_id, video_path, num_images, output_dir):
     count = 0
     frame_idx = 0
     image_list = []
+    file_counter = 1
 
     while cap.isOpened():
         ret, frame = cap.read()
@@ -37,17 +38,20 @@ def process_split_video_to_img(video_id, video_path, num_images, output_dir):
 
         if frame_idx % frame_interval == 0 and count < num_images:
             timestamp = datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
-            filename = f"video2img-{timestamp}-{random.randint(0, 1000)}.png"
+            video_name = os.path.splitext(os.path.basename(video_path))[0]
+            filename = f"video2img-{video_name}-{timestamp}-{file_counter}.png"
             output_path = os.path.join(output_dir, filename)
 
             cv2.imwrite(output_path, frame)
             image_list.append(output_path)
             count += 1
+            file_counter += 1
 
             # Update progress
             progress_status[video_id] = (count / num_images) * 100
 
         frame_idx += 1
+
 
     cap.release()
     os.remove(video_path) 

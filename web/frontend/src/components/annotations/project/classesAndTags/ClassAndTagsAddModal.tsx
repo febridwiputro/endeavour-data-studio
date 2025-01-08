@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { api } from "@/services/apiConfig";
-import { SketchPicker } from "react-color";
+import ColorPicker from "react-best-gradient-color-picker";
 
 interface ClassAndTagsAddModalProps {
   isOpen: boolean;
@@ -126,10 +126,10 @@ const ClassAndTagsAddModal: React.FC<ClassAndTagsAddModalProps> = ({
             </div>
             {colorPickerVisible && (
               <div ref={pickerRef} className="absolute z-10 mt-2">
-                <SketchPicker
-                  color={classColor}
-                  onChange={(color) => setClassColor(color.hex)}
-                  disableAlpha
+                <ColorPicker
+                  value={classColor}
+                  onChange={(color: string) => setClassColor(color)}
+                  hidePresets={true} // Optional: Hide preset colors
                 />
               </div>
             )}
@@ -161,10 +161,11 @@ export default ClassAndTagsAddModal;
 
 
 
-// import React, { useState } from "react";
+// import React, { useState, useRef, useEffect } from "react";
 // import { useSelector } from "react-redux";
 // import { RootState } from "@/store/store";
 // import { api } from "@/services/apiConfig";
+// import { SketchPicker } from "react-color";
 
 // interface ClassAndTagsAddModalProps {
 //   isOpen: boolean;
@@ -180,13 +181,17 @@ export default ClassAndTagsAddModal;
 //   const { accessToken } = useSelector((state: RootState) => state.auth);
 //   const [className, setClassName] = useState("");
 //   const [classColor, setClassColor] = useState("#cccccc");
+//   const [colorPickerVisible, setColorPickerVisible] = useState(false);
 //   const [loading, setLoading] = useState(false);
+//   const [error, setError] = useState("");
+//   const pickerRef = useRef<HTMLDivElement | null>(null);
 
 //   const handleAddClass = async () => {
 //     if (!className.trim()) {
-//       alert("Class name is required!");
+//       setError("Class name is required!");
 //       return;
 //     }
+//     setError("");
 
 //     setLoading(true);
 
@@ -226,6 +231,21 @@ export default ClassAndTagsAddModal;
 //     }
 //   };
 
+//   const handleClickOutside = (event: MouseEvent) => {
+//     if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+//       setColorPickerVisible(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     if (colorPickerVisible) {
+//       document.addEventListener("mousedown", handleClickOutside);
+//     } else {
+//       document.removeEventListener("mousedown", handleClickOutside);
+//     }
+//     return () => document.removeEventListener("mousedown", handleClickOutside);
+//   }, [colorPickerVisible]);
+
 //   if (!isOpen) return null;
 
 //   return (
@@ -254,16 +274,29 @@ export default ClassAndTagsAddModal;
 //             onChange={(e) => setClassName(e.target.value)}
 //             className="w-full px-4 py-2 border rounded-md text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1a4f9d]"
 //           />
+//           {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
 
 //           <label className="block text-sm font-medium text-gray-700 mt-4 mb-2">
 //             Class Color
 //           </label>
-//           <input
-//             type="color"
-//             value={classColor}
-//             onChange={(e) => setClassColor(e.target.value)}
-//             className="w-16 h-10 border rounded-md"
-//           />
+//           <div className="relative">
+//             <div
+//               className="w-full h-10 border rounded-md flex items-center justify-between px-4 cursor-pointer"
+//               style={{ backgroundColor: classColor }}
+//               onClick={() => setColorPickerVisible(!colorPickerVisible)}
+//             >
+//               <span className="text-sm text-white">{classColor}</span>
+//             </div>
+//             {colorPickerVisible && (
+//               <div ref={pickerRef} className="absolute z-10 mt-2">
+//                 <SketchPicker
+//                   color={classColor}
+//                   onChange={(color) => setClassColor(color.hex)}
+//                   disableAlpha
+//                 />
+//               </div>
+//             )}
+//           </div>
 //         </div>
 
 //         {/* Footer */}

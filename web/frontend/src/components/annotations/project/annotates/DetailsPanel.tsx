@@ -61,29 +61,33 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({
               {selectedBoxIndex !== null && boundingBoxes[selectedBoxIndex] ? (
                 <div className="bg-white p-4 border border-gray-200 rounded space-y-4">
                   {/* Top Section */}
-                  <div className="flex items-center space-x-2">
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{
-                        backgroundColor: boundingBoxes[selectedBoxIndex].color,
-                      }}
-                    ></div>
-                    <span className="text-sm font-medium text-gray-700">
-                      {boundingBoxes[selectedBoxIndex].label}
-                    </span>
-                  </div>
-
-                  {/* ID Field */}
-                  <div className="mt-4">
-                    <label className="block text-xs font-medium text-gray-500">
-                      ID:
-                    </label>
-                    <input
-                      type="text"
-                      readOnly
-                      value={boundingBoxes[selectedBoxIndex].id}
-                      className="w-full border border-gray-300 rounded px-2 py-1 text-gray-800"
-                    />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className="w-4 h-4 rounded-full"
+                        style={{
+                          backgroundColor:
+                            boundingBoxes[selectedBoxIndex].color,
+                        }}
+                      ></div>
+                      <span className="text-sm font-medium text-gray-700">
+                        {boundingBoxes[selectedBoxIndex].label}
+                      </span>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500">
+                        ID:
+                      </label>
+                      <input
+                        type="text"
+                        readOnly
+                        value={boundingBoxes[selectedBoxIndex].id}
+                        className="w-full border border-gray-300 rounded px-2 py-1 text-gray-800"
+                      />
+                    </div>
+                    {/* <span className="text-sm font-medium text-gray-600">
+                      ID: {boundingBoxes[selectedBoxIndex].id}
+                    </span> */}
                   </div>
 
                   {/* Coordinates Section */}
@@ -211,28 +215,35 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({
               <h4 className="text-sm font-medium text-gray-600 mb-2">
                 Regions
               </h4>
-              <ul
-                className="bg-white p-2 border border-gray-200 rounded overflow-y-auto"
-                style={{ maxHeight: "200px" }} // Adjust maxHeight as needed
-              >
+              <ul className="bg-white p-2 border border-gray-200 rounded max-h-40 overflow-y-auto">
                 {boundingBoxes.map((box, index) => (
                   <li
                     key={box.id}
-                    className="flex items-center justify-between p-2 border-b last:border-b-0"
+                    className="text-sm flex flex-col p-2 border-b last:border-b-0"
                   >
-                    #{index + 1}
-                    <button
-                      onClick={() =>
-                        console.log(`Selected label: ${box.label}`)
-                      }
-                      style={{
-                        backgroundColor: box.color,
-                        color: "white",
-                      }}
-                      className="px-2 py-1 text-sm font-medium rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      {box.label}
-                    </button>
+                    <span className="font-bold text-gray-800">
+                      #{index + 1} - {box.label}
+                    </span>
+                    <div className="flex flex-col space-y-1 text-gray-600 text-xs">
+                      <span>ID: {box.id}</span>
+                      <span>Label: {box.label}</span>
+                      <span>
+                        Color:
+                        <span
+                          style={{ backgroundColor: box.color }}
+                          className="inline-block w-4 h-4 rounded-full ml-1"
+                        ></span>
+                      </span>
+                      <span>
+                        x1: {box.x1.toFixed(2)}, y1: {box.y1.toFixed(2)}
+                      </span>
+                      <span>
+                        x2: {box.x2.toFixed(2)}, y2: {box.y2.toFixed(2)}
+                      </span>
+                      <span>
+                        Width: {box.w.toFixed(2)}, Height: {box.h.toFixed(2)}
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -258,6 +269,12 @@ const DetailsPanel: React.FC<DetailsPanelProps> = ({
 };
 
 export default DetailsPanel;
+
+
+
+
+
+
 
 // import React from "react";
 // import { Task, Annotation } from "./types";

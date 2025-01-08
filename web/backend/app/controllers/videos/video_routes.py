@@ -27,17 +27,6 @@ async def split_video_to_img(
     
     return {"message": "Video processing started", "video_id": video_id}
 
-# @router.post("/split-video-to-img")
-# async def split_video_to_img(
-#     background_tasks: BackgroundTasks,
-#     video: UploadFile = File(...), 
-#     num_images: int = Form(...), 
-#     folder_name: str = Form("output")
-# ):
-#     video_id = random.randint(1000, 9999)
-#     background_tasks.add_task(process_split_video_to_img, video_id, video, num_images, folder_name)
-#     return {"message": "Video processing started", "video_id": video_id}
-
 @router.post("/concatenate-videos")
 async def concatenate_videos(
     background_tasks: BackgroundTasks,

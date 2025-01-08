@@ -62,7 +62,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
   ];
 
   const getButtonClass = (item: string) =>
-    `flex items-center px-4 py-2 text-sm font-medium rounded-lg transition 
+    `flex items-center px-1 py-2 text-sm font-medium rounded-lg transition 
     ${activePage === item ? "bg-[#e6f0ff] text-[#1a4f9d]" : "text-gray-700"} 
     hover:bg-[#e6f0ff] hover:text-[#1a4f9d]`;
 
