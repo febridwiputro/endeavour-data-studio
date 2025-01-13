@@ -20,7 +20,11 @@ from app.controllers.annotations.annotation_sub_features_2 import router as anno
 from app.controllers.menu.menu_router import router as menu_router
 from app.controllers.annotations.annotation_projects.upload_data_controller import router as upload_data_router
 from app.controllers.annotations.annotation_projects.classes_and_tags_controller import router as classes_and_tags_router
-# from app.routes.yolo_routes import router as yolo_router
+from app.controllers.annotations.models_controllers import router as models_router
+from app.controllers.annotations.annotation_projects.annotate.image_annotations_controller import router as image_annotations_router
+# from app.controllers.annotations.annotation_projects.annotate_controller import router as annotate_router
+# from app.controllers.annotations.annotation_projects.annotate_result_controller import router as annotate_result_router
+from app.controllers.yolo_routes import router as yolo_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,7 +65,12 @@ app.include_router(annotation_projects_router, prefix="/annotations/annotation-p
 app.include_router(annotation_project_features_router, prefix="/annotations/annotation-project-features", tags=["annotations/annotation-project-features"])
 app.include_router(upload_data_router, prefix="/annotations/upload-data", tags=["annotations/upload-data"])
 app.include_router(classes_and_tags_router, prefix="/annotations/classes-and-tags", tags=["annotations/classes-and-tags"])
+app.include_router(image_annotations_router, prefix="/annotations/image-annotations", tags=["annotations/image-annotations"])
+# app.include_router(annotate_router, prefix="/annotations/annotate", tags=["annotations/annotate"])
+# app.include_router(annotate_result_router, prefix="/annotations/annotate-result", tags=["annotations/annotate-result"])
+
+app.include_router(models_router, prefix="/annotations/models", tags=["annotations/models"])
 app.include_router(image_router, prefix="/images", tags=["images"])
 app.include_router(video_router, prefix="/videos", tags=["videos"])
 app.include_router(menu_router, prefix="/menu", tags=["menu"])
-# app.include_router(yolo_router, prefix="/yolo", tags=["/yolo"])
+app.include_router(yolo_router, prefix="/yolo", tags=["/yolo"])

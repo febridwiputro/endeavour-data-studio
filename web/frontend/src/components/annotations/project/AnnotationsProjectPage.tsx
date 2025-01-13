@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import SidebarAnnotationProject from "./SidebarAnnotationProject";
-import AnnotationUploadDataProjectPage from "./AnnotationUploadDataProjectPage";
+import AnnotationUploadDataProjectPage from "./uploadData/AnnotationUploadDataProjectPage";
 import AnnotationAnnotateProjectLabelingPage from "./annotate/AnnotationAnnotateProjectLabelingPage";
 import AnnotationDatasetProjectPage from "./dataset/AnnotationDatasetProjectPage";
 import ExternalModelPage from "./externalModel/ExternalModelPage";
@@ -9,6 +9,8 @@ import DataVersionPage from "./dataVersion/DataVersionPage";
 import ClassesAndTagsPage from "./classesAndTags/ClassesAndTagsPage";
 import DataAnalyticsPage from "./dataAnalytics/DataAnalyticsPage";
 import ModelsPage from "./models/ModelsPage";
+import MonitoringPage from "./monitoring/MonitoringPage";
+import ConfigEditor from "@/components/anomalib/Config";
 
 interface AnnotationsProjectPageProps {
   selectedAnnotation: {
@@ -41,11 +43,16 @@ const AnnotationsProjectPage: React.FC<AnnotationsProjectPageProps> = ({
         return <ClassesAndTagsPage />;
       case "Models":
         return <ModelsPage />;
+      case "Monitoring": // New page case
+        return <MonitoringPage />;
+      case "Deployments":
+        return <ConfigEditor />;
       case "Upload Data":
       default:
         return <AnnotationUploadDataProjectPage />;
     }
   };
+  
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">

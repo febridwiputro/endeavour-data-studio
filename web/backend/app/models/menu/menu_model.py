@@ -13,6 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.config.database import Base
+from app.models.menu.annotations.annotation_feature_model import AnnotationFeatureModel
 
 
 class MenuModel(Base):

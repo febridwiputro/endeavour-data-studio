@@ -200,7 +200,7 @@ const LoginPage: React.FC = () => {
               {loading ? "Logging in..." : "Log In"}
             </button>
           </form>
-          <div className="my-4 flex items-center gap-4">
+          {/* <div className="my-4 flex items-center gap-4">
             <hr className="w-full border-gray-300" />
             <p className="text-sm text-gray-800 text-center">or</p>
             <hr className="w-full border-gray-300" />
@@ -271,7 +271,7 @@ const LoginPage: React.FC = () => {
                 ></path>
               </svg>
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
 

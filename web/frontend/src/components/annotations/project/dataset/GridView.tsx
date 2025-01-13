@@ -109,7 +109,7 @@ const GridView: React.FC<GridViewProps> = ({
             }}
           >
             <img
-              src={file.img_url}
+              src={file.file_url}
               alt={file.file_name}
               className="object-cover w-full h-full"
             />
@@ -176,7 +176,7 @@ const GridView: React.FC<GridViewProps> = ({
                     </svg>
                   </button>
                   <img
-                    src={file.img_url}
+                    src={file.file_url}
                     alt={file.file_name}
                     className="object-contain w-full h-full"
                   />

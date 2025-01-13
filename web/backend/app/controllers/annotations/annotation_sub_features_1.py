@@ -2,9 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from app.config.database import get_db
 from app.models.menu.menu_model import MenuModel
-from app.models.menu.annotations.annotations_model import (
-    SubFeature1Model,
-)
+from app.models.menu.annotations.annotation_sub_feature_model import SubFeature1Model
 from app.schemas.menu.annotations.annotations_schema import (
     CreateAnnotationProjectRequest,
 )

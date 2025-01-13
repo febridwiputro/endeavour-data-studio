@@ -50,6 +50,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
         { name: "Models", icon: CubeIcon },
         { name: "External Models", icon: CubeIcon },
         { name: "Visualize", icon: EyeIcon },
+        { name: "Monitoring", icon: ServerStackIcon },
       ],
     },
     {

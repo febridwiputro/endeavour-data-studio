@@ -120,6 +120,7 @@ const RenderCard: React.FC<RenderCardProps> = ({ annotations, onClick }) => {
 
               <div>
                 <dt className="sr-only">Feature</dt>
+                <dd className="font-medium text-gray-800">{annotation.annotation_type}</dd>
                 <dd className="font-medium text-gray-900">{annotation.name}</dd>
               </div>
             </dl>

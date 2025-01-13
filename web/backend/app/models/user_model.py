@@ -35,14 +35,6 @@ class VerificationCode(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-# import uuid
-# from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy import TIMESTAMP, Column, String, Boolean, text, Integer
-# from sqlalchemy.dialects.postgresql import UUID
-
-# from app.config.database import Base
-
-# Base = declarative_base()
 
 # class User(Base):
 #     __tablename__ = 'users'

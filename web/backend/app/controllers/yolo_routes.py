@@ -5,6 +5,7 @@ import numpy as np
 import requests
 from fastapi import APIRouter, File, UploadFile, Form
 from fastapi.responses import JSONResponse
+import base64
 from app.models.yolo_model import model
 
 router = APIRouter()

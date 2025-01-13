@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ArrowUturnLeftIcon,
   ArrowUturnRightIcon,
@@ -6,6 +6,8 @@ import {
   Cog6ToothIcon,
   PaperAirplaneIcon,
   TrashIcon,
+  CheckCircleIcon,
+  XCircleIcon,
 } from "@heroicons/react/24/outline";
 
 interface ToolbarActionsProps {
@@ -31,6 +33,12 @@ const ToolbarActions: React.FC<ToolbarActionsProps> = ({
   isRedoDisabled = false,
   isDeleteDisabled = false,
 }) => {
+  const [isCompleted, setIsCompleted] = useState(false);
+
+  const toggleCompletion = () => {
+    setIsCompleted((prev) => !prev);
+  };
+
   return (
     <div className="flex items-center justify-between bg-white p-4 rounded-md shadow mb-4">
       <div className="flex items-center space-x-2">
@@ -112,7 +120,21 @@ const ToolbarActions: React.FC<ToolbarActionsProps> = ({
       </div>
 
       {/* Submit Button */}
-      <div className="relative group">
+      <div className="flex items-center space-x-2">
+      {/* Completed Icon */}
+      <button
+          onClick={toggleCompletion}
+          className="relative group p-2 bg-gray-200 rounded hover:bg-gray-300 transform hover:scale-105 transition-transform duration-150"
+        >
+          {isCompleted ? (
+            <CheckCircleIcon className="h-6 w-6 text-green-500 hover:text-green-600" />
+          ) : (
+            <XCircleIcon className="h-6 w-6 text-red-500 hover:text-red-600" />
+          )}
+          <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 text-xs text-white bg-black rounded opacity-0 group-hover:opacity-100">
+            {isCompleted ? "Completed" : "Uncompleted"}
+          </div>
+        </button>
         <button
           className="px-4 py-2 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 flex items-center space-x-1"
           onClick={onSubmit}

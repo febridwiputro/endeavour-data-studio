@@ -13,22 +13,30 @@ load_dotenv()
 # Import Base and all models to ensure mappers are configured
 from app.config.database import Base
 from app.models.menu.menu_model import MenuModel
-from app.models.menu.annotations.annotations_model import (
-    AnnotationProjectModel,
-    AnnotationProjectModelManagement,
-    AnnotationProjectDataModel,
-    AnnotateModel,
-    AnnotateResultModel,
-    ActiveLearningModel,
-    ClassesAndTagsModel,
-    DatasetModel,
-    DeploymentModel,
-    ModelsModel,
-    TrainModel,
-    UploadDataModel,
-    VersionModel,
-)
+# from app.models.menu.annotations.annotate_model import AnnotateModel
+# from app.models.menu.annotations.annotate_result_model import AnnotateResultModel
+from app.models.menu.annotations.active_learning_model import ActiveLearningModel
+from app.models.menu.annotations.annotation_project_model import AnnotationProjectModel
+from app.models.menu.annotations.annotation_project_data_model import AnnotationProjectDataModel
+from app.models.menu.annotations.annotation_project_deployment_model import AnnotationProjectDeploymentModel
+from app.models.menu.annotations.classes_and_tags_model import ClassesAndTagsModel
+from app.models.menu.annotations.dataset_model import DatasetModel
+from app.models.menu.annotations.deployment_model import DeploymentModel
+from app.models.menu.annotations.train_model import TrainModel
+from app.models.menu.annotations.version_model import VersionModel
 from app.models.user_model import UserModel, VerificationCode
+from app.models.menu.annotations.models_model import ModelsModel
+from app.models.menu.annotations.annotate_result_model import (
+    ImageAnnotationResultModel, 
+    TextAnnotationResultModel, 
+    AudioAnnotationResultModel, 
+    VideoAnnotationResultModel, 
+    ImageMetadataModel,
+    TextMetadataModel,
+    AudioMetadataModel,
+    VideoMetadataModel
+)
+
 
 # Retrieve database URL from environment variables
 DATABASE_URL = (

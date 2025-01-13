@@ -3,12 +3,23 @@ from typing import Optional, List
 from fastapi import APIRouter, HTTPException, UploadFile, Form, Depends, Request
 from sqlalchemy.orm import Session
 from app.config.database import get_db
-from app.models.menu.annotations.annotations_model import AnnotationProjectModel, UploadDataModel
+from app.models.menu.annotations.annotation_project_data_model import AnnotationProjectDataModel
+from app.models.menu.annotations.annotate_result_model import (
+    ImageMetadataModel,
+    TextMetadataModel,
+    AudioMetadataModel,
+    VideoMetadataModel
+)
+from app.models.menu.annotations.annotation_project_model import AnnotationProjectModel
+from app.enums.dataTypeEnum import DataTypeEnum
 from app.utils.response_utils import standard_response, standard_pagination_response
 from app.helpers.pagination_helper import paginate_query
 from app.enums.uploadTypeEnum import UploadType
 from app.enums.perPagesEnum import PerPageOptions
 from app.utils.token_bearer_util import JWTBearer
+from PIL import Image
+import mutagen
+from langdetect import detect
 
 # Create or ensure the folder exists
 OUTPUT_FOLDER = "static/image_output"
@@ -18,176 +29,352 @@ jwt_bearer = JWTBearer()
 router = APIRouter()
 
 
-@router.post("/", summary="Upload Files")
+@router.post("/", summary="Upload Data")
 async def upload_data(
     request: Request,
     project_id: int = Form(..., description="Project ID to associate the uploads."),
-    upload_type: UploadType = Form(..., description="Type of upload (select from dropdown)."),
+    upload_type: UploadType = Form(..., description="Type of upload (e.g., BY_MULTIPLE_DATA, BY_DATA_URL)."),
+    data_type: DataTypeEnum = Form(..., description="Type of data (e.g., IMAGE, AUDIO, TEXT, VIDEO)."),
     files_upload: Optional[List[UploadFile]] = None,
-    folders_upload: Optional[List[UploadFile]] = None,
-    folder_path: Optional[str] = None,
-    image_path: Optional[str] = None,
-    image_urls: Optional[List[str]] = None,
+    urls: Optional[List[str]] = None,
     payload: dict = Depends(jwt_bearer),
     db: Session = Depends(get_db),
 ):
     created_by = payload.get("id")
     if not created_by:
-        return standard_response(
-            status="error",
-            status_code=401,
-            message_code="INVALID_OR_EXPIRED_TOKEN",
-            data=None,
-        )
+        return standard_response(status="error", status_code=401, message_code="INVALID_TOKEN")
 
     project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
     if not project:
-        return standard_response(
-            status="error",
-            status_code=404,
-            message_code="PROJECT_NOT_FOUND",
-            data=None,
-        )
+        return standard_response(status="error", status_code=404, message_code="PROJECT_NOT_FOUND")
 
     uploaded_files = []
 
     try:
-        if upload_type == UploadType.by_multiple_image:
+        if upload_type == UploadType.BY_MULTIPLE_DATA:
             if not files_upload or len(files_upload) == 0:
-                return standard_response(
-                    status="error",
-                    status_code=400,
-                    message_code="FILES_REQUIRED",
-                    data=None,
-                )
+                return standard_response(status="error", status_code=400, message_code="NO_FILES_PROVIDED")
             for file in files_upload:
                 file_path = os.path.join(OUTPUT_FOLDER, file.filename)
                 with open(file_path, "wb") as f:
                     f.write(await file.read())
 
-                # Convert URL object to string
-                img_url = str(request.url_for("static", path=f"image_output/{file.filename}"))
-
-                new_upload = UploadDataModel(
+                # file_url = str(request.url_for(path=f"{OUTPUT_FOLDER}/{file.filename}"))
+                file_url = f"{request.base_url}static/image_output/{file.filename}"
+                new_upload = AnnotationProjectDataModel(
                     project_id=project_id,
                     file_name=file.filename,
-                    img_url=img_url,  # Pass as string
+                    file_url=file_url,
+                    data_type=data_type,
                     created_by=created_by,
                 )
                 db.add(new_upload)
                 db.commit()
                 db.refresh(new_upload)
+
+                # Update metadata based on data type
+                update_metadata(file_path, data_type, new_upload.id, db)
+
                 uploaded_files.append({
                     "upload_id": new_upload.id,
                     "file_name": new_upload.file_name,
                     "uploaded_at": new_upload.created_at,
-                    "file_path": file_path,
-                    "image_url": img_url,
+                    "file_url": file_url,
                 })
 
-        elif upload_type == UploadType.by_folder:
-            if not folders_upload or len(folders_upload) == 0:
-                return standard_response(
-                    status="error",
-                    status_code=400,
-                    message_code="FOLDER_FILES_REQUIRED",
-                    data=None,
-                )
-            for file in folders_upload:
-                file_path = os.path.join(OUTPUT_FOLDER, file.filename)
-                with open(file_path, "wb") as f:
-                    f.write(await file.read())
-
-                # Convert URL object to string
-                img_url = str(request.url_for("static", path=f"image_output/{file.filename}"))
-
-                new_upload = UploadDataModel(
+        elif upload_type == UploadType.BY_DATA_URL:
+            if not urls or len(urls) == 0:
+                return standard_response(status="error", status_code=400, message_code="NO_URLS_PROVIDED")
+            for url in urls:
+                new_upload = AnnotationProjectDataModel(
                     project_id=project_id,
-                    file_name=file.filename,
-                    img_url=img_url,  # Pass as string
+                    file_name=url.split("/")[-1],
+                    file_url=url,
+                    data_type=data_type,
                     created_by=created_by,
                 )
                 db.add(new_upload)
                 db.commit()
                 db.refresh(new_upload)
+
                 uploaded_files.append({
                     "upload_id": new_upload.id,
                     "file_name": new_upload.file_name,
                     "uploaded_at": new_upload.created_at,
-                    "file_path": file_path,
-                    "image_url": img_url,
+                    "file_url": url,
                 })
-
-        elif upload_type == UploadType.by_image_url:
-            if not image_urls or len(image_urls) == 0:
-                return standard_response(
-                    status="error",
-                    status_code=400,
-                    message_code="IMAGE_URLS_REQUIRED",
-                    data=None,
-                )
-            for url in image_urls:
-                new_upload = UploadDataModel(
-                    project_id=project_id,
-                    file_name=url,
-                    img_url=url,  # Save the URL string directly
-                    created_by=created_by,
-                )
-                db.add(new_upload)
-                db.commit()
-                db.refresh(new_upload)
-                uploaded_files.append({
-                    "upload_id": new_upload.id,
-                    "file_name": new_upload.file_name,
-                    "uploaded_at": new_upload.created_at,
-                    "image_url": url,
-                })
-
-        elif upload_type == UploadType.by_folder_path:
-            if not folder_path:
-                return standard_response(
-                    status="error",
-                    status_code=400,
-                    message_code="FOLDER_PATH_REQUIRED",
-                    data=None,
-                )
-            uploaded_files.append({
-                "message": f"Folder path '{folder_path}' processed successfully."
-            })
-
-        elif upload_type == UploadType.by_image_path:
-            if not image_path:
-                return standard_response(
-                    status="error",
-                    status_code=400,
-                    message_code="IMAGE_PATH_REQUIRED",
-                    data=None,
-                )
-            uploaded_files.append({
-                "message": f"Image path '{image_path}' processed successfully."
-            })
 
         else:
-            return standard_response(
-                status="error",
-                status_code=400,
-                message_code="INVALID_UPLOAD_TYPE",
-                data=None,
-            )
-    except Exception as e:
-        return standard_response(
-            status="error",
-            status_code=500,
-            message_code="UPLOAD_PROCESSING_FAILED",
-            data=str(e),
-        )
+            return standard_response(status="error", status_code=400, message_code="INVALID_UPLOAD_TYPE")
 
-    return standard_response(
-        status="success",
-        status_code=201,
-        message_code="UPLOAD_PROCESSED_SUCCESSFULLY",
-        data=uploaded_files,
+    except Exception as e:
+        return standard_response(status="error", status_code=500, message_code="UPLOAD_FAILED", data=str(e))
+
+    return standard_response(status="success", status_code=201, message_code="UPLOAD_SUCCESS", data=uploaded_files)
+
+
+def update_metadata(file_path: str, data_type: DataTypeEnum, data_id: int, db: Session):
+    try:
+        if data_type == DataTypeEnum.IMAGE:
+            update_image_metadata(file_path, data_id, db)
+        elif data_type == DataTypeEnum.AUDIO:
+            update_audio_metadata(file_path, data_id, db)
+        elif data_type == DataTypeEnum.TEXT:
+            update_text_metadata(file_path, data_id, db)
+        elif data_type == DataTypeEnum.VIDEO:
+            update_video_metadata(file_path, data_id, db)
+    except Exception as e:
+        print(f"Error updating metadata for {data_type.value}: {e}")
+
+
+def update_image_metadata(file_path: str, data_id: int, db: Session):
+    with Image.open(file_path) as img:
+        width, height = img.size
+        format = img.format
+        color_mode = img.mode
+
+        metadata_entry = ImageMetadataModel(
+            data_id=data_id,
+            width=width,
+            height=height,
+            format=format,
+            color_mode=color_mode,
+        )
+        db.add(metadata_entry)
+        db.commit()
+
+
+def update_text_metadata(file_path: str, data_id: int, db: Session):
+    with open(file_path, "r", encoding="utf-8") as file:
+        content = file.read()
+        text_length = len(content)
+        language = detect(content)
+
+        metadata_entry = TextMetadataModel(
+            data_id=data_id,
+            text_length=text_length,
+            language=language,
+            encoding="utf-8",
+        )
+        db.add(metadata_entry)
+        db.commit()
+
+def update_audio_metadata(file_path: str, data_id: int, db: Session):
+    audio = mutagen.File(file_path)
+    if audio:
+        duration = audio.info.length
+        sample_rate = audio.info.sample_rate if hasattr(audio.info, "sample_rate") else None
+        channels = audio.info.channels if hasattr(audio.info, "channels") else None
+        format = file_path.split(".")[-1].upper()
+
+        metadata_entry = AudioMetadataModel(
+            data_id=data_id,
+            duration=duration,
+            sample_rate=sample_rate,
+            channels=channels,
+            format=format,
+        )
+        db.add(metadata_entry)
+        db.commit()
+
+
+def update_video_metadata(file_path: str, data_id: int, db: Session):
+    import cv2
+    video = cv2.VideoCapture(file_path)
+    if not video.isOpened():
+        raise Exception("Unable to open video file.")
+
+    frame_rate = video.get(cv2.CAP_PROP_FPS)
+    frame_count = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = frame_count / frame_rate if frame_rate else 0
+    width = int(video.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    resolution = f"{width}x{height}"
+    format = file_path.split(".")[-1].upper()
+
+    metadata_entry = VideoMetadataModel(
+        data_id=data_id,
+        duration=duration,
+        frame_rate=frame_rate,
+        resolution=resolution,
+        format=format,
     )
+    db.add(metadata_entry)
+    db.commit()
+
+
+
+
+# @router.post("/", summary="Upload Files")
+# async def upload_data(
+#     request: Request,
+#     project_id: int = Form(..., description="Project ID to associate the uploads."),
+#     upload_type: UploadType = Form(..., description="Type of upload (select from dropdown)."),
+#     files_upload: Optional[List[UploadFile]] = None,
+#     folders_upload: Optional[List[UploadFile]] = None,
+#     folder_path: Optional[str] = None,
+#     image_path: Optional[str] = None,
+#     image_urls: Optional[List[str]] = None,
+#     payload: dict = Depends(jwt_bearer),
+#     db: Session = Depends(get_db),
+# ):
+#     created_by = payload.get("id")
+#     if not created_by:
+#         return standard_response(
+#             status="error",
+#             status_code=401,
+#             message_code="INVALID_OR_EXPIRED_TOKEN",
+#             data=None,
+#         )
+
+#     project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
+#     if not project:
+#         return standard_response(
+#             status="error",
+#             status_code=404,
+#             message_code="PROJECT_NOT_FOUND",
+#             data=None,
+#         )
+
+#     uploaded_files = []
+
+#     try:
+#         if upload_type == UploadType.by_multiple_image:
+#             if not files_upload or len(files_upload) == 0:
+#                 return standard_response(
+#                     status="error",
+#                     status_code=400,
+#                     message_code="FILES_REQUIRED",
+#                     data=None,
+#                 )
+#             for file in files_upload:
+#                 file_path = os.path.join(OUTPUT_FOLDER, file.filename)
+#                 with open(file_path, "wb") as f:
+#                     f.write(await file.read())
+
+#                 # Convert URL object to string
+#                 img_url = str(request.url_for("static", path=f"image_output/{file.filename}"))
+
+#                 new_upload = AnnotationProjectDataModel(
+#                     project_id=project_id,
+#                     file_name=file.filename,
+#                     img_url=img_url,  # Pass as string
+#                     created_by=created_by,
+#                 )
+#                 db.add(new_upload)
+#                 db.commit()
+#                 db.refresh(new_upload)
+#                 uploaded_files.append({
+#                     "upload_id": new_upload.id,
+#                     "file_name": new_upload.file_name,
+#                     "uploaded_at": new_upload.created_at,
+#                     "file_path": file_path,
+#                     "image_url": img_url,
+#                 })
+
+#         elif upload_type == UploadType.by_folder:
+#             if not folders_upload or len(folders_upload) == 0:
+#                 return standard_response(
+#                     status="error",
+#                     status_code=400,
+#                     message_code="FOLDER_FILES_REQUIRED",
+#                     data=None,
+#                 )
+#             for file in folders_upload:
+#                 file_path = os.path.join(OUTPUT_FOLDER, file.filename)
+#                 with open(file_path, "wb") as f:
+#                     f.write(await file.read())
+
+#                 # Convert URL object to string
+#                 img_url = str(request.url_for("static", path=f"image_output/{file.filename}"))
+
+#                 new_upload = AnnotationProjectDataModel(
+#                     project_id=project_id,
+#                     file_name=file.filename,
+#                     img_url=img_url,  # Pass as string
+#                     created_by=created_by,
+#                 )
+#                 db.add(new_upload)
+#                 db.commit()
+#                 db.refresh(new_upload)
+#                 uploaded_files.append({
+#                     "upload_id": new_upload.id,
+#                     "file_name": new_upload.file_name,
+#                     "uploaded_at": new_upload.created_at,
+#                     "file_path": file_path,
+#                     "image_url": img_url,
+#                 })
+
+#         elif upload_type == UploadType.by_image_url:
+#             if not image_urls or len(image_urls) == 0:
+#                 return standard_response(
+#                     status="error",
+#                     status_code=400,
+#                     message_code="IMAGE_URLS_REQUIRED",
+#                     data=None,
+#                 )
+#             for url in image_urls:
+#                 new_upload = AnnotationProjectDataModel(
+#                     project_id=project_id,
+#                     file_name=url,
+#                     img_url=url,  # Save the URL string directly
+#                     created_by=created_by,
+#                 )
+#                 db.add(new_upload)
+#                 db.commit()
+#                 db.refresh(new_upload)
+#                 uploaded_files.append({
+#                     "upload_id": new_upload.id,
+#                     "file_name": new_upload.file_name,
+#                     "uploaded_at": new_upload.created_at,
+#                     "image_url": url,
+#                 })
+
+#         elif upload_type == UploadType.by_folder_path:
+#             if not folder_path:
+#                 return standard_response(
+#                     status="error",
+#                     status_code=400,
+#                     message_code="FOLDER_PATH_REQUIRED",
+#                     data=None,
+#                 )
+#             uploaded_files.append({
+#                 "message": f"Folder path '{folder_path}' processed successfully."
+#             })
+
+#         elif upload_type == UploadType.by_image_path:
+#             if not image_path:
+#                 return standard_response(
+#                     status="error",
+#                     status_code=400,
+#                     message_code="IMAGE_PATH_REQUIRED",
+#                     data=None,
+#                 )
+#             uploaded_files.append({
+#                 "message": f"Image path '{image_path}' processed successfully."
+#             })
+
+#         else:
+#             return standard_response(
+#                 status="error",
+#                 status_code=400,
+#                 message_code="INVALID_UPLOAD_TYPE",
+#                 data=None,
+#             )
+#     except Exception as e:
+#         return standard_response(
+#             status="error",
+#             status_code=500,
+#             message_code="UPLOAD_PROCESSING_FAILED",
+#             data=str(e),
+#         )
+
+#     return standard_response(
+#         status="success",
+#         status_code=201,
+#         message_code="UPLOAD_PROCESSED_SUCCESSFULLY",
+#         data=uploaded_files,
+#     )
 
 
 @router.get("/all", summary="Get All Data by User")
@@ -215,7 +402,7 @@ async def get_all_data_by_user(
             total_pages=0,
         )
 
-    query = db.query(UploadDataModel).filter_by(created_by=created_by)
+    query = db.query(AnnotationProjectDataModel).filter_by(created_by=created_by)
     paginated_result = paginate_query(query, page, per_page.value)
 
     if not paginated_result["items"]:
@@ -280,7 +467,7 @@ async def get_uploaded_data(
             data=[],
         )
 
-    files = db.query(UploadDataModel).filter_by(project_id=project_id).all()
+    files = db.query(AnnotationProjectDataModel).filter_by(project_id=project_id).all()
 
     if not files:
         return standard_response(
@@ -294,7 +481,7 @@ async def get_uploaded_data(
         {
             "upload_id": file.id,
             "file_name": file.file_name,
-            "img_url": file.img_url,
+            "file_url": file.file_url,
             "uploaded_at": file.created_at,
         }
         for file in files
@@ -343,7 +530,7 @@ async def get_uploaded_data(
 #             total_pages=0,
 #         )
 
-#     query = db.query(UploadDataModel).filter_by(project_id=project_id)
+#     query = db.query(AnnotationProjectDataModel).filter_by(project_id=project_id)
 #     paginated_result = paginate_query(query, page, per_page.value, request)
 
 #     if not paginated_result["items"]:

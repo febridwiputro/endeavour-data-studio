@@ -1,17 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from app.config.database import get_db
-from app.models.menu.menu_model import MenuModel
-from app.models.menu.annotations.annotations_model import (
-    AnnotationProjectModel,
-    AnnotationFeatureModel,
-    SubFeature1Model,
-    SubFeature2Model,
-    AnnotationProjectFeatureModel,
-)
-from app.schemas.menu.annotations.annotations_schema import (
-    CreateAnnotationProjectRequest,
-)
+from app.models.menu.annotations.annotation_sub_feature_2_model import SubFeature2Model
 from app.utils.response_utils import standard_response
 from app.utils.token_bearer_util import JWTBearer
 

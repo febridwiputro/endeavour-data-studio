@@ -87,7 +87,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
         const { data } = response.data;
         const mappedTasks = data.map((item: any) => ({
           id: item.upload_id,
-          image: item.img_url,
+          image: item.file_url,
           completed: false,
           annotatedBy: "Unassigned",
         }));
@@ -121,18 +121,18 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     x: number;
     y: number;
   } | null>(null);
-const [resizingHandle, setResizingHandle] = useState<{
-  index: number;
-  corner:
-    | "top-left"
-    | "top-right"
-    | "bottom-left"
-    | "bottom-right"
-    | "top-center"
-    | "bottom-center"
-    | "left-center"
-    | "right-center";
-} | null>(null);
+  const [resizingHandle, setResizingHandle] = useState<{
+    index: number;
+    corner:
+      | "top-left"
+      | "top-right"
+      | "bottom-left"
+      | "bottom-right"
+      | "top-center"
+      | "bottom-center"
+      | "left-center"
+      | "right-center";
+  } | null>(null);
 
   // const [resizingHandle, setResizingHandle] = useState<{
   //   index: number;
@@ -170,6 +170,45 @@ const [resizingHandle, setResizingHandle] = useState<{
   const [selectedLabelIndex, setSelectedLabelIndex] = useState<number | null>(
     null
   );
+
+  const [deletedBoundingBoxes, setDeletedBoundingBoxes] = useState<number[]>(
+    []
+  );
+  const [hiddenBoxes, setHiddenBoxes] = useState<number[]>([]);
+
+  const onToggleBoxVisibility = (id: number | string) => {
+    setHiddenBoxes(
+      (prev) =>
+        prev.includes(Number(id))
+          ? prev.filter((boxId) => boxId !== Number(id)) // Remove the id
+          : [...prev, Number(id)] // Add the id
+    );
+  };
+
+  const visibleBoundingBoxes = boundingBoxes.filter(
+    (box) => !hiddenBoxes.includes(Number(box.id))
+  );
+
+  const onDeleteBox = (index: number) => {
+    if (index !== null && index >= 0) {
+      const boxToDelete = boundingBoxes[index];
+      if (boxToDelete.id) {
+        setDeletedBoundingBoxes((prev) => [
+          ...prev,
+          typeof boxToDelete.id === "string"
+            ? Number(boxToDelete.id)
+            : boxToDelete.id,
+        ]);
+      }
+      setBoundingBoxes((prev) => prev.filter((_, idx) => idx !== index));
+      setSelectedBoxIndex(null);
+    }
+  };
+
+  const handleSelectBoundingBox = (index: number) => {
+    setSelectedBoxIndex(index); // Set the selected bounding box index
+    setActiveMainTab("info"); // Switch to "info" tab
+  };
 
   const toggleDashLineMode = () => {
     setIsDashLineMode((prev) => !prev);
@@ -404,161 +443,287 @@ const [resizingHandle, setResizingHandle] = useState<{
   // Handle canvas mouse move
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = adjustCoordinates(e);
-
-    // Update cursor style when hovering near a corner
-    let cursorStyle = "default";
-    for (let i = 0; i < boundingBoxes.length; i++) {
-      const box = boundingBoxes[i];
-      const corner = detectResizeHandle(x, y, box);
-      if (corner === "top-left" || corner === "bottom-right") {
-        cursorStyle = "nwse-resize";
-        break;
-      } else if (corner === "top-right" || corner === "bottom-left") {
-        cursorStyle = "nesw-resize";
-        break;
-      }
-    }
-    e.currentTarget.style.cursor = cursorStyle;
-
-    // Handle resizing
-    if (resizingHandle) {
-      setBoundingBoxes((prev) => {
-        const updatedBoxes = [...prev];
-        const box = updatedBoxes[resizingHandle.index];
-        const { corner } = resizingHandle;
-
-        if (corner === "top-left") {
-          box.x1 = x;
-          box.y1 = y;
-        } else if (corner === "top-right") {
-          box.x2 = x;
-          box.y1 = y;
-        } else if (corner === "bottom-left") {
-          box.x1 = x;
-          box.y2 = y;
-        } else if (corner === "bottom-right") {
-          box.x2 = x;
-          box.y2 = y;
-        } else if (corner === "top-center") {
-          box.y1 = y;
-        } else if (corner === "bottom-center") {
-          box.y2 = y;
-        } else if (corner === "left-center") {
-          box.x1 = x;
-        } else if (corner === "right-center") {
-          box.x2 = x;
+  
+    // Handle cursor style updates
+    const updateCursorStyle = () => {
+      let cursorStyle = "default";
+      for (const box of visibleBoundingBoxes) {
+        const corner = detectResizeHandle(x, y, box);
+        if (corner === "top-left" || corner === "bottom-right") {
+          cursorStyle = "nwse-resize";
+          break;
+        } else if (corner === "top-right" || corner === "bottom-left") {
+          cursorStyle = "nesw-resize";
+          break;
         }
-
-        // Update width and height
-        box.w = Math.abs(box.x2 - box.x1);
-        box.h = Math.abs(box.y2 - box.y1);
-
-        return updatedBoxes;
-      });
-      return;
-    }
-
-    // if (resizingHandle) {
-    //   setBoundingBoxes((prev) => {
-    //     const updatedBoxes = [...prev];
-    //     const box = updatedBoxes[resizingHandle.index];
-    //     const { corner } = resizingHandle;
-
-    //     if (corner === "top-left") {
-    //       box.x1 = x;
-    //       box.y1 = y;
-    //     } else if (corner === "top-right") {
-    //       box.x2 = x;
-    //       box.y1 = y;
-    //     } else if (corner === "bottom-left") {
-    //       box.x1 = x;
-    //       box.y2 = y;
-    //     } else if (corner === "bottom-right") {
-    //       box.x2 = x;
-    //       box.y2 = y;
-    //     }
-
-    //     // Update width and height
-    //     box.w = Math.abs(box.x2 - box.x1);
-    //     box.h = Math.abs(box.y2 - box.y1);
-
-    //     return updatedBoxes;
-    //   });
-    //   return;
-    // }
-
-    // Handle dragging
-    if (draggingOffset && selectedBoxIndex !== null) {
-      setBoundingBoxes((prev) => {
-        const updatedBoxes = [...prev];
-        const box = updatedBoxes[selectedBoxIndex];
-
-        const newX1 = x - draggingOffset.x;
-        const newY1 = y - draggingOffset.y;
-        const newX2 = newX1 + box.w;
-        const newY2 = newY1 + box.h;
-
-        updatedBoxes[selectedBoxIndex] = {
-          ...box,
-          x1: newX1,
-          y1: newY1,
-          x2: newX2,
-          y2: newY2,
-        };
-
-        return updatedBoxes;
-      });
-      return;
-    }
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Redraw all bounding boxes
-    boundingBoxes.forEach((box, index) =>
-      drawBoundingBox(ctx, box, index === selectedBoxIndex)
-    );
-
-    // Draw dashed lines if the mode is active
-    if (isDashLineMode) {
+      }
+      e.currentTarget.style.cursor = cursorStyle;
+    };
+  
+    // Handle resizing logic
+    const handleResizing = () => {
+      if (resizingHandle) {
+        setBoundingBoxes((prev) => {
+          const updatedBoxes = [...prev];
+          const box = updatedBoxes[resizingHandle.index];
+          const { corner } = resizingHandle;
+  
+          // Update coordinates based on the corner being resized
+          if (corner === "top-left") {
+            box.x1 = x;
+            box.y1 = y;
+          } else if (corner === "top-right") {
+            box.x2 = x;
+            box.y1 = y;
+          } else if (corner === "bottom-left") {
+            box.x1 = x;
+            box.y2 = y;
+          } else if (corner === "bottom-right") {
+            box.x2 = x;
+            box.y2 = y;
+          } else if (corner === "top-center") {
+            box.y1 = y;
+          } else if (corner === "bottom-center") {
+            box.y2 = y;
+          } else if (corner === "left-center") {
+            box.x1 = x;
+          } else if (corner === "right-center") {
+            box.x2 = x;
+          }
+  
+          // Update width and height
+          box.w = Math.abs(box.x2 - box.x1);
+          box.h = Math.abs(box.y2 - box.y1);
+  
+          return updatedBoxes;
+        });
+      }
+    };
+  
+    // Handle dragging logic
+    const handleDragging = () => {
+      if (draggingOffset && selectedBoxIndex !== null) {
+        setBoundingBoxes((prev) => {
+          const updatedBoxes = [...prev];
+          const box = updatedBoxes[selectedBoxIndex];
+  
+          // Calculate new coordinates
+          const newX1 = x - draggingOffset.x;
+          const newY1 = y - draggingOffset.y;
+          const newX2 = newX1 + box.w;
+          const newY2 = newY1 + box.h;
+  
+          updatedBoxes[selectedBoxIndex] = {
+            ...box,
+            x1: newX1,
+            y1: newY1,
+            x2: newX2,
+            y2: newY2,
+          };
+  
+          return updatedBoxes;
+        });
+      }
+    };
+  
+    // Handle live drawing of a new bounding box
+    const handleDrawing = () => {
+      if (isDrawing && startPoint) {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+  
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+  
+        // Clear canvas and redraw all visible bounding boxes
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        visibleBoundingBoxes.forEach((box, index) =>
+          drawBoundingBox(ctx, box, index === selectedBoxIndex)
+        );
+  
+        // Draw the new bounding box being created
+        ctx.strokeStyle =
+          classes.find((cls) => cls.name === activeClass)?.color || "#000000";
+        ctx.lineWidth = 2;
+        ctx.strokeRect(
+          startPoint.x,
+          startPoint.y,
+          x - startPoint.x,
+          y - startPoint.y
+        );
+      }
+    };
+  
+    // Handle dashed lines if the mode is active
+    const handleDashedLines = () => {
+      if (!isDashLineMode) return;
+  
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+  
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+  
       ctx.save();
       ctx.setLineDash([5, 5]); // Define dash pattern
       ctx.strokeStyle = "white"; // Set dashed line color
       ctx.lineWidth = 1; // Set dashed line thickness
-
-      // Vertical dashed line
+  
+      // Draw vertical dashed line
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, canvas.height);
       ctx.stroke();
-
-      // Horizontal dashed line
+  
+      // Draw horizontal dashed line
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(canvas.width, y);
       ctx.stroke();
-
+  
       ctx.restore();
-    }
-
-    // Handle live drawing of a new bounding box
-    if (isDrawing && startPoint) {
-      ctx.strokeStyle =
-        classes.find((cls) => cls.name === activeClass)?.color || "#000000";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(
-        startPoint.x,
-        startPoint.y,
-        x - startPoint.x,
-        y - startPoint.y
-      );
+    };
+  
+    // Execute interaction logic in order of priority
+    if (resizingHandle) {
+      handleResizing();
+    } else if (draggingOffset && selectedBoxIndex !== null) {
+      handleDragging();
+    } else {
+      updateCursorStyle();
+      handleDrawing();
+      handleDashedLines();
     }
   };
+  
+  // const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  //   const { x, y } = adjustCoordinates(e);
+
+  //   // Update cursor style when hovering near a corner
+  //   let cursorStyle = "default";
+  //   for (let i = 0; i < boundingBoxes.length; i++) {
+  //     const box = boundingBoxes[i];
+  //     const corner = detectResizeHandle(x, y, box);
+  //     if (corner === "top-left" || corner === "bottom-right") {
+  //       cursorStyle = "nwse-resize";
+  //       break;
+  //     } else if (corner === "top-right" || corner === "bottom-left") {
+  //       cursorStyle = "nesw-resize";
+  //       break;
+  //     }
+  //   }
+  //   e.currentTarget.style.cursor = cursorStyle;
+
+  //   // Handle resizing
+  //   if (resizingHandle) {
+  //     setBoundingBoxes((prev) => {
+  //       const updatedBoxes = [...prev];
+  //       const box = updatedBoxes[resizingHandle.index];
+  //       const { corner } = resizingHandle;
+
+  //       if (corner === "top-left") {
+  //         box.x1 = x;
+  //         box.y1 = y;
+  //       } else if (corner === "top-right") {
+  //         box.x2 = x;
+  //         box.y1 = y;
+  //       } else if (corner === "bottom-left") {
+  //         box.x1 = x;
+  //         box.y2 = y;
+  //       } else if (corner === "bottom-right") {
+  //         box.x2 = x;
+  //         box.y2 = y;
+  //       } else if (corner === "top-center") {
+  //         box.y1 = y;
+  //       } else if (corner === "bottom-center") {
+  //         box.y2 = y;
+  //       } else if (corner === "left-center") {
+  //         box.x1 = x;
+  //       } else if (corner === "right-center") {
+  //         box.x2 = x;
+  //       }
+
+  //       // Update width and height
+  //       box.w = Math.abs(box.x2 - box.x1);
+  //       box.h = Math.abs(box.y2 - box.y1);
+
+  //       return updatedBoxes;
+  //     });
+  //     return;
+  //   }
+
+  //   // Handle dragging
+  //   if (draggingOffset && selectedBoxIndex !== null) {
+  //     setBoundingBoxes((prev) => {
+  //       const updatedBoxes = [...prev];
+  //       const box = updatedBoxes[selectedBoxIndex];
+
+  //       const newX1 = x - draggingOffset.x;
+  //       const newY1 = y - draggingOffset.y;
+  //       const newX2 = newX1 + box.w;
+  //       const newY2 = newY1 + box.h;
+
+  //       updatedBoxes[selectedBoxIndex] = {
+  //         ...box,
+  //         x1: newX1,
+  //         y1: newY1,
+  //         x2: newX2,
+  //         y2: newY2,
+  //       };
+
+  //       return updatedBoxes;
+  //     });
+  //     return;
+  //   }
+
+  //   const canvas = canvasRef.current;
+  //   if (!canvas) return;
+
+  //   const ctx = canvas.getContext("2d");
+  //   if (!ctx) return;
+
+  //   ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  //   // Redraw all bounding boxes
+  //   boundingBoxes.forEach((box, index) =>
+  //     drawBoundingBox(ctx, box, index === selectedBoxIndex)
+  //   );
+
+  //   // Draw dashed lines if the mode is active
+  //   if (isDashLineMode) {
+  //     ctx.save();
+  //     ctx.setLineDash([5, 5]); // Define dash pattern
+  //     ctx.strokeStyle = "white"; // Set dashed line color
+  //     ctx.lineWidth = 1; // Set dashed line thickness
+
+  //     // Vertical dashed line
+  //     ctx.beginPath();
+  //     ctx.moveTo(x, 0);
+  //     ctx.lineTo(x, canvas.height);
+  //     ctx.stroke();
+
+  //     // Horizontal dashed line
+  //     ctx.beginPath();
+  //     ctx.moveTo(0, y);
+  //     ctx.lineTo(canvas.width, y);
+  //     ctx.stroke();
+
+  //     ctx.restore();
+  //   }
+
+  //   // Handle live drawing of a new bounding box
+  //   if (isDrawing && startPoint) {
+  //     ctx.strokeStyle =
+  //       classes.find((cls) => cls.name === activeClass)?.color || "#000000";
+  //     ctx.lineWidth = 2;
+  //     ctx.strokeRect(
+  //       startPoint.x,
+  //       startPoint.y,
+  //       x - startPoint.x,
+  //       y - startPoint.y
+  //     );
+  //   }
+  // };
 
   // Handle canvas mouse up
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -584,7 +749,8 @@ const [resizingHandle, setResizingHandle] = useState<{
     const y2 = Math.max(startPoint.y, y);
 
     const newBox: BoundingBox = {
-      id: uuidv4(),
+      id: selectedTaskId!.toString(),
+      // id: uuidv4(),
       x1,
       y1,
       x2,
@@ -717,7 +883,6 @@ const [resizingHandle, setResizingHandle] = useState<{
   //   );
   // };
 
-  // Update bounding boxes redraw to pass selection state
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -727,11 +892,16 @@ const [resizingHandle, setResizingHandle] = useState<{
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Redraw all bounding boxes with selection highlighting
-    boundingBoxes.forEach((box, index) =>
+    // Calculate visible bounding boxes
+    const visibleBoundingBoxes = boundingBoxes.filter(
+      (box) => !hiddenBoxes.includes(Number(box.id))
+    );
+
+    // Redraw only visible bounding boxes with selection highlighting
+    visibleBoundingBoxes.forEach((box, index) =>
       drawBoundingBox(ctx, box, index === selectedBoxIndex)
     );
-  }, [boundingBoxes, selectedBoxIndex]);
+  }, [boundingBoxes, hiddenBoxes, selectedBoxIndex]);
 
   // Handle mouse leave
   const handleMouseLeave = () => {
@@ -842,6 +1012,8 @@ const [resizingHandle, setResizingHandle] = useState<{
         handleMouseUpForMove={handleMouseUpForMove}
         boundingBoxes={boundingBoxes}
         setBoundingBoxes={setBoundingBoxes}
+        deletedBoundingBoxes={deletedBoundingBoxes}
+        setDeletedBoundingBoxes={setDeletedBoundingBoxes}
         classes={classes}
         setClasses={setClasses}
         selectedColors={selectedColors}
@@ -864,12 +1036,11 @@ const [resizingHandle, setResizingHandle] = useState<{
         showModal={showModal}
         cancelReset={cancelReset}
         confirmReset={confirmReset}
-        showAlert={showAlert}
-        setShowAlert={setShowAlert}
         canvasRef={canvasRef}
         activeClass={activeClass}
         setActiveClass={setActiveClass}
       />
+
       <DetailsPanel
         selectedTask={selectedTask}
         annotations={classes.map((cls) => ({
@@ -883,518 +1054,13 @@ const [resizingHandle, setResizingHandle] = useState<{
         setActiveSubTab={setActiveSubTab}
         boundingBoxes={boundingBoxes}
         selectedBoxIndex={selectedBoxIndex}
+        hiddenBoxes={hiddenBoxes} // Pass deleted bounding boxes
+        onDeleteBox={onDeleteBox}
+        onToggleBoxVisibility={onToggleBoxVisibility}
+        onSelectBoundingBox={handleSelectBoundingBox}
       />
     </div>
   );
 };
 
 export default AnnotationAnnotateProjectLabelingPage;
-
-
-// ==================================================================================================
-
-
-
-// {
-/* <MainPanel
-        tasks={tasks}
-        selectedTaskId={selectedTaskId}
-        panelWidth={panelWidth}
-        isDragging={isDragging}
-        showDashLines={showDashLines}
-        cursorPosition={{ x: 0, y: 0 }}
-        zoomLevel={zoomLevel}
-        panOffset={panOffset}
-        activeTool={activeTool}
-        handleZoomIn={handleZoomIn}
-        handleZoomOut={handleZoomOut}
-        handleMove={handleMove}
-        handlePan={handlePan}
-        handleZoomToFit={handleZoomToFit}
-        handleZoomToActualSize={handleZoomToActualSize}
-        accessToken={accessToken || localStorage.getItem("accessToken") || ""}
-        boundingBoxes={boundingBoxes}
-        setBoundingBoxes={setBoundingBoxes}
-        classes={classes}
-        setClasses={setClasses}
-        selectedColors={selectedColors}
-        setSelectedColors={setSelectedColors}
-        handleDashLineCursor={handleDashLineCursor}
-      /> */
-// }
-
-// import React, { useState, useEffect } from "react";
-// import { useSelector } from "react-redux";
-// import { RootState } from "@/store/store";
-// import { api } from "@/services/apiConfig";
-// import Sidebar from "./Sidebar";
-// import ResizableBar from "./ResizableBar";
-// import MainPanel from "./MainPanel";
-// import DetailsPanel from "./DetailsPanel";
-// import { Task, BoundingBox, Annotation } from "./types";
-
-// const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
-//   const { accessToken } = useSelector((state: RootState) => state.auth);
-//   const [tasks, setTasks] = useState<Task[]>([]);
-//   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-//   const [annotations, setAnnotations] = useState<Annotation[]>([]);
-//   const [panelWidth, setPanelWidth] = useState(60);
-//   const [isDragging, setIsDragging] = useState(false);
-//   const [zoomLevel, setZoomLevel] = useState(1);
-//   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-//   const [activeTool, setActiveTool] = useState<
-//     | "zoomIn"
-//     | "zoomOut"
-//     | "move"
-//     | "pan"
-//     | "dashLine"
-//     | "zoomToFit"
-//     | "zoomToActualSize"
-//     | null
-//   >(null);
-//   const [activeMainTab, setActiveMainTab] = useState<"info" | "history">(
-//     "info"
-//   );
-//   const [activeSubTab, setActiveSubTab] = useState<"regions" | "relations">(
-//     "regions"
-//   );
-//   const [boundingBoxes, setBoundingBoxes] = useState<BoundingBox[]>([]);
-//   const [selectedBoxIndex, setSelectedBoxIndex] = useState<number | null>(null);
-//   const [classes, setClasses] = useState<any[]>([]);
-
-//   const selectedTask =
-//     tasks.find((task) => task.id === selectedTaskId) || tasks[0];
-
-//   useEffect(() => {
-//     const fetchTasks = async () => {
-//       try {
-//         const response = await api.get("/annotations/upload-data/1", {
-//           headers: { Authorization: `Bearer ${accessToken}` },
-//         });
-//         const { data } = response.data;
-//         setTasks(
-//           data.map((item: any) => ({
-//             id: item.upload_id,
-//             image: item.img_url,
-//             completed: false,
-//             annotatedBy: "Unassigned",
-//           }))
-//         );
-//       } catch (error) {
-//         console.error("Error fetching tasks:", error);
-//       }
-//     };
-
-//     const fetchClasses = async () => {
-//       try {
-//         const response = await api.get("/annotations/classes-and-tags/1", {
-//           headers: { Authorization: `Bearer ${accessToken}` },
-//         });
-//         const { data } = response.data;
-//         setClasses(
-//           data.map((cls: any) => ({
-//             id: cls.id,
-//             name: cls.class_name,
-//             color: cls.class_color || "#cccccc",
-//           }))
-//         );
-//       } catch (error) {
-//         console.error("Error fetching classes:", error);
-//       }
-//     };
-
-//     if (accessToken) {
-//       fetchTasks();
-//       fetchClasses();
-//     }
-//   }, [accessToken]);
-
-//   const [showDashLines, setShowDashLines] = useState(false);
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
-//   const [selectedColors, setSelectedColors] = useState<Record<string, boolean>>(
-//     {}
-//   );
-
-//   // Fetch annotation classes
-//   const fetchClasses = async () => {
-//     if (!accessToken) return;
-
-//     try {
-//       const response = await api.get(`/annotations/classes-and-tags/1`, {
-//         headers: { Authorization: `Bearer ${accessToken}` },
-//       });
-//       const { data } = response.data;
-//       const fetchedClasses = data.map((cls: any) => ({
-//         id: cls.id,
-//         color: cls.class_color || "#cccccc",
-//         name: cls.class_name,
-//       }));
-//       setClasses(fetchedClasses);
-
-//       const initialColors = fetchedClasses.reduce(
-//         (acc: any, cls: any) => ({ ...acc, [cls.name]: false }),
-//         {}
-//       );
-//       setSelectedColors(initialColors);
-//     } catch (error) {
-//       console.error("Error fetching classes and tags:", error);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchClasses();
-//   }, [accessToken]);
-
-//   // Fetch Tasks
-//   useEffect(() => {
-//     const fetchTasks = async () => {
-//       const token = accessToken || localStorage.getItem("accessToken");
-//       if (!token) {
-//         setError("Access token is missing. Please log in.");
-//         return;
-//       }
-
-//       setLoading(true);
-//       setError(null);
-
-//       try {
-//         const response = await api.get("/annotations/upload-data/1", {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         });
-
-//         const { data } = response.data;
-//         const mappedTasks = data.map((item: any) => ({
-//           id: item.upload_id,
-//           image: item.img_url,
-//           completed: false,
-//           annotatedBy: "Unassigned",
-//         }));
-
-//         setTasks(mappedTasks);
-//       } catch (err: any) {
-//         setError(err.response?.data?.message || "Failed to fetch tasks.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchTasks();
-//   }, [accessToken]);
-
-//   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.1, 3));
-//   const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 0.1, 0.5));
-//   const handleMove = () => setActiveTool("move");
-//   const handlePan = () => setActiveTool("pan");
-//   const handleDashLineCursor = () => setShowDashLines((prev) => !prev);
-
-//   const handleZoomToFit = () => {
-//     if (!selectedTask) return;
-//     const image = new Image();
-//     image.src = selectedTask.image;
-
-//     image.onload = () => {
-//       const imageAspectRatio = image.width / image.height;
-//       const panelAspectRatio = panelWidth / 100;
-//       const newZoomLevel =
-//         imageAspectRatio > panelAspectRatio
-//           ? panelWidth / 100 / imageAspectRatio
-//           : 1;
-
-//       setZoomLevel(newZoomLevel);
-//       setPanOffset({ x: 0, y: 0 });
-//       setActiveTool("zoomToFit");
-//     };
-//   };
-
-//   const handleZoomToActualSize = () => {
-//     if (!selectedTask) return;
-//     const image = new Image();
-//     image.src = selectedTask.image;
-
-//     image.onload = () => {
-//       setZoomLevel(1);
-//       setPanOffset({ x: 0, y: 0 });
-//       setActiveTool("zoomToActualSize");
-//     };
-//   };
-
-//   if (loading) return <p>Loading...</p>;
-//   if (error) return <p className="text-red-600">{error}</p>;
-//   if (!tasks.length) return <p>No tasks available.</p>;
-
-//   return (
-//     <div className="flex min-h-screen">
-//       <Sidebar
-//         tasks={tasks}
-//         selectedTaskId={selectedTaskId}
-//         setSelectedTaskId={setSelectedTaskId}
-//         panelWidth={panelWidth}
-//       />
-//       <ResizableBar
-//         panelWidth={panelWidth}
-//         setPanelWidth={setPanelWidth}
-//         isDragging={isDragging}
-//         setIsDragging={setIsDragging}
-//       />
-//       <MainPanel
-//         tasks={tasks}
-//         selectedTaskId={selectedTaskId}
-//         panelWidth={panelWidth}
-//         isDragging={isDragging}
-//         showDashLines={showDashLines}
-//         cursorPosition={{ x: 0, y: 0 }}
-//         zoomLevel={zoomLevel}
-//         panOffset={panOffset}
-//         activeTool={activeTool}
-//         handleZoomIn={handleZoomIn}
-//         handleZoomOut={handleZoomOut}
-//         handleMove={handleMove}
-//         handlePan={handlePan}
-//         handleZoomToFit={handleZoomToFit}
-//         handleZoomToActualSize={handleZoomToActualSize}
-//         accessToken={accessToken || localStorage.getItem("accessToken") || ""}
-//         boundingBoxes={boundingBoxes}
-//         setBoundingBoxes={setBoundingBoxes}
-//         classes={classes}
-//         setClasses={setClasses}
-//         selectedColors={selectedColors}
-//         setSelectedColors={setSelectedColors}
-//         handleDashLineCursor={handleDashLineCursor}
-//       />
-//       <DetailsPanel
-//         selectedTask={selectedTask}
-//         annotations={classes.map((cls) => ({
-//           id: cls.id,
-//           type: cls.name,
-//           color: cls.color,
-//         }))}
-//         activeMainTab={activeMainTab}
-//         setActiveMainTab={setActiveMainTab}
-//         activeSubTab={activeSubTab}
-//         setActiveSubTab={setActiveSubTab}
-//         boundingBoxes={boundingBoxes}
-//         selectedBoxIndex={selectedBoxIndex}
-//       />
-//     </div>
-//   );
-// };
-
-// export default AnnotationAnnotateProjectLabelingPage;
-
-// import React, { useState, useEffect } from "react";
-// import { useSelector } from "react-redux";
-// import { RootState } from "@/store/store";
-// import { api } from "@/services/apiConfig";
-// import Sidebar from "./Sidebar";
-// import ResizableBar from "./ResizableBar";
-// import MainPanel from "./MainPanel";
-// import DetailsPanel from "./DetailsPanel";
-// import { Task, BoundingBox, Annotation } from "./types";
-
-// const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
-//   const { accessToken } = useSelector((state: RootState) => state.auth);
-//   const [tasks, setTasks] = useState<Task[]>([]);
-//   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-//   const [annotations, setAnnotations] = useState<Annotation[]>([]);
-//   const [panelWidth, setPanelWidth] = useState(60);
-//   const [isDragging, setIsDragging] = useState(false);
-//   const [zoomLevel, setZoomLevel] = useState(1);
-//   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
-//   const [activeTool, setActiveTool] = useState<
-//     | "zoomIn"
-//     | "zoomOut"
-//     | "move"
-//     | "pan"
-//     | "dashLine"
-//     | "zoomToFit"
-//     | "zoomToActualSize"
-//     | null
-//   >(null);
-//   const [showDashLines, setShowDashLines] = useState(false);
-//   const [activeMainTab, setActiveMainTab] = useState<"info" | "history">(
-//     "info"
-//   );
-//   const [activeSubTab, setActiveSubTab] = useState<"regions" | "relations">(
-//     "regions"
-//   );
-//   const [loading, setLoading] = useState(false);
-//   const [error, setError] = useState<string | null>(null);
-//   const [boundingBoxes, setBoundingBoxes] = useState<BoundingBox[]>([]);
-//   const [selectedBoxIndex, setSelectedBoxIndex] = useState<number | null>(null);
-//   const [classes, setClasses] = useState<any[]>([]);
-//   const [selectedColors, setSelectedColors] = useState<Record<string, boolean>>(
-//     {}
-//   );
-
-//   // Fetch annotation classes
-//   const fetchClasses = async () => {
-//     if (!accessToken) return;
-
-//     try {
-//       const response = await api.get(`/annotations/classes-and-tags/1`, {
-//         headers: { Authorization: `Bearer ${accessToken}` },
-//       });
-//       const { data } = response.data;
-//       const fetchedClasses = data.map((cls: any) => ({
-//         id: cls.id,
-//         color: cls.class_color || "#cccccc",
-//         name: cls.class_name,
-//       }));
-//       setClasses(fetchedClasses);
-
-//       const initialColors = fetchedClasses.reduce(
-//         (acc: any, cls: any) => ({ ...acc, [cls.name]: false }),
-//         {}
-//       );
-//       setSelectedColors(initialColors);
-//     } catch (error) {
-//       console.error("Error fetching classes and tags:", error);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchClasses();
-//   }, [accessToken]);
-
-//   // Fetch Tasks
-//   useEffect(() => {
-//     const fetchTasks = async () => {
-//       const token = accessToken || localStorage.getItem("accessToken");
-//       if (!token) {
-//         setError("Access token is missing. Please log in.");
-//         return;
-//       }
-
-//       setLoading(true);
-//       setError(null);
-
-//       try {
-//         const response = await api.get("/annotations/upload-data/1", {
-//           headers: {
-//             Authorization: `Bearer ${token}`,
-//           },
-//         });
-
-//         const { data } = response.data;
-//         const mappedTasks = data.map((item: any) => ({
-//           id: item.upload_id,
-//           image: item.img_url,
-//           completed: false,
-//           annotatedBy: "Unassigned",
-//         }));
-
-//         setTasks(mappedTasks);
-//       } catch (err: any) {
-//         setError(err.response?.data?.message || "Failed to fetch tasks.");
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchTasks();
-//   }, [accessToken]);
-
-//   const selectedTask = tasks.find((task) => task.id === selectedTaskId);
-
-//   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.1, 3));
-//   const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 0.1, 0.5));
-//   const handleMove = () => setActiveTool("move");
-//   const handlePan = () => setActiveTool("pan");
-//   const handleDashLineCursor = () => setShowDashLines((prev) => !prev);
-
-//   const handleZoomToFit = () => {
-//     if (!selectedTask) return;
-//     const image = new Image();
-//     image.src = selectedTask.image;
-
-//     image.onload = () => {
-//       const imageAspectRatio = image.width / image.height;
-//       const panelAspectRatio = panelWidth / 100;
-//       const newZoomLevel =
-//         imageAspectRatio > panelAspectRatio
-//           ? panelWidth / 100 / imageAspectRatio
-//           : 1;
-
-//       setZoomLevel(newZoomLevel);
-//       setPanOffset({ x: 0, y: 0 });
-//       setActiveTool("zoomToFit");
-//     };
-//   };
-
-//   const handleZoomToActualSize = () => {
-//     if (!selectedTask) return;
-//     const image = new Image();
-//     image.src = selectedTask.image;
-
-//     image.onload = () => {
-//       setZoomLevel(1);
-//       setPanOffset({ x: 0, y: 0 });
-//       setActiveTool("zoomToActualSize");
-//     };
-//   };
-
-//   if (loading) return <p>Loading...</p>;
-//   if (error) return <p className="text-red-600">{error}</p>;
-//   if (!tasks.length) return <p>No tasks available.</p>;
-
-//   return (
-//     <div className="flex min-h-screen">
-//       <Sidebar
-//         tasks={tasks}
-//         selectedTaskId={selectedTaskId}
-//         setSelectedTaskId={setSelectedTaskId}
-//         panelWidth={panelWidth}
-//       />
-//       <ResizableBar
-//         panelWidth={panelWidth}
-//         setPanelWidth={setPanelWidth}
-//         isDragging={isDragging}
-//         setIsDragging={setIsDragging}
-//       />
-//       <MainPanel
-//         tasks={tasks}
-//         selectedTaskId={selectedTaskId}
-//         panelWidth={panelWidth}
-//         isDragging={isDragging}
-//         showDashLines={showDashLines}
-//         cursorPosition={{ x: 0, y: 0 }}
-//         zoomLevel={zoomLevel}
-//         panOffset={panOffset}
-//         activeTool={activeTool}
-//         handleZoomIn={handleZoomIn}
-//         handleZoomOut={handleZoomOut}
-//         handleMove={handleMove}
-//         handlePan={handlePan}
-//         handleZoomToFit={handleZoomToFit}
-//         handleZoomToActualSize={handleZoomToActualSize}
-//         accessToken={accessToken || localStorage.getItem("accessToken") || ""}
-//         boundingBoxes={boundingBoxes}
-//         setBoundingBoxes={setBoundingBoxes}
-//         classes={classes}
-//         setClasses={setClasses}
-//         selectedColors={selectedColors}
-//         setSelectedColors={setSelectedColors}
-//         handleDashLineCursor={handleDashLineCursor}
-//       />
-//       <DetailsPanel
-//         selectedTask={selectedTask}
-//         annotations={classes.map((cls) => ({
-//           id: cls.id,
-//           type: cls.name,
-//           color: cls.color,
-//         }))}
-//         activeMainTab={activeMainTab}
-//         setActiveMainTab={setActiveMainTab}
-//         activeSubTab={activeSubTab}
-//         setActiveSubTab={setActiveSubTab}
-//         boundingBoxes={boundingBoxes}
-//         selectedBoxIndex={selectedBoxIndex}
-//       />
-//     </div>
-//   );
-// };
-
-// export default AnnotationAnnotateProjectLabelingPage;

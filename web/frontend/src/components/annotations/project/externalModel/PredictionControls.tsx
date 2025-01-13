@@ -1,10 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 
 interface PredictionControlsProps {
   isEnabled: boolean;
   modelName: string;
   onToggleEnable: () => void;
-  onDeleteModel: () => void;
   inputType: "file" | "url" | "paste";
   imageUrl: string;
   pastedImage: string;
@@ -23,7 +22,6 @@ const PredictionControls: React.FC<PredictionControlsProps> = ({
   isEnabled,
   modelName,
   onToggleEnable,
-  onDeleteModel,
   inputType,
   imageUrl,
   pastedImage,
@@ -38,6 +36,7 @@ const PredictionControls: React.FC<PredictionControlsProps> = ({
   setPastedImage,
 }) => {
   const imageRef = useRef<HTMLImageElement>(null);
+  const [showJson, setShowJson] = useState<boolean>(false);
 
   // Calculate bounding box with percentage-based values
   const calculateBoundingBox = (box: any) => {
@@ -54,26 +53,18 @@ const PredictionControls: React.FC<PredictionControlsProps> = ({
     };
   };
 
-  //   if (!isEnabled) return null;
-
   return (
-    <>
+    <div className="space-y-6">
       {/* Model Integrated Section */}
-      <div className="mb-6">
-        <h2 className="text-lg font-semibold mb-2">Model: {modelName}</h2>
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-semibold">Model: {modelName}</h2>
         <button
           onClick={onToggleEnable}
-          className={`px-6 py-2 rounded-md ${
+          className={`px-4 py-2 rounded-md ${
             isEnabled ? "bg-red-600" : "bg-green-600"
           } text-white hover:bg-opacity-80`}
         >
           {isEnabled ? "Disable" : "Enable"} Model
-        </button>
-        <button
-          onClick={onDeleteModel}
-          className="ml-4 px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
-        >
-          Delete Model
         </button>
       </div>
 
@@ -81,7 +72,7 @@ const PredictionControls: React.FC<PredictionControlsProps> = ({
       {isEnabled && (
         <>
           {/* Input Type Selection */}
-          <div className="mb-6">
+          <div>
             <label className="block text-base font-medium text-gray-800 mb-2">
               Select Input Type
             </label>
@@ -97,7 +88,7 @@ const PredictionControls: React.FC<PredictionControlsProps> = ({
           </div>
 
           {/* Conditional Inputs */}
-          <div className="mb-6">
+          <div className="mt-4">
             {inputType === "file" && (
               <input
                 type="file"
@@ -142,7 +133,7 @@ const PredictionControls: React.FC<PredictionControlsProps> = ({
 
           {/* Image Preview and Bounding Box */}
           {imagePreview && (
-            <div className="relative mt-4 border">
+            <div className="relative mt-4 border rounded-md overflow-hidden">
               <img
                 src={imagePreview}
                 alt="Uploaded"
@@ -172,18 +163,34 @@ const PredictionControls: React.FC<PredictionControlsProps> = ({
               })}
             </div>
           )}
+
           {/* Test Button */}
-          <div className="mb-6 flex justify-start">
+          <div className="mt-6 flex justify-start space-x-4">
             <button
               onClick={onTestWithData}
-              className="px-6 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700"
+              className="px-4 py-2 bg-green-600 text-white rounded-md shadow hover:bg-green-700"
             >
               Test with Data
             </button>
+            <button
+              onClick={() => setShowJson((prev) => !prev)}
+              className="px-4 py-2 bg-gray-600 text-white rounded-md shadow hover:bg-gray-700"
+            >
+              {showJson ? "Hide JSON" : "Show JSON"}
+            </button>
           </div>
+
+          {/* JSON Output */}
+          {showJson && (
+            <div className="mt-4 bg-gray-100 p-4 rounded shadow max-h-40 overflow-auto">
+              <pre className="text-sm text-gray-700">
+                {JSON.stringify(predictionResults, null, 2)}
+              </pre>
+            </div>
+          )}
         </>
       )}
-    </>
+    </div>
   );
 };
 
