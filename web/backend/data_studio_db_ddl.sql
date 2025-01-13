@@ -17,6 +17,12 @@ select * from public.annotation_projects_tbl apt
 
 select * from public.annotation_project_features_tbl apft
 
+select * from public.annotation_project_data_tbl apdt
+
+select * from public.image_metadata_tbl imt
+
+select * from public.image_annotation_result_tbl iart
+
 select * from public.menu_tbl mt 
 
 SELECT n.nspname AS schema, t.typname AS type
@@ -26,7 +32,6 @@ JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace;
 --WHERE t.typname = 'menustype';
 
 DROP TYPE IF EXISTS menustype, annotationtype, annotateresulttypeenum, deliverytype CASCADE;
-
 
 INSERT INTO menu_tbl (id, name, description, is_active, menu_metadata, logo_url, created_by, updated_by, created_at, updated_at)
 VALUES
@@ -141,8 +146,8 @@ VALUES
     (
         'Animal Detection in Wildlife', 
         'Detects and classifies wild animals in forest images.', 
-        NULL,
-        NULL,
+        NULL, -- No project_photo_url provided
+        NULL, -- No sub_feature_2_id associated
         1, 
         NOW(), 
         NOW()
@@ -156,3 +161,52 @@ VALUES
         NOW(), 
         NOW()
     );
+
+
+INSERT INTO classes_and_tags_tbl (
+    id, 
+    class_name, 
+    class_color, 
+    updated_by, 
+    updated_at, 
+    project_id, 
+    tag_name, 
+    created_by, 
+    created_at
+)
+VALUES
+(1, 'car', '#fcba03', NULL, '2025-01-03T04:28:32.306354', 1, NULL, 1, '2025-01-03T04:28:32.306354'),
+(2, 'plate', '#fc0303', NULL, '2025-01-03T04:28:48.852572', 1, NULL, 1, '2025-01-03T04:28:48.852572'),
+(3, 'pickup', '#fc0303', NULL, '2025-01-03T04:29:08.945837', 1, NULL, 1, '2025-01-03T04:29:08.945837'),
+(4, 'sedan', '#00478a', NULL, '2025-01-03T04:29:23.352099', 1, NULL, 1, '2025-01-03T04:29:23.352099'),
+(5, 'minibus', '#8a0053', NULL, '2025-01-03T04:29:41.962686', 1, NULL, 1, '2025-01-03T04:29:41.962686'),
+(6, 'bus', '#5a008a', NULL, '2025-01-03T04:30:11.271497', 1, NULL, 1, '2025-01-03T04:30:11.271497'),
+(7, 'motorcycle', '#705454', 1, '2025-01-03T07:43:25.401794', 1, '', 1, '2025-01-03T07:11:57.410441');
+
+
+select * from public.annotate_tbl
+select * from public.annotate_result_tbl
+
+# .env
+
+POSTGRES_DB=data_studio_db
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_HOSTNAME=127.0.0.1
+POSTGRES_HOST=localhost
+DATABASE_PORT=5432
+
+ACCESS_TOKEN_EXPIRES_IN=1440
+REFRESH_TOKEN_EXPIRES_IN=2880
+
+SECRET_KEY=your-secret-key
+JWT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+JWT_PUBLIC_KEY="-----BEGIN PUBLIC KEY-----\n...\n-----END PUBLIC KEY-----"
+JWT_ALGORITHM = "HS256" # "RS256"
+
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8000
+
+YOLO_MODEL_PATH= "D:/dataset/vehicle_detection/car-plate-detection/kendaraan.v1i.yolov8/runs/detect/vehicle-plate-model-n/weights/best.pt"
+
+CLIENT_ORIGIN=http://localhost:3000
