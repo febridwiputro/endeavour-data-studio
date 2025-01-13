@@ -1,7 +1,7 @@
 import os
 from typing import Optional, List
 from fastapi import APIRouter, HTTPException, UploadFile, Form, Depends, Request
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.config.database import get_db
 from app.models.menu.annotations.annotation_project_data_model import AnnotationProjectDataModel
 from app.models.menu.annotations.annotate_result_model import (
@@ -438,7 +438,6 @@ async def get_all_data_by_user(
         previous_page=paginated_result["previous_page"],
     )
 
-
 @router.get("/{project_id}", summary="Get Uploaded Files")
 async def get_uploaded_data(
     project_id: int,
@@ -448,6 +447,7 @@ async def get_uploaded_data(
 ):
     """
     Retrieve uploaded files for a specific project ID without pagination.
+    Includes related data using eager loading.
 
     Args:
         project_id (int): The ID of the project to retrieve files for.
@@ -456,7 +456,7 @@ async def get_uploaded_data(
         db (Session): Database session dependency.
 
     Returns:
-        dict: A standard response containing the list of uploaded files.
+        dict: A standard response containing the list of uploaded files and related data.
     """
     user_id = payload.get("id")
     if not user_id:
@@ -467,7 +467,26 @@ async def get_uploaded_data(
             data=[],
         )
 
-    files = db.query(AnnotationProjectDataModel).filter_by(project_id=project_id).all()
+    # Query with eager loading of related models
+    files = (
+        db.query(AnnotationProjectDataModel)
+        .filter_by(project_id=project_id)
+        .options(
+            joinedload(AnnotationProjectDataModel.project),
+            joinedload(AnnotationProjectDataModel.datasets),
+            joinedload(AnnotationProjectDataModel.training),
+            joinedload(AnnotationProjectDataModel.versions),
+            joinedload(AnnotationProjectDataModel.image_annotations),
+            joinedload(AnnotationProjectDataModel.text_annotations),
+            joinedload(AnnotationProjectDataModel.audio_annotations),
+            joinedload(AnnotationProjectDataModel.video_annotations),
+            joinedload(AnnotationProjectDataModel.image_metadata),
+            joinedload(AnnotationProjectDataModel.audio_metadata),
+            joinedload(AnnotationProjectDataModel.text_metadata),
+            joinedload(AnnotationProjectDataModel.video_metadata),
+        )
+        .all()
+    )
 
     if not files:
         return standard_response(
@@ -477,15 +496,80 @@ async def get_uploaded_data(
             data=[],
         )
 
-    response_data = [
-        {
-            "upload_id": file.id,
-            "file_name": file.file_name,
-            "file_url": file.file_url,
-            "uploaded_at": file.created_at,
-        }
-        for file in files
-    ]
+    # Serialize the results
+    response_data = []
+    for file in files:
+        response_data.append(
+            {
+                "upload_id": file.id,
+                "file_name": file.file_name,
+                "file_url": file.file_url,
+                "description": file.description,
+                "data_type": file.data_type.name if file.data_type else None,
+                "drafts": file.drafts,
+                "completed": file.completed,
+                "avg_confidence_score": file.avg_confidence_score,
+                "created_at": file.created_at,
+                "updated_at": file.updated_at,
+                # "project": file.project.name if file.project else None,
+                # "datasets": [
+                #     {"id": dataset.id, "name": dataset.name}
+                #     for dataset in file.datasets
+                # ],
+                # "training": [
+                #     {"id": train.id, "status": train.status}
+                #     for train in file.training
+                # ],
+                # "versions": [
+                #     {"id": version.id, "name": version.name}
+                #     for version in file.versions
+                # ],
+                # "annotations": {
+                #     "image_annotations": [
+                #         {"id": annotation.id, "label": annotation.label}
+                #         for annotation in file.image_annotations
+                #     ],
+                #     "text_annotations": [
+                #         {"id": annotation.id, "label": annotation.label}
+                #         for annotation in file.text_annotations
+                #     ],
+                #     "audio_annotations": [
+                #         {"id": annotation.id, "label": annotation.label}
+                #         for annotation in file.audio_annotations
+                #     ],
+                #     "video_annotations": [
+                #         {"id": annotation.id, "label": annotation.label}
+                #         for annotation in file.video_annotations
+                #     ],
+                # },
+                "metadata": {
+                    "image_metadata": {
+                        "width": file.image_metadata.width,
+                        "height": file.image_metadata.height,
+                    }
+                    if file.image_metadata
+                    else None,
+                    # "audio_metadata": {
+                    #     "duration": file.audio_metadata.duration,
+                    #     "format": file.audio_metadata.format,
+                    # }
+                    # if file.audio_metadata
+                    # else None,
+                    # "text_metadata": {
+                    #     "language": file.text_metadata.language,
+                    #     "character_count": file.text_metadata.character_count,
+                    # }
+                    # if file.text_metadata
+                    # else None,
+                    # "video_metadata": {
+                    #     "duration": file.video_metadata.duration,
+                    #     "resolution": file.video_metadata.resolution,
+                    # }
+                    # if file.video_metadata
+                    # else None,
+                },
+            }
+        )
 
     return standard_response(
         status="success",

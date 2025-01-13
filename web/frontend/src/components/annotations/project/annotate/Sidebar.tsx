@@ -33,7 +33,9 @@ const Sidebar: React.FC<SidebarProps> = ({
     annotated: true,
     predictBy: true,
   });
-  const [classes, setClasses] = useState<{ id: string; color: string; name: string }[]>([]);
+  const [classes, setClasses] = useState<
+    { id: string; color: string; name: string }[]
+  >([]);
 
   // Fetch annotation classes
   const fetchClasses = async () => {
@@ -103,6 +105,85 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Table Section */}
       <div className="relative overflow-y-auto h-[calc(100%-200px)]">
+        <table className="w-full border-collapse border border-gray-200">
+          <thead className="bg-gray-100 sticky top-0 z-10">
+            <tr>
+              <th className="border border-gray-200 p-2 text-center">
+                <input
+                  type="checkbox"
+                  className="form-checkbox h-4 w-4 text-blue-600"
+                  checked={selectedTasks.length === tasks.length}
+                  onChange={() =>
+                    setSelectedTasks((prev) =>
+                      prev.length === tasks.length
+                        ? []
+                        : tasks.map((task) => task.id)
+                    )
+                  }
+                />
+              </th>
+              {tasks.length > 0 &&
+                Object.keys(tasks[0]).map((key) => (
+                  <th
+                    key={key}
+                    className="border border-gray-200 p-2 text-left"
+                  >
+                    {key.charAt(0).toUpperCase() +
+                      key.slice(1).replace(/_/g, " ")}
+                  </th>
+                ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((task) => (
+              <tr
+                key={task.id}
+                className={`cursor-pointer ${
+                  selectedTaskId === task.id
+                    ? "bg-blue-100"
+                    : "hover:bg-gray-100"
+                }`}
+                onClick={() => setSelectedTaskId(task.id)}
+              >
+                <td className="border border-gray-200 p-2 text-center">
+                  <input
+                    type="checkbox"
+                    className="form-checkbox h-4 w-4 text-blue-600"
+                    checked={selectedTasks.includes(task.id)}
+                    onChange={() =>
+                      setSelectedTasks((prev) =>
+                        prev.includes(task.id)
+                          ? prev.filter((id) => id !== task.id)
+                          : [...prev, task.id]
+                      )
+                    }
+                  />
+                </td>
+                {Object.entries(task).map(([key, value]) => (
+                  <td
+                    key={key}
+                    className="border border-gray-200 p-2 text-center"
+                  >
+                    {key === "image" ? (
+                      <img
+                        src={value as string}
+                        alt={`Task ${task.id}`}
+                        className="w-10 h-10 object-cover rounded"
+                      />
+                    ) : typeof value === "object" && value !== null ? (
+                      JSON.stringify(value, null, 2) // Render nested objects as JSON
+                    ) : (
+                      String(value) // Render other types as strings
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* <div className="relative overflow-y-auto h-[calc(100%-200px)]">
         <table className="w-full border-collapse border border-gray-200">
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr>
@@ -180,7 +261,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             ))}
           </tbody>
         </table>
-      </div>
+      </div> */}
     </div>
   );
 };

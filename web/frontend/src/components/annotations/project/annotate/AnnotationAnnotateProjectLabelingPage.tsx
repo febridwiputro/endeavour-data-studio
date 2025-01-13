@@ -66,42 +66,81 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   }, [accessToken]);
 
   // Fetch Tasks
-  useEffect(() => {
-    const fetchTasks = async () => {
-      const token = accessToken || localStorage.getItem("accessToken");
-      if (!token) {
-        setError("Access token is missing. Please log in.");
-        return;
-      }
+useEffect(() => {
+  const fetchTasks = async () => {
+    const token = accessToken || localStorage.getItem("accessToken");
+    if (!token) {
+      setError("Access token is missing. Please log in.");
+      return;
+    }
 
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        const response = await api.get("/annotations/upload-data/1", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    try {
+      const response = await api.get("/annotations/upload-data/1", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        const { data } = response.data;
-        const mappedTasks = data.map((item: any) => ({
-          id: item.upload_id,
-          image: item.file_url,
-          completed: false,
-          annotatedBy: "Unassigned",
-        }));
+      const { data } = response.data;
 
-        setTasks(mappedTasks);
-      } catch (err: any) {
-        setError(err.response?.data?.message || "Failed to fetch tasks.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      // Map tasks and retain all properties
+      const mappedTasks = data.map((item: any) => ({
+        ...item, // Spread all properties from the response
+        image: item.file_url, // Keep image field for compatibility
+      }));
 
-    fetchTasks();
-  }, [accessToken]);
+      setTasks(mappedTasks);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to fetch tasks.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchTasks();
+}, [accessToken]);
+
+
+  // // Fetch Tasks
+  // useEffect(() => {
+  //   const fetchTasks = async () => {
+  //     const token = accessToken || localStorage.getItem("accessToken");
+  //     if (!token) {
+  //       setError("Access token is missing. Please log in.");
+  //       return;
+  //     }
+
+  //     setLoading(true);
+  //     setError(null);
+
+  //     try {
+  //       const response = await api.get("/annotations/upload-data/1", {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+
+  //       const { data } = response.data;
+  //       const mappedTasks = data.map((item: any) => ({
+  //         id: item.upload_id,
+  //         image: item.file_url,
+  //         completed: false,
+  //         annotatedBy: "Unassigned",
+  //       }));
+
+  //       setTasks(mappedTasks);
+  //     } catch (err: any) {
+  //       setError(err.response?.data?.message || "Failed to fetch tasks.");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchTasks();
+  // }, [accessToken]);
 
   const selectedTask =
     tasks.find((task) => task.id === selectedTaskId) || tasks[0];
@@ -134,10 +173,6 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       | "right-center";
   } | null>(null);
 
-  // const [resizingHandle, setResizingHandle] = useState<{
-  //   index: number;
-  //   corner: "top-left" | "top-right" | "bottom-left" | "bottom-right";
-  // } | null>(null);
   const isPointNear = (
     x: number,
     y: number,
@@ -368,15 +403,6 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     return null;
   };
 
-  // const detectResizeHandle = (x: number, y: number, box: BoundingBox) => {
-  //   const handleSize = 10; // Resize handle size
-  //   if (isPointNear(x, y, box.x1, box.y1, handleSize)) return "top-left";
-  //   if (isPointNear(x, y, box.x2, box.y1, handleSize)) return "top-right";
-  //   if (isPointNear(x, y, box.x1, box.y2, handleSize)) return "bottom-left";
-  //   if (isPointNear(x, y, box.x2, box.y2, handleSize)) return "bottom-right";
-  //   return null;
-  // };
-
   const adjustCoordinates = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
@@ -443,7 +469,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   // Handle canvas mouse move
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = adjustCoordinates(e);
-  
+
     // Handle cursor style updates
     const updateCursorStyle = () => {
       let cursorStyle = "default";
@@ -459,7 +485,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       }
       e.currentTarget.style.cursor = cursorStyle;
     };
-  
+
     // Handle resizing logic
     const handleResizing = () => {
       if (resizingHandle) {
@@ -467,7 +493,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
           const updatedBoxes = [...prev];
           const box = updatedBoxes[resizingHandle.index];
           const { corner } = resizingHandle;
-  
+
           // Update coordinates based on the corner being resized
           if (corner === "top-left") {
             box.x1 = x;
@@ -490,29 +516,29 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
           } else if (corner === "right-center") {
             box.x2 = x;
           }
-  
+
           // Update width and height
           box.w = Math.abs(box.x2 - box.x1);
           box.h = Math.abs(box.y2 - box.y1);
-  
+
           return updatedBoxes;
         });
       }
     };
-  
+
     // Handle dragging logic
     const handleDragging = () => {
       if (draggingOffset && selectedBoxIndex !== null) {
         setBoundingBoxes((prev) => {
           const updatedBoxes = [...prev];
           const box = updatedBoxes[selectedBoxIndex];
-  
+
           // Calculate new coordinates
           const newX1 = x - draggingOffset.x;
           const newY1 = y - draggingOffset.y;
           const newX2 = newX1 + box.w;
           const newY2 = newY1 + box.h;
-  
+
           updatedBoxes[selectedBoxIndex] = {
             ...box,
             x1: newX1,
@@ -520,27 +546,27 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
             x2: newX2,
             y2: newY2,
           };
-  
+
           return updatedBoxes;
         });
       }
     };
-  
+
     // Handle live drawing of a new bounding box
     const handleDrawing = () => {
       if (isDrawing && startPoint) {
         const canvas = canvasRef.current;
         if (!canvas) return;
-  
+
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
-  
+
         // Clear canvas and redraw all visible bounding boxes
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         visibleBoundingBoxes.forEach((box, index) =>
           drawBoundingBox(ctx, box, index === selectedBoxIndex)
         );
-  
+
         // Draw the new bounding box being created
         ctx.strokeStyle =
           classes.find((cls) => cls.name === activeClass)?.color || "#000000";
@@ -553,37 +579,37 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
         );
       }
     };
-  
+
     // Handle dashed lines if the mode is active
     const handleDashedLines = () => {
       if (!isDashLineMode) return;
-  
+
       const canvas = canvasRef.current;
       if (!canvas) return;
-  
+
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
-  
+
       ctx.save();
       ctx.setLineDash([5, 5]); // Define dash pattern
       ctx.strokeStyle = "white"; // Set dashed line color
       ctx.lineWidth = 1; // Set dashed line thickness
-  
+
       // Draw vertical dashed line
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, canvas.height);
       ctx.stroke();
-  
+
       // Draw horizontal dashed line
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(canvas.width, y);
       ctx.stroke();
-  
+
       ctx.restore();
     };
-  
+
     // Execute interaction logic in order of priority
     if (resizingHandle) {
       handleResizing();
@@ -595,139 +621,10 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       handleDashedLines();
     }
   };
-  
-  // const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-  //   const { x, y } = adjustCoordinates(e);
-
-  //   // Update cursor style when hovering near a corner
-  //   let cursorStyle = "default";
-  //   for (let i = 0; i < boundingBoxes.length; i++) {
-  //     const box = boundingBoxes[i];
-  //     const corner = detectResizeHandle(x, y, box);
-  //     if (corner === "top-left" || corner === "bottom-right") {
-  //       cursorStyle = "nwse-resize";
-  //       break;
-  //     } else if (corner === "top-right" || corner === "bottom-left") {
-  //       cursorStyle = "nesw-resize";
-  //       break;
-  //     }
-  //   }
-  //   e.currentTarget.style.cursor = cursorStyle;
-
-  //   // Handle resizing
-  //   if (resizingHandle) {
-  //     setBoundingBoxes((prev) => {
-  //       const updatedBoxes = [...prev];
-  //       const box = updatedBoxes[resizingHandle.index];
-  //       const { corner } = resizingHandle;
-
-  //       if (corner === "top-left") {
-  //         box.x1 = x;
-  //         box.y1 = y;
-  //       } else if (corner === "top-right") {
-  //         box.x2 = x;
-  //         box.y1 = y;
-  //       } else if (corner === "bottom-left") {
-  //         box.x1 = x;
-  //         box.y2 = y;
-  //       } else if (corner === "bottom-right") {
-  //         box.x2 = x;
-  //         box.y2 = y;
-  //       } else if (corner === "top-center") {
-  //         box.y1 = y;
-  //       } else if (corner === "bottom-center") {
-  //         box.y2 = y;
-  //       } else if (corner === "left-center") {
-  //         box.x1 = x;
-  //       } else if (corner === "right-center") {
-  //         box.x2 = x;
-  //       }
-
-  //       // Update width and height
-  //       box.w = Math.abs(box.x2 - box.x1);
-  //       box.h = Math.abs(box.y2 - box.y1);
-
-  //       return updatedBoxes;
-  //     });
-  //     return;
-  //   }
-
-  //   // Handle dragging
-  //   if (draggingOffset && selectedBoxIndex !== null) {
-  //     setBoundingBoxes((prev) => {
-  //       const updatedBoxes = [...prev];
-  //       const box = updatedBoxes[selectedBoxIndex];
-
-  //       const newX1 = x - draggingOffset.x;
-  //       const newY1 = y - draggingOffset.y;
-  //       const newX2 = newX1 + box.w;
-  //       const newY2 = newY1 + box.h;
-
-  //       updatedBoxes[selectedBoxIndex] = {
-  //         ...box,
-  //         x1: newX1,
-  //         y1: newY1,
-  //         x2: newX2,
-  //         y2: newY2,
-  //       };
-
-  //       return updatedBoxes;
-  //     });
-  //     return;
-  //   }
-
-  //   const canvas = canvasRef.current;
-  //   if (!canvas) return;
-
-  //   const ctx = canvas.getContext("2d");
-  //   if (!ctx) return;
-
-  //   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  //   // Redraw all bounding boxes
-  //   boundingBoxes.forEach((box, index) =>
-  //     drawBoundingBox(ctx, box, index === selectedBoxIndex)
-  //   );
-
-  //   // Draw dashed lines if the mode is active
-  //   if (isDashLineMode) {
-  //     ctx.save();
-  //     ctx.setLineDash([5, 5]); // Define dash pattern
-  //     ctx.strokeStyle = "white"; // Set dashed line color
-  //     ctx.lineWidth = 1; // Set dashed line thickness
-
-  //     // Vertical dashed line
-  //     ctx.beginPath();
-  //     ctx.moveTo(x, 0);
-  //     ctx.lineTo(x, canvas.height);
-  //     ctx.stroke();
-
-  //     // Horizontal dashed line
-  //     ctx.beginPath();
-  //     ctx.moveTo(0, y);
-  //     ctx.lineTo(canvas.width, y);
-  //     ctx.stroke();
-
-  //     ctx.restore();
-  //   }
-
-  //   // Handle live drawing of a new bounding box
-  //   if (isDrawing && startPoint) {
-  //     ctx.strokeStyle =
-  //       classes.find((cls) => cls.name === activeClass)?.color || "#000000";
-  //     ctx.lineWidth = 2;
-  //     ctx.strokeRect(
-  //       startPoint.x,
-  //       startPoint.y,
-  //       x - startPoint.x,
-  //       y - startPoint.y
-  //     );
-  //   }
-  // };
 
   // Handle canvas mouse up
   const handleMouseUp = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (activeTool === "move") return; // Prevent bounding box creation in move mode
+    if (activeTool === "move") return;
 
     if (resizingHandle) {
       setResizingHandle(null);
@@ -822,66 +719,6 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       );
     });
   };
-
-  // const drawBoundingBox = (
-  //   ctx: CanvasRenderingContext2D,
-  //   box: BoundingBox,
-  //   isSelected: boolean
-  // ) => {
-  //   ctx.strokeStyle = isSelected ? "#FF0000" : box.color; // Outline color
-  //   ctx.lineWidth = isSelected ? 2 : 1; // Reduced bounding box thickness
-  //   ctx.strokeRect(box.x1, box.y1, box.w, box.h);
-
-  //   // Draw the label background
-  //   ctx.fillStyle = box.color;
-  //   ctx.fillRect(
-  //     box.x1,
-  //     box.y1 - 20,
-  //     ctx.measureText(box.label).width + 10,
-  //     20
-  //   );
-
-  //   // Draw the label text
-  //   ctx.fillStyle = "#ffffff";
-  //   ctx.fillText(box.label, box.x1 + 5, box.y1 - 5);
-
-  //   // Draw resize handles
-  //   const handleSize = 8;
-  //   const handleColor = isSelected ? "#FFFFFF" : "#000000";
-  //   ctx.fillStyle = handleColor;
-
-  //   // Top-left corner
-  //   ctx.fillRect(
-  //     box.x1 - handleSize / 2,
-  //     box.y1 - handleSize / 2,
-  //     handleSize,
-  //     handleSize
-  //   );
-
-  //   // Top-right corner
-  //   ctx.fillRect(
-  //     box.x1 + box.w - handleSize / 2,
-  //     box.y1 - handleSize / 2,
-  //     handleSize,
-  //     handleSize
-  //   );
-
-  //   // Bottom-left corner
-  //   ctx.fillRect(
-  //     box.x1 - handleSize / 2,
-  //     box.y1 + box.h - handleSize / 2,
-  //     handleSize,
-  //     handleSize
-  //   );
-
-  //   // Bottom-right corner
-  //   ctx.fillRect(
-  //     box.x1 + box.w - handleSize / 2,
-  //     box.y1 + box.h - handleSize / 2,
-  //     handleSize,
-  //     handleSize
-  //   );
-  // };
 
   useEffect(() => {
     const canvas = canvasRef.current;
