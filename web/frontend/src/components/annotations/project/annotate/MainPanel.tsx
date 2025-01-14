@@ -9,6 +9,7 @@ import { Task } from "./types";
 import { BoundingBox } from "./types";
 import api from "@/services/apiConfig";
 
+
 interface MainPanelProps {
   tasks: Task[];
   selectedTaskId: number | null;
@@ -447,7 +448,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
               }}
             >
               <img
-                src={selectedTask.image}
+                src={selectedTask.file_url}
                 alt={`Task ${selectedTask.id}`}
                 className="w-full object-contain"
               />

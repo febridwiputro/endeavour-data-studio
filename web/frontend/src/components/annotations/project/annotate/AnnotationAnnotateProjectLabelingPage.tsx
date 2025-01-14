@@ -9,6 +9,7 @@ import MainPanel from "./MainPanel";
 import DetailsPanel from "./DetailsPanel";
 import { Task, BoundingBox, Annotation } from "./types";
 
+
 const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   const { accessToken } = useSelector((state: RootState) => state.auth);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -86,11 +87,19 @@ useEffect(() => {
 
       const { data } = response.data;
 
-      // Map tasks and retain all properties
-      const mappedTasks = data.map((item: any) => ({
-        ...item, // Spread all properties from the response
-        image: item.file_url, // Keep image field for compatibility
-      }));
+        // Map tasks to match the expected SidebarTask type
+        const mappedTasks = data.map((item: any) => ({
+          id: item.upload_id,
+          file_url: item.file_url,
+          description: item.description,
+          data_type: item.data_type,
+          drafts: item.drafts,
+          completed: item.completed,
+          avg_confidence_score: item.avg_confidence_score,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          metadata: item.metadata,
+        }));
 
       setTasks(mappedTasks);
     } catch (err: any) {
@@ -769,7 +778,7 @@ useEffect(() => {
   const handleZoomToFit = () => {
     if (!selectedTask) return;
     const image = new Image();
-    image.src = selectedTask.image;
+    image.src = selectedTask.file_url;
 
     image.onload = () => {
       const imageAspectRatio = image.width / image.height;
@@ -788,7 +797,7 @@ useEffect(() => {
   const handleZoomToActualSize = () => {
     if (!selectedTask) return;
     const image = new Image();
-    image.src = selectedTask.image;
+    image.src = selectedTask.file_url;
 
     image.onload = () => {
       setZoomLevel(1);

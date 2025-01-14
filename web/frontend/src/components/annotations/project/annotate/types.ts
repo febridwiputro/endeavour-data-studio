@@ -2,10 +2,28 @@
 
 export interface Task {
   id: number;
-  image: string;
+  file_url: string;
+  // description: string | null;
+  data_type: string;
+  drafts: string | null;
   completed: boolean;
-  annotatedBy: string;
+  avg_confidence_score: number;
+  // created_at: string;
+  updated_at: string;
+  metadata: {
+    image_metadata?: {
+      width: number;
+      height: number;
+    };
+  };
 }
+
+// export interface Task {
+//   id: number;
+//   image: string;
+//   completed: boolean;
+//   annotatedBy: string;
+// }
 
 export interface Annotation {
   id: number;

@@ -210,7 +210,7 @@ def get_models_by_project_id(
     )
 
 @router.get(
-    "/filter",
+    "/filter/",
     summary="Get models by filters",
     description="Retrieve models based on project_id and is_enable status.",
 )

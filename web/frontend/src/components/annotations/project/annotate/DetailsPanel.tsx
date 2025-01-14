@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Task, Annotation, BoundingBox } from "./types";
+import { Annotation, BoundingBox } from "./types";
 import {
   LinkIcon,
   PlusIcon,
@@ -7,6 +7,8 @@ import {
   EyeIcon,
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
+import { Task } from "./types";
+
 
 interface DetailsPanelProps {
   selectedTask: Task | undefined;

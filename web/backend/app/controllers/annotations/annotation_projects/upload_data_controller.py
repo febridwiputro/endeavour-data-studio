@@ -502,7 +502,7 @@ async def get_uploaded_data(
         response_data.append(
             {
                 "upload_id": file.id,
-                "file_name": file.file_name,
+                # "file_name": file.file_name,
                 "file_url": file.file_url,
                 "description": file.description,
                 "data_type": file.data_type.name if file.data_type else None,
