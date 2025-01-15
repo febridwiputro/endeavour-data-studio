@@ -1,10 +1,13 @@
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Query
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from pydantic import BaseModel
 from typing import List, Optional
 from app.config.database import get_db
 from app.models.menu.annotations.annotation_project_data_model import AnnotationProjectDataModel
 from app.models.menu.annotations.annotate_result_model import ImageAnnotationResultModel
+from app.models.menu.annotations.classes_and_tags_model import ClassesAndTagsModel
+from app.models.menu.annotations.annotation_project_model import AnnotationProjectModel
 # from app.models.menu.annotations.image_annotation_result_model import ImageAnnotationResultModel
 from app.utils.response_utils import standard_response
 from app.utils.token_bearer_util import JWTBearer
@@ -64,7 +67,7 @@ def create_image_annotation(
         y1=request.y1,
         x2=request.x2,
         y2=request.y2,
-        label=request.label,
+        label=str(request.label),
         confidence_score=request.confidence_score,
         created_by=user_id,
     )
@@ -78,8 +81,6 @@ def create_image_annotation(
         message_code="image_annotation_created",
         data={"annotation_id": new_annotation.id},
     )
-
-
 
 @router.get(
     "/{data_id}",
@@ -215,73 +216,63 @@ def delete_image_annotation(
     )
 
 
-# @router.put(
-#     "/{annotation_id}",
-#     summary="Update image annotation",
-#     description="Update an image annotation by ID.",
-# )
-# def update_image_annotation(
-#     annotation_id: int,
-#     request: UpdateImageAnnotationRequest,
-#     payload: dict = Depends(jwt_bearer),
-#     db: Session = Depends(get_db),
-# ):
-#     user_id = payload.get("id")
-#     if not user_id:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
-#         )
+@router.get(
+    "/class-count/",
+    summary="Get class count by project ID",
+    description="Retrieve the count of each class (label) for a given project ID with color information.",
+    status_code=status.HTTP_200_OK,
+)
+def get_class_count_by_project(
+    project_id: int = Query(..., description="The ID of the project."),
+    payload: dict = Depends(jwt_bearer),
+    db: Session = Depends(get_db),
+):
+    # Validate user from payload
+    user_id = payload.get("id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
+        )
 
-#     annotation = db.query(ImageAnnotationResultModel).filter_by(id=annotation_id).first()
-#     if not annotation:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail=f"Annotation with ID {annotation_id} not found.",
-#         )
+    # Validate if project exists
+    project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Annotation project not found.",
+        )
 
-#     for field, value in request.dict(exclude_unset=True).items():
-#         setattr(annotation, field, value)
-#     annotation.updated_by = user_id
-#     db.commit()
-#     db.refresh(annotation)
+    # Query annotations and join with project data, classes, and tags to get colors
+    class_counts = (
+        db.query(
+            ImageAnnotationResultModel.label,
+            func.count(ImageAnnotationResultModel.label).label("count"),
+            ClassesAndTagsModel.class_color,
+        )
+        .join(
+            AnnotationProjectDataModel,
+            ImageAnnotationResultModel.data_id == AnnotationProjectDataModel.id,
+        )
+        .join(
+            ClassesAndTagsModel,
+            (ImageAnnotationResultModel.label == ClassesAndTagsModel.class_name)
+            & (ClassesAndTagsModel.project_id == project_id),
+            isouter=True,
+        )
+        .filter(AnnotationProjectDataModel.project_id == project_id)
+        .group_by(ImageAnnotationResultModel.label, ClassesAndTagsModel.class_color)
+        .all()
+    )
 
-#     return standard_response(
-#         status="success",
-#         status_code=status.HTTP_200_OK,
-#         message_code="annotation_updated",
-#         data=annotation,
-#     )
+    # Format response data
+    response_data = [
+        {"label": label, "count": count, "color": class_color or "#000000"}
+        for label, count, class_color in class_counts
+    ]
 
-
-# @router.delete(
-#     "/{annotation_id}",
-#     summary="Delete image annotation",
-#     description="Delete an image annotation by ID.",
-# )
-# def delete_image_annotation(
-#     annotation_id: int,
-#     payload: dict = Depends(jwt_bearer),
-#     db: Session = Depends(get_db),
-# ):
-#     user_id = payload.get("id")
-#     if not user_id:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
-#         )
-
-#     annotation = db.query(ImageAnnotationResultModel).filter_by(id=annotation_id).first()
-#     if not annotation:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail=f"Annotation with ID {annotation_id} not found.",
-#         )
-
-#     db.delete(annotation)
-#     db.commit()
-
-#     return standard_response(
-#         status="success",
-#         status_code=status.HTTP_200_OK,
-#         message_code="annotation_deleted",
-#         data={"annotation_id": annotation_id},
-#     )
+    return standard_response(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        message_code="class_count_retrieved",
+        data=response_data,
+    )

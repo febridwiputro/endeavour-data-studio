@@ -22,6 +22,21 @@ except OperationalError as e:
     print("Failed to connect to the database.")
     print(f"Error: {e}")
 
+# query = text(""" 
+#     SELECT *
+#     FROM pg_catalog.pg_tables
+#     WHERE schemaname != 'pg_catalog' AND 
+#         schemaname != 'information_schema';""")
+
+
+# with engine.connect() as conn:
+#         with conn.begin():
+#             result = conn.execute(query)
+
+
+# for row in result:
+#     print(row)
+
 # Dependency to provide database session
 def get_db():
     db = SessionLocal()

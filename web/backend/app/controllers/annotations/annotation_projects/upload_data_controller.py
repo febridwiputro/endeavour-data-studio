@@ -1,6 +1,6 @@
 import os
 from typing import Optional, List
-from fastapi import APIRouter, HTTPException, UploadFile, Form, Depends, Request
+from fastapi import APIRouter, HTTPException, UploadFile, Form, Depends, Request, Query, status
 from sqlalchemy.orm import Session, joinedload
 from app.config.database import get_db
 from app.models.menu.annotations.annotation_project_data_model import AnnotationProjectDataModel
@@ -11,6 +11,11 @@ from app.models.menu.annotations.annotate_result_model import (
     VideoMetadataModel
 )
 from app.models.menu.annotations.annotation_project_model import AnnotationProjectModel
+from app.models.menu.annotations.annotate_result_model import ImageAnnotationResultModel
+import shutil
+import uuid
+from fastapi.responses import FileResponse
+import zipfile
 from app.enums.dataTypeEnum import DataTypeEnum
 from app.utils.response_utils import standard_response, standard_pagination_response
 from app.helpers.pagination_helper import paginate_query
@@ -20,6 +25,7 @@ from app.utils.token_bearer_util import JWTBearer
 from PIL import Image
 import mutagen
 from langdetect import detect
+import requests
 
 # Create or ensure the folder exists
 OUTPUT_FOLDER = "static/image_output"
@@ -577,6 +583,98 @@ async def get_uploaded_data(
         message_code="FILES_RETRIEVED_SUCCESSFULLY",
         data=response_data,
     )
+
+@router.get(
+    "/export-annotations/",
+    summary="Export annotations in YOLOv8 format",
+    description="Exports annotation results including bounding boxes and class labels in YOLOv8-compatible format.",
+    status_code=status.HTTP_200_OK,
+)
+def export_annotations(
+    project_id: int = Query(..., description="The ID of the project."),
+    db: Session = Depends(get_db),
+):
+    # Validate if project exists
+    project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Annotation project not found.",
+        )
+    
+    # Query all annotations for the project
+    annotations = (
+        db.query(ImageAnnotationResultModel)
+        .join(AnnotationProjectModel, AnnotationProjectModel.id == project_id)
+        .filter(AnnotationProjectModel.id == project_id)
+        .all()
+    )
+    
+    if not annotations:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No annotations found for this project.",
+        )
+    
+    # Get unique class labels
+    class_labels = (
+        db.query(ImageAnnotationResultModel.label)
+        .distinct()
+        .filter(ImageAnnotationResultModel.data_id.in_([a.data_id for a in annotations]))
+        .all()
+    )
+    class_labels = [label[0] for label in class_labels]
+    
+    # Create temporary directory
+    export_dir = f"./temp_exports/{uuid.uuid4()}"
+    images_dir = os.path.join(export_dir, "images")
+    labels_dir = os.path.join(export_dir, "labels")
+    os.makedirs(images_dir, exist_ok=True)
+    os.makedirs(labels_dir, exist_ok=True)
+    
+    # Write class labels to classes.txt
+    with open(os.path.join(export_dir, "classes.txt"), "w") as f:
+        for label in class_labels:
+            f.write(f"{label}\n")
+    
+    # Process annotations
+    for annotation in annotations:
+        # Assume image file paths are stored in annotation.project_data.file_url
+        image_url = annotation.project_data.file_url
+        image_name = os.path.basename(image_url)
+        
+        # Download the image
+        response = requests.get(image_url, stream=True)
+        if response.status_code == 200:
+            with open(os.path.join(images_dir, image_name), "wb") as img_file:
+                shutil.copyfileobj(response.raw, img_file)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Failed to download image: {image_url}",
+            )
+        
+        # Generate label file
+        label_file_path = os.path.join(labels_dir, f"{os.path.splitext(image_name)[0]}.txt")
+        with open(label_file_path, "a") as label_file:
+            bbox = f"{class_labels.index(annotation.label)} " \
+                f"{annotation.x1} {annotation.y1} {annotation.x2} {annotation.y2}\n"
+            label_file.write(bbox)
+    
+    # Create a ZIP archive
+    zip_file_path = f"{export_dir}.zip"
+    with zipfile.ZipFile(zip_file_path, "w") as zipf:
+        for root, dirs, files in os.walk(export_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, export_dir)
+                zipf.write(file_path, arcname)
+    
+    # Cleanup temporary directory
+    shutil.rmtree(export_dir)
+    
+    return FileResponse(zip_file_path, media_type="application/zip", filename="annotations_export.zip")
+
 
 
 # @router.get("/{project_id}", summary="Get Uploaded Files")

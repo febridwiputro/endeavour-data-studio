@@ -7,7 +7,7 @@ import ModalBase from "@/components/base/ModalBaseV2";
 import AlertBase from "@/components/base/AlertBase";
 import { Task } from "./types";
 import { BoundingBox } from "./types";
-import api from "@/services/apiConfig";
+import { api } from "@/services/apiConfig";
 
 
 interface MainPanelProps {
@@ -29,15 +29,15 @@ interface MainPanelProps {
   handleMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   handleMouseLeave: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   activeTool:
-    | "normal"
-    | "zoomIn"
-    | "zoomOut"
-    | "move"
-    | "pan"
-    | "dashLine"
-    | "zoomToFit"
-    | "zoomToActualSize"
-    | null;
+  | "normal"
+  | "zoomIn"
+  | "zoomOut"
+  | "move"
+  | "pan"
+  | "dashLine"
+  | "zoomToFit"
+  | "zoomToActualSize"
+  | null;
   cursorStyle: string;
   handleNormalCursor: () => void;
   handleZoomIn: () => void;
@@ -201,72 +201,58 @@ const MainPanel: React.FC<MainPanelProps> = ({
     fetchAnnotations();
   }, [selectedTaskId, accessToken, classes]);
 
-
   const saveAnnotationResults = async (
     dataId: number,
     boundingBoxes: BoundingBox[],
     accessToken: string
   ) => {
     try {
-      // Fetch existing annotation IDs
-      let existingAnnotationIds: number[] = [];
-  
-      try {
-        const response = await fetchAnnotationIds(dataId, accessToken);
-  
-        if (response && Array.isArray(response)) {
-          existingAnnotationIds = response.map((id) => Number(id));
-        }
-      } catch (error: any) {
-        if (error.response?.status === 404) {
-          console.warn("No existing annotations found, proceeding with creation.");
-        } else {
-          throw error;
-        }
+      // Fetch existing annotations
+      const response = await api.get(`/annotations/image-annotations/${dataId}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (response.status !== 200) {
+        console.error("Failed to fetch annotation data.");
+        return { success: false, message: "Failed to fetch annotation data." };
       }
-  
-      // Determine bounding boxes for each process
-      const toDelete = deletedBoundingBoxes.map((id) => Number(id));
-      const toUpdate = boundingBoxes.filter(
-        (box) => box.id && existingAnnotationIds.includes(Number(box.id))
+
+      const existingAnnotations = response.data.data; // Array of existing annotations
+      const existingIds = new Set(
+        existingAnnotations.map((annotation: any) => annotation.id)
       );
+
+      // Determine changes
+      const toDelete = existingAnnotations.filter(
+        (annotation: any) =>
+          !boundingBoxes.some(
+            (box) =>
+              box.id === annotation.id &&
+              box.x1 === annotation.x1 &&
+              box.y1 === annotation.y1 &&
+              box.x2 === annotation.x2 &&
+              box.y2 === annotation.y2 &&
+              box.label === annotation.label
+          )
+      );
+
       const toCreate = boundingBoxes.filter(
-        (box) => !box.id || !existingAnnotationIds.includes(Number(box.id))
+        (box) =>
+          !box.id || !existingAnnotations.some((ann: any) => ann.id === box.id)
       );
-  
-      // Deletion requests
-      const deleteRequests = toDelete.map((id) =>
-        api.delete(`/annotations/image-annotations/${id}`, {
+
+      // Delete old bounding boxes with changed coordinates
+      const deleteRequests = toDelete.map((annotation: any) =>
+        api.delete(`/annotations/image-annotations/${annotation.id}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
       );
-  
-      // Update requests
-      const updateRequests = toUpdate.map((box) => {
-        const payload = {
-          data_id: dataId, // Include data_id here
-          x1: box.x1,
-          y1: box.y1,
-          x2: box.x2,
-          y2: box.y2,
-          label: box.label,
-          confidence_score: box.confidence || 1.0,
-        };
-  
-        return api.put(
-          `/annotations/image-annotations/${box.id}`,
-          payload,
-          {
-            headers: { Authorization: `Bearer ${accessToken}` },
-          }
-        );
-      });
-  
-      // Create requests
+
+      // Create new bounding boxes
       const createRequests = toCreate.map((box) => {
         const payload = {
           data_id: dataId,
-          result_type: "bounding_box",
+          result_type: "manual",
           x1: box.x1,
           y1: box.y1,
           x2: box.x2,
@@ -274,19 +260,15 @@ const MainPanel: React.FC<MainPanelProps> = ({
           label: box.label,
           confidence_score: box.confidence || 1.0,
         };
-  
+
         return api.post("/annotations/image-annotations/", payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
       });
-  
-      // Wait for all requests to complete
-      await Promise.all([
-        ...deleteRequests,
-        ...updateRequests,
-        ...createRequests,
-      ]);
-  
+
+      // Execute all requests
+      await Promise.all([...deleteRequests, ...createRequests]);
+
       return { success: true };
     } catch (error: any) {
       console.error("Error saving annotation results:", error);
@@ -296,9 +278,6 @@ const MainPanel: React.FC<MainPanelProps> = ({
       };
     }
   };
-  
-  
-  
 
   const handleSubmit = async () => {
     if (!selectedTaskId || !accessToken) {
@@ -400,7 +379,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
       showAlert("error", "No bounding box selected to delete!");
     }
   };
-  
+
 
   return (
     <div

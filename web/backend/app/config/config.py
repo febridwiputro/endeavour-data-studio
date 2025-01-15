@@ -2,7 +2,7 @@
 
 import os
 import sys
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import ClassVar, Set
 from pydantic import ValidationError
 
@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     SERVER_PORT: int
     CLIENT_ORIGIN: str
     YOLO_MODEL_PATH: str
+
+    # model_config = SettingsConfigDict(env_file=os.path.join(this_path, '.env'), extra='ignore')
 
     class Config:
         env_file = os.path.join(this_path, ".env")
