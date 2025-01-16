@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   ArrowDownTrayIcon,
+  ArrowUpTrayIcon,
   PencilIcon,
   TableCellsIcon,
   Squares2X2Icon,
@@ -13,7 +14,6 @@ import {
   ChartBarSquareIcon,
   TagIcon,
 } from "@heroicons/react/24/outline";
-
 
 interface SidebarProps {
   activePage: string;
@@ -36,7 +36,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
     {
       category: "Data",
       items: [
-        { name: "Upload Data", icon: ArrowDownTrayIcon },
+        { name: "Upload Data", icon: ArrowUpTrayIcon },
         { name: "Annotate", icon: PencilIcon },
         { name: "Dataset", icon: TableCellsIcon, badge: "100" },
         { name: "Versions", icon: Squares2X2Icon, badge: "Train" },

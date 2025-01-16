@@ -95,7 +95,7 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData }) => {
   if (selectedPage === "AnnotationsProjectPage" && selectedAnnotation) {
     return (
       <AnnotationsProjectPage
-        selectedAnnotation={selectedAnnotation} // Meneruskan anotasi yang dipilih
+        selectedAnnotation={selectedAnnotation}
       />
     );
   }

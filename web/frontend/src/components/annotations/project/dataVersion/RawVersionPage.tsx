@@ -7,6 +7,7 @@ import {
   FaPencilAlt,
   FaTrashAlt,
 } from "react-icons/fa";
+import axios from "axios";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -41,9 +42,36 @@ const RawVersionPage: React.FC<RawVersionPageProps> = ({
   toggleTrainingGraphs,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const projectId = 1; // Replace with the actual project ID
+      const response = await axios.get(
+        `http://127.0.0.1:8000/annotations/upload-data/export-annotations/?project_id=${projectId}`,
+        {
+          responseType: "blob", // Ensure the response is a file (binary data)
+        }
+      );
+
+      // Create a URL for the downloaded file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "annotations_export.zip"); // Filename
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch (error) {
+      console.error("Failed to download dataset:", error);
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   // Training Graphs Data
@@ -131,8 +159,17 @@ const RawVersionPage: React.FC<RawVersionPageProps> = ({
             <p className="text-sm text-gray-500">Generated on Dec 13, 2023</p>
           </div>
           <div className="flex items-center space-x-2">
-            <button className="flex items-center px-4 py-2 text-sm bg-gray-200 rounded-md hover:bg-gray-300">
-              <FaDownload className="mr-2" /> Download Dataset
+            <button
+              onClick={handleDownload}
+              className="flex items-center px-4 py-2 text-sm bg-gray-200 rounded-md hover:bg-gray-300"
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                "Downloading..."
+              ) : (
+                <FaDownload className="mr-2" />
+              )}
+              Download Dataset
             </button>
             {/* Edit Button */}
             <button

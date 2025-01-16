@@ -79,8 +79,8 @@ async def predict_image(
             content={
                 "status": "success",
                 "predictions": predictions,
-                "image_width": width,  # Include image width
-                "image_height": height,  # Include image height
+                "image_width": width,
+                "image_height": height,
             },
             status_code=status.HTTP_200_OK,
         )
@@ -90,64 +90,6 @@ async def predict_image(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error during prediction: {str(e)}",
         )
-
-
-
-
-# @router.post("/predict/")
-# async def predict_image(url: str = Form(..., description="URL of the image to predict")):
-#     """
-#     Predict bounding boxes from an image URL using the YOLOv8 model.
-#     """
-#     if not url:
-#         return JSONResponse(content={"error": "Image URL must be provided."}, status_code=400)
-
-#     try:
-#         # Fetch the image from the URL
-#         response = requests.get(url)
-#         if response.status_code != 200:
-#             return JSONResponse(
-#                 content={"error": f"Failed to fetch image: HTTP {response.status_code}"},
-#                 status_code=400,
-#             )
-
-#         nparr = np.frombuffer(response.content, np.uint8)
-#         image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-#         if image is None:
-#             return JSONResponse(
-#                 content={"error": "Failed to decode image from the provided URL."},
-#                 status_code=400,
-#             )
-#     except Exception as e:
-#         return JSONResponse(
-#             content={"error": f"Error while fetching the image: {str(e)}"},
-#             status_code=400,
-#         )
-
-#     # Perform YOLO prediction
-#     try:
-#         results = model.predict(image, conf=0.25, verbose=False)
-#         predictions = []
-#         for result in results:
-#             for box in result.boxes:
-#                 x1, y1, x2, y2 = map(int, box.xyxy[0].cpu().numpy())
-#                 cls_id = int(box.cls.cpu().numpy())
-#                 confidence = float(box.conf.cpu().numpy())
-#                 class_name = result.names[cls_id]
-
-#                 predictions.append({
-#                     "class_id": cls_id,
-#                     "class_name": class_name,
-#                     "bounding_box": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
-#                     "confidence": confidence,
-#                 })
-
-#         return JSONResponse(content=predictions)
-#     except Exception as e:
-#         return JSONResponse(
-#             content={"error": f"Error during YOLO prediction: {str(e)}"},
-#             status_code=500,
-#         )
 
 
 # @router.post("/predict/")
