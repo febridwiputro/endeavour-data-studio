@@ -15,6 +15,7 @@ import { resetProgress } from "../features/video/videoSlice";
 import CompressImagesInFolder from "../components/images/CompressImagesInFolder";
 import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
 import AnnotationsPage from "@/pages/annotations";
+import HomeDefaultPage from "./home-default";
 import { useDarkMode } from "@/context/DarkModeContext";
 
 const HomePage: React.FC = () => {

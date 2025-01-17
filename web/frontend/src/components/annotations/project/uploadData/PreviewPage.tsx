@@ -152,7 +152,7 @@ const PreviewPage: React.FC<PreviewPageProps> = ({
       {/* Preview Section */}
       <div
         className="grid grid-cols-4 gap-4 border rounded-lg p-4 overflow-y-auto"
-        style={{ maxHeight: "400px" }}
+        style={{ maxHeight: "615px" }}
       >
         {filteredFiles.map((file, index) => (
           <div

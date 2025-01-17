@@ -19,7 +19,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => (
           key={index}
           className={`flex items-center ${
             item.isActive
-              ? "bg-[#1a4f9d] text-white"
+              ? "bg-[#1a4e9d] text-white"
               : "bg-white text-gray-600 dark:bg-gray-800 dark:text-gray-300"
           }`}
         >
@@ -30,7 +30,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => (
                 index === 0 ? "" : "ps-8"
               } text-xs font-medium transition hover:bg-blue-700 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white`}
             >
-              {item.icon && <span className="size-4">{item.icon}</span>}
+              {item.icon && <span className="w-4 h-4">{item.icon}</span>}
               {item.label}
             </a>
           ) : (
@@ -39,7 +39,7 @@ const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => (
                 index === 0 ? "" : "ps-8"
               } text-xs font-medium`}
             >
-              {item.icon && <span className="size-4">{item.icon}</span>}
+              {item.icon && <span className="w-4 h-4">{item.icon}</span>}
               {item.label}
             </span>
           )}
@@ -58,6 +58,7 @@ export default Breadcrumb;
 //   label: string;
 //   href?: string;
 //   icon?: React.ReactNode;
+//   isActive?: boolean;
 // }
 
 // interface BreadcrumbProps {
@@ -65,16 +66,13 @@ export default Breadcrumb;
 // }
 
 // const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => (
-//   <nav
-//     aria-label="Breadcrumb"
-//     className="flex"
-//   >
+//   <nav aria-label="Breadcrumb" className="flex">
 //     <ol className="flex overflow-hidden rounded-lg border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300">
 //       {items.map((item, index) => (
 //         <li
 //           key={index}
 //           className={`flex items-center ${
-//             index === 0
+//             item.isActive
 //               ? "bg-[#1a4f9d] text-white"
 //               : "bg-white text-gray-600 dark:bg-gray-800 dark:text-gray-300"
 //           }`}

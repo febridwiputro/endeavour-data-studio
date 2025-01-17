@@ -112,45 +112,6 @@ useEffect(() => {
   fetchTasks();
 }, [accessToken]);
 
-
-  // // Fetch Tasks
-  // useEffect(() => {
-  //   const fetchTasks = async () => {
-  //     const token = accessToken || localStorage.getItem("accessToken");
-  //     if (!token) {
-  //       setError("Access token is missing. Please log in.");
-  //       return;
-  //     }
-
-  //     setLoading(true);
-  //     setError(null);
-
-  //     try {
-  //       const response = await api.get("/annotations/upload-data/1", {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
-
-  //       const { data } = response.data;
-  //       const mappedTasks = data.map((item: any) => ({
-  //         id: item.upload_id,
-  //         image: item.file_url,
-  //         completed: false,
-  //         annotatedBy: "Unassigned",
-  //       }));
-
-  //       setTasks(mappedTasks);
-  //     } catch (err: any) {
-  //       setError(err.response?.data?.message || "Failed to fetch tasks.");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchTasks();
-  // }, [accessToken]);
-
   const selectedTask =
     tasks.find((task) => task.id === selectedTaskId) || tasks[0];
   const [selectedColors, setSelectedColors] = useState<Record<string, boolean>>(
@@ -159,7 +120,7 @@ useEffect(() => {
   const [activeClass, setActiveClass] = useState<string | null>(null);
   const [undoStack, setUndoStack] = useState<BoundingBox[][]>([]);
   const [redoStack, setRedoStack] = useState<BoundingBox[][]>([]);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null!);
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(
     null
@@ -900,7 +861,7 @@ useEffect(() => {
         setActiveSubTab={setActiveSubTab}
         boundingBoxes={boundingBoxes}
         selectedBoxIndex={selectedBoxIndex}
-        hiddenBoxes={hiddenBoxes} // Pass deleted bounding boxes
+        hiddenBoxes={hiddenBoxes}
         onDeleteBox={onDeleteBox}
         onToggleBoxVisibility={onToggleBoxVisibility}
         onSelectBoundingBox={handleSelectBoundingBox}

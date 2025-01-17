@@ -43,7 +43,7 @@ const AnnotationsProjectPage: React.FC<AnnotationsProjectPageProps> = ({
         return <ClassesAndTagsPage />;
       case "Models":
         return <ModelsPage />;
-      case "Monitoring": // New page case
+      case "Monitoring":
         return <MonitoringPage />;
       case "Deployments":
         return <ConfigEditor />;
@@ -52,7 +52,6 @@ const AnnotationsProjectPage: React.FC<AnnotationsProjectPageProps> = ({
         return <AnnotationUploadDataProjectPage />;
     }
   };
-  
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">

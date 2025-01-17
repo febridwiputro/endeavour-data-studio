@@ -10,7 +10,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
   handleSidebarToggle,
 }) => {
   return (
-    <div className="flex items-center justify-center">
+    <div className="border flex items-center justify-center">
       <div
         className="flex items-center cursor-pointer"
         onClick={handleSidebarToggle}
@@ -23,7 +23,7 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
           fill="currentColor"
           className="block text-[#699bf7] dark:text-blue-400"
         >
-          <rect width="2048" height="2048" fill="none" />
+          <rect width="1080" height="1080" fill="none" />
           <path
             fill="currentColor"
             d="M2048 640h-640V482L691 960l717 478v-158h640v640h-640v-328l-768-512v200H0V640h640v200l768-512V0h640zm-512 768v384h384v-384zM512 1152V768H128v384zM1536 128v384h384V128z"
