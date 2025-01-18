@@ -103,10 +103,9 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData }) => {
   return (
     <section className="flex-1 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 w-full">
       <div className="h-screen overflow-hidden flex">
-        {/* Sidebar and Header */}
 
         {/* Main Content with Scroll */}
-        <div className="flex-1 overflow-auto px-4 py-8 sm:px-6 sm:py-12 lg:px-8 lg:py-16">
+        <div className="flex-1 overflow-auto px-0 py-0 sm:px-0 sm:py-0 lg:px-0 lg:py-0">
           <DropdownSearch
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}

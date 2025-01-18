@@ -10,9 +10,9 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
   handleSidebarToggle,
 }) => {
   return (
-    <div className="border flex items-center justify-center">
+    <div className="absolute top-0 left-0 w-full h-10 shadow-md flex justify-center items-center rounded-t-md">
       <div
-        className="flex items-center cursor-pointer"
+        className="absolute top-0 left-0 w-full h-10 shadow-md flex justify-center items-center rounded-t-md"
         onClick={handleSidebarToggle}
       >
         <svg
@@ -29,9 +29,10 @@ const SidebarHeader: React.FC<SidebarHeaderProps> = ({
             d="M2048 640h-640V482L691 960l717 478v-158h640v640h-640v-328l-768-512v200H0V640h640v200l768-512V0h640zm-512 768v384h384v-384zM512 1152V768H128v384zM1536 128v384h384V128z"
           />
         </svg>
+        {/* Tampilkan teks hanya jika sidebar terbuka */}
         <span
-          className={`text-xl font-bold ml-2 text-gray-800 dark:text-gray-200 ${
-            !isOpen && "hidden"
+          className={`text-xl font-bold ml-2 text-gray-800 dark:text-gray-200 transition-all ${
+            isOpen ? "opacity-100 ml-2" : "opacity-0 hidden"
           }`}
         >
           Data Studio
