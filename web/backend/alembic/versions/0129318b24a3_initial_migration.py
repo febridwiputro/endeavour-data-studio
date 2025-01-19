@@ -1,8 +1,8 @@
-"""Init Migration
+"""Initial migration
 
-Revision ID: 95d206d803e1
+Revision ID: 0129318b24a3
 Revises: 
-Create Date: 2025-01-12 18:09:55.662027
+Create Date: 2025-01-18 12:47:02.184904
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = '95d206d803e1'
+revision = '0129318b24a3'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -276,10 +276,10 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('data_id', sa.Integer(), nullable=False),
     sa.Column('result_type', sa.String(), nullable=False),
-    sa.Column('x1', sa.Integer(), nullable=True),
-    sa.Column('y1', sa.Integer(), nullable=True),
-    sa.Column('x2', sa.Integer(), nullable=True),
-    sa.Column('y2', sa.Integer(), nullable=True),
+    sa.Column('x1', sa.Float(), nullable=True),
+    sa.Column('y1', sa.Float(), nullable=True),
+    sa.Column('x2', sa.Float(), nullable=True),
+    sa.Column('y2', sa.Float(), nullable=True),
     sa.Column('label', sa.String(), nullable=True),
     sa.Column('confidence_score', sa.Float(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),

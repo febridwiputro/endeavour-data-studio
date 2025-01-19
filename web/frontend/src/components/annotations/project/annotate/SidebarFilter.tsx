@@ -205,7 +205,6 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     }
   };
 
-
   return (
     <div className="mb-4 relative">
       {/* Filter and Column Toggles */}

@@ -67,20 +67,38 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   // Fetch model API URL
-  const fetchModelApi = async () => {
-    try {
-      const response = await api.get(
-        "/annotations/models/filter/?project_id=1&is_enable=true",
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-      );
-      const { data } = response.data;
-      if (data.length > 0) {
-        setModelApiUrl(data[0].api_url);
-      }
-    } catch (error) {
+// Fetch model API URL dengan perbaikan error handling
+const fetchModelApi = async () => {
+  if (!accessToken) {
+    console.warn("Access token is missing. Skipping fetchModelApi.");
+    return;
+  }
+
+  try {
+    const response = await api.get(
+      "/annotations/models/filter/?project_id=1&is_enable=true",
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    const { data } = response.data;
+
+    if (!data || data.length === 0) {
+      console.warn("No model API found. Setting default state.");
+      setModelApiUrl(null);
+      return;
+    }
+
+    setModelApiUrl(data[0]?.api_url || null);
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      console.error("Error 404: API endpoint not found or no matching data.");
+    } else {
       console.error("Error fetching model API:", error);
     }
-  };
+    setModelApiUrl(null);
+  }
+};
+
 
   useEffect(() => {
     fetchClasses();
