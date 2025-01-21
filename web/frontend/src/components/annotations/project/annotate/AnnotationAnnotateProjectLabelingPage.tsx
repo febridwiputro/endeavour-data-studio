@@ -9,7 +9,6 @@ import MainPanel from "./MainPanel";
 import DetailsPanel from "./DetailsPanel";
 import { Task, BoundingBox, Annotation } from "./types";
 
-
 const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   const { accessToken } = useSelector((state: RootState) => state.auth);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -67,25 +66,25 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   }, [accessToken]);
 
   // Fetch Tasks
-useEffect(() => {
-  const fetchTasks = async () => {
-    const token = accessToken || localStorage.getItem("accessToken");
-    if (!token) {
-      setError("Access token is missing. Please log in.");
-      return;
-    }
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const token = accessToken || localStorage.getItem("accessToken");
+      if (!token) {
+        setError("Access token is missing. Please log in.");
+        return;
+      }
 
-    setLoading(true);
-    setError(null);
+      setLoading(true);
+      setError(null);
 
-    try {
-      const response = await api.get("/annotations/upload-data/1", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      try {
+        const response = await api.get("/annotations/upload-data/1", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      const { data } = response.data;
+        const { data } = response.data;
 
         // Map tasks to match the expected SidebarTask type
         const mappedTasks = data.map((item: any) => ({
@@ -101,16 +100,16 @@ useEffect(() => {
           metadata: item.metadata,
         }));
 
-      setTasks(mappedTasks);
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to fetch tasks.");
-    } finally {
-      setLoading(false);
-    }
-  };
+        setTasks(mappedTasks);
+      } catch (err: any) {
+        setError(err.response?.data?.message || "Failed to fetch tasks.");
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  fetchTasks();
-}, [accessToken]);
+    fetchTasks();
+  }, [accessToken]);
 
   const selectedTask =
     tasks.find((task) => task.id === selectedTaskId) || tasks[0];
@@ -170,10 +169,6 @@ useEffect(() => {
   );
   const [activeSubTab, setActiveSubTab] = useState<"regions" | "relations">(
     "regions"
-  );
-
-  const [selectedLabelIndex, setSelectedLabelIndex] = useState<number | null>(
-    null
   );
 
   const [deletedBoundingBoxes, setDeletedBoundingBoxes] = useState<number[]>(

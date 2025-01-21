@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { api } from "@/services/apiConfig";
 
@@ -56,6 +56,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   const [filters, setFilters] = useState<Filter[]>([
     { field: "image", operator: "contains", value: "", logic: "and" },
   ]);
+  const imageRef = useRef<HTMLImageElement>(null);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
   const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
@@ -118,8 +119,8 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
       console.error("Prediction is disabled. Check model URL or selected tasks.");
       return;
     }
-
-    setIsPredicting(true); // Set predicting state to true
+  
+    setIsPredicting(true);
     try {
       const predictions = await Promise.all(
         selectedTasks.map(async (taskId) => {
@@ -128,29 +129,37 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
             console.error(`Task ${taskId} does not have a valid file URL.`);
             return null;
           }
-
+  
           try {
             console.log(`[TASK]: Sending prediction request for ${task.file_url}`);
+            const formData = new FormData();
+            formData.append("url", task.file_url);
+  
             const response = await api.post(
               `${modelApiUrl}/predict/`,
-              { url: task.file_url }, // Send JSON payload
+              formData,
               {
                 headers: {
-                  "Content-Type": "application/json",
                   Authorization: `Bearer ${accessToken}`,
                 },
               }
             );
-
-            console.log(`Prediction response for Task ${taskId}:`, response.data);
-            const { predictions, image_width, image_height } = response.data;
-
-            // Calculate scaled bounding boxes
-            const displayedWidth = 800; // Example: Width of the image displayed in the UI
-            const scaleX = displayedWidth / image_width;
-            const scaleY = scaleX; // Assuming aspect ratio is maintained
-
-            const scaledPredictions = predictions.map((box: any) => ({
+  
+            if (response.data.status !== "success") {
+              console.error(`Prediction failed for Task ${taskId}:`, response.data);
+              return null;
+            }
+  
+            const { predictions, image_width, image_height } = response.data.data;
+            const scaleX = image_width ? image_width / image_width : 1;
+            const scaleY = image_height ? image_height / image_height : 1;
+  
+            const scaledPredictions = predictions.map((box: {
+              class_id: number;
+              class_name: string;
+              bounding_box: { x1: number; y1: number; x2: number; y2: number };
+              confidence: number;
+            }) => ({
               ...box,
               bounding_box: {
                 x1: box.bounding_box.x1 * scaleX,
@@ -159,7 +168,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
                 y2: box.bounding_box.y2 * scaleY,
               },
             }));
-
+  
             return { taskId, result: { predictions: scaledPredictions } };
           } catch (error) {
             console.error(`Error processing Task ${taskId}:`, error);
@@ -167,16 +176,20 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
           }
         })
       );
-
-      // Process predictions
+  
       predictions.forEach((prediction) => {
         if (prediction?.result) {
           console.log(
             `Processed results for Task ${prediction.taskId}:`,
             prediction.result
           );
-
-          prediction.result.predictions.forEach((box: any) => {
+  
+          prediction.result.predictions.forEach((box: {
+            class_id: number;
+            class_name: string;
+            bounding_box: { x1: number; y1: number; x2: number; y2: number };
+            confidence: number;
+          }) => {
             const payload = {
               data_id: prediction.taskId,
               result_type: "model",
@@ -185,25 +198,24 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
               x2: box.bounding_box.x2,
               y2: box.bounding_box.y2,
               label: box.class_name,
-              confidence_score: box.confidence_score || 1.0,
+              confidence_score: box.confidence || 1.0,
             };
-
-            // Save annotations to the server
+  
             api.post("/annotations/image-annotations/", payload, {
               headers: { Authorization: `Bearer ${accessToken}` },
             });
           });
         }
       });
-
-      // Notify parent component
+  
       onPredictionComplete();
     } catch (error) {
       console.error("Error during prediction process:", error);
     } finally {
-      setIsPredicting(false); // Reset predicting state
+      setIsPredicting(false);
     }
   };
+  
 
   return (
     <div className="mb-4 relative">
@@ -211,10 +223,11 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
       <div className="p-4 flex items-center space-x-4 bg-white shadow-md rounded overflow-x-auto">
         {/* Predict Button */}
         <button
-          className={`px-4 py-1 text-sm font-medium rounded ${isPredictDisabled || isPredicting
-            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-            : "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"
-            }`}
+          className={`px-4 py-1 text-sm font-medium rounded ${
+            isPredictDisabled || isPredicting
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"
+          }`}
           disabled={isPredictDisabled || isPredicting}
           onClick={handlePredict}
         >
@@ -228,10 +241,11 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         >
           <span className="text-gray-700">Class</span>
           <ChevronDownIcon
-            className={`h-5 w-5 ml-2 transform transition-transform ${isClassDropdownOpen ? "rotate-180" : ""
-              }`}
+            className={`h-5 w-5 ml-2 transform transition-transform ${
+              isClassDropdownOpen ? "rotate-180" : ""
+            }`}
           />
-        </button>        
+        </button>
         {/* Filter Button */}
         <button
           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
@@ -239,8 +253,9 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         >
           <span className="text-gray-700">Filter</span>
           <ChevronDownIcon
-            className={`h-5 w-5 ml-2 transform transition-transform ${isFilterDropdownOpen ? "rotate-180" : ""
-              }`}
+            className={`h-5 w-5 ml-2 transform transition-transform ${
+              isFilterDropdownOpen ? "rotate-180" : ""
+            }`}
           />
         </button>
 
@@ -251,8 +266,9 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         >
           <span className="text-gray-700">Columns</span>
           <ChevronDownIcon
-            className={`h-5 w-5 ml-2 transform transition-transform ${isColumnDropdownOpen ? "rotate-180" : ""
-              }`}
+            className={`h-5 w-5 ml-2 transform transition-transform ${
+              isColumnDropdownOpen ? "rotate-180" : ""
+            }`}
           />
         </button>
       </div>
@@ -382,10 +398,11 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
                 className="hidden peer"
               />
               <label
-                className={`relative mr-3 flex items-center justify-center w-5 h-5 rounded overflow-hidden border ${selectedClasses[cls.name]
-                  ? "bg-blue-600"
-                  : "bg-white border-gray-300"
-                  }`}
+                className={`relative mr-3 flex items-center justify-center w-5 h-5 rounded overflow-hidden border ${
+                  selectedClasses[cls.name]
+                    ? "bg-blue-600"
+                    : "bg-white border-gray-300"
+                }`}
               >
                 {selectedClasses[cls.name] && (
                   <svg

@@ -12,7 +12,9 @@ import { useDarkMode } from "@/context/DarkModeContext";
 import Breadcrumb from "@/components/Breadcrumb";
 import { HomeIcon, FolderIcon } from "@heroicons/react/24/outline";
 import DashboardMenu from "@/components/dashboard/DashboardMenu";
-import AnnotationsPage from "@/pages/annotations";
+import DashboardPage from "./dashboard";
+// import AnnotationsPage from "@/pages/annotations";
+import AnnotationsPage from "./annotations";
 
 const HomePage: React.FC = () => {
   const { isDarkMode } = useDarkMode();
@@ -86,7 +88,7 @@ const HomePage: React.FC = () => {
           className={`flex-grow p-4 transition-colors ${isDarkMode ? "bg-gray-800" : "bg-white"} shadow-md rounded-md mx-2 mt-2`}
         >
           <div className="p-4">
-            {selectedMenu === "Dashboard" && <DashboardMenu />}
+            {selectedMenu === "Dashboard" && <DashboardPage />}
             {selectedMenu === "Annotations" && <AnnotationsPage />}
             {selectedMenu === "Split by Number of Images" && <VideoToImage />}
             {selectedMenu === "Concatenate by Composition" && (

@@ -137,31 +137,6 @@ const ExternalModelPage: React.FC = () => {
       showAlert("error", "An error occurred while updating the model status.");
     }
   };
-  
-
-  // const handleToggle = async (modelId: number, isEnable: boolean) => {
-  //   try {
-  //     const response = await api.put(
-  //       `/annotations/models/${modelId}`,
-  //       { is_enable: isEnable },
-  //       {
-  //         headers: {
-  //           Authorization: `Bearer ${accessToken}`,
-  //         },
-  //       }
-  //     );
-
-  //     if (response.status === 200 && response.data.status === "success") {
-  //       fetchModels();
-  //       showAlert("success", "Model status updated successfully.");
-  //     } else {
-  //       showAlert("error", "Failed to update model status.");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error updating model:", error);
-  //     showAlert("error", "An error occurred while updating the model.");
-  //   }
-  // };
 
   const handleDelete = async () => {
     if (!selectedModel) return;
@@ -351,47 +326,66 @@ const ExternalModelPage: React.FC = () => {
       showAlert("error", "API URL is missing.");
       return;
     }
-
+  
     const formData = new FormData();
-
+  
     try {
-      // Handle input based on inputType
       if (inputType === "file" && imagePreview) {
         const blob = await fetch(imagePreview).then((res) => res.blob());
-        formData.append("file", blob);
+        formData.append("file", blob, "uploaded_image.jpg");
       } else if (inputType === "url" && imageUrl) {
         formData.append("url", imageUrl);
       } else if (inputType === "paste" && pastedImage) {
-        formData.append("pastedImage", pastedImage);
+        const blob = await fetch(pastedImage).then((res) => res.blob());
+        formData.append("file", blob, "pasted_image.jpg");
       } else {
-        showAlert("error", "Please provide valid input data.");
+        showAlert("error", "Please provide a valid input.");
         return;
       }
-
-      // Send prediction request
-      const response = await fetch(`${selectedModel.api_url}/predict`, {
+  
+      console.log("🔹 Sending request to:", selectedModel.api_url);
+  
+      const apiEndpoint = selectedModel.api_url.endsWith("/predict")
+        ? selectedModel.api_url
+        : `${selectedModel.api_url}/predict`;
+  
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         body: formData,
         headers: {
-          Authorization: `Bearer ${selectedModel.api_key || accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
+          Accept: "application/json",
         },
       });
-
-      if (response.ok) {
-        const result = await response.json();
-        setPredictionResults(result);
-        showAlert("success", "Prediction successful!");
-      } else {
-        const errorData = await response.json();
-        const errorMessage =
-          errorData?.message || "Prediction failed. Please try again.";
-        showAlert("error", `Error: ${errorMessage}`);
+  
+      const contentType = response.headers.get("content-type");
+  
+      if (!response.ok) {
+        const errorData = contentType?.includes("application/json")
+          ? await response.json()
+          : await response.text();
+        throw new Error(
+          typeof errorData === "string" ? errorData : errorData?.detail || "Prediction failed. Try again."
+        );
       }
+  
+      const result = contentType?.includes("application/json")
+        ? await response.json()
+        : await response.text();
+  
+      // Pastikan `result.predictions` adalah array
+      setPredictionResults(
+        Array.isArray(result.data.predictions) ? result.data.predictions : []
+      );
+  
+      showAlert("success", "Prediction successful!");
+      console.log("✅ Prediction Response:", result);
     } catch (error) {
-      console.error("Prediction error:", error);
+      console.error("❌ Prediction error:", error);
       showAlert("error", "An error occurred during prediction.");
     }
   };
+  
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen">

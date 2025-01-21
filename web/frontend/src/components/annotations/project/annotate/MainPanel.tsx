@@ -9,7 +9,6 @@ import { Task } from "./types";
 import { BoundingBox } from "./types";
 import { api } from "@/services/apiConfig";
 
-
 interface MainPanelProps {
   tasks: Task[];
   selectedTaskId: number | null;
@@ -29,15 +28,15 @@ interface MainPanelProps {
   handleMouseUp: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   handleMouseLeave: (e: React.MouseEvent<HTMLCanvasElement>) => void;
   activeTool:
-  | "normal"
-  | "zoomIn"
-  | "zoomOut"
-  | "move"
-  | "pan"
-  | "dashLine"
-  | "zoomToFit"
-  | "zoomToActualSize"
-  | null;
+    | "normal"
+    | "zoomIn"
+    | "zoomOut"
+    | "move"
+    | "pan"
+    | "dashLine"
+    | "zoomToFit"
+    | "zoomToActualSize"
+    | null;
   cursorStyle: string;
   handleNormalCursor: () => void;
   handleZoomIn: () => void;
@@ -170,6 +169,17 @@ const MainPanel: React.FC<MainPanelProps> = ({
   const closeAlert = () => {
     setAlertConfig((prev) => ({ ...prev, show: false }));
   };
+  const imageRef = useRef<HTMLImageElement>(null);
+  const [imageSize, setImageSize] = useState({ width: 1280, height: 1280 });
+
+  useEffect(() => {
+    if (imageRef.current) {
+      setImageSize({
+        width: imageRef.current.naturalWidth,
+        height: imageRef.current.naturalHeight,
+      });
+    }
+  }, [selectedTaskId]);
 
   // Fetch saved annotations when a task is selected
   useEffect(() => {
@@ -207,22 +217,23 @@ const MainPanel: React.FC<MainPanelProps> = ({
     accessToken: string
   ) => {
     try {
-      // Fetch existing annotations
-      const response = await api.get(`/annotations/image-annotations/${dataId}`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
-
+      const response = await api.get(
+        `/annotations/image-annotations/${dataId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+  
       if (response.status !== 200) {
         console.error("Failed to fetch annotation data.");
         return { success: false, message: "Failed to fetch annotation data." };
       }
-
-      const existingAnnotations = response.data.data; // Array of existing annotations
+  
+      const existingAnnotations = response.data.data;
       const existingIds = new Set(
         existingAnnotations.map((annotation: any) => annotation.id)
       );
-
-      // Determine changes
+  
       const toDelete = existingAnnotations.filter(
         (annotation: any) =>
           !boundingBoxes.some(
@@ -235,21 +246,34 @@ const MainPanel: React.FC<MainPanelProps> = ({
               box.label === annotation.label
           )
       );
-
+  
       const toCreate = boundingBoxes.filter(
         (box) =>
           !box.id || !existingAnnotations.some((ann: any) => ann.id === box.id)
       );
-
-      // Delete old bounding boxes with changed coordinates
+  
+      // Delete old bounding boxes
       const deleteRequests = toDelete.map((annotation: any) =>
         api.delete(`/annotations/image-annotations/${annotation.id}`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         })
       );
-
-      // Create new bounding boxes
-      const createRequests = toCreate.map((box) => {
+  
+      // Re-create deleted bounding boxes with updated positions
+      const recreatedBoxes = toDelete.map((deletedBox: any) => {
+        const matchingBox = boundingBoxes.find((box) => box.id === deletedBox.id);
+        return matchingBox
+          ? {
+              ...matchingBox,
+              x1: matchingBox.x1,
+              y1: matchingBox.y1,
+              x2: matchingBox.x2,
+              y2: matchingBox.y2,
+            }
+          : null;
+      }).filter(Boolean);
+  
+      const createRequests = [...toCreate, ...recreatedBoxes].map((box) => {
         const payload = {
           data_id: dataId,
           result_type: "manual",
@@ -260,15 +284,13 @@ const MainPanel: React.FC<MainPanelProps> = ({
           label: box.label,
           confidence_score: box.confidence || 1.0,
         };
-
+  
         return api.post("/annotations/image-annotations/", payload, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
       });
-
-      // Execute all requests
+  
       await Promise.all([...deleteRequests, ...createRequests]);
-
       return { success: true };
     } catch (error: any) {
       console.error("Error saving annotation results:", error);
@@ -278,7 +300,7 @@ const MainPanel: React.FC<MainPanelProps> = ({
       };
     }
   };
-
+  
   const handleSubmit = async () => {
     if (!selectedTaskId || !accessToken) {
       showAlert("error", "No task selected or missing access token.");
@@ -295,29 +317,6 @@ const MainPanel: React.FC<MainPanelProps> = ({
       showAlert("success", "Annotations saved successfully!");
     } else {
       showAlert("error", resultsResponse.message);
-    }
-  };
-
-  const fetchAnnotationIds = async (taskId: number, accessToken: string) => {
-    try {
-      const response = await api.get(
-        `/annotations/image-annotations/${taskId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
-      );
-
-      if (response.status === 200) {
-        return response.data.data.map((annotation: any) => annotation.id);
-      } else {
-        console.error("Failed to fetch annotation IDs:", response);
-        return [];
-      }
-    } catch (error) {
-      console.error("Error fetching annotation IDs:", error);
-      return [];
     }
   };
 
@@ -368,7 +367,9 @@ const MainPanel: React.FC<MainPanelProps> = ({
         // Pastikan box.id dikonversi ke number jika perlu
         setDeletedBoundingBoxes((prev) => [
           ...prev,
-          typeof boxToDelete.id === "string" ? Number(boxToDelete.id) : boxToDelete.id,
+          typeof boxToDelete.id === "string"
+            ? Number(boxToDelete.id)
+            : boxToDelete.id,
         ]);
       }
       setBoundingBoxes((prev) =>
@@ -379,7 +380,6 @@ const MainPanel: React.FC<MainPanelProps> = ({
       showAlert("error", "No bounding box selected to delete!");
     }
   };
-
 
   return (
     <div
@@ -427,16 +427,25 @@ const MainPanel: React.FC<MainPanelProps> = ({
               }}
             >
               <img
+                ref={imageRef}
                 src={selectedTask.file_url}
                 alt={`Task ${selectedTask.id}`}
                 className="w-full object-contain"
+                onLoad={() => {
+                  if (imageRef.current) {
+                    setImageSize({
+                      width: imageRef.current.naturalWidth,
+                      height: imageRef.current.naturalHeight,
+                    });
+                  }
+                }}
               />
             </div>
             <canvas
               ref={canvasRef}
               className="absolute top-0 left-0 w-full h-full"
-              width={800}
-              height={500}
+              width={imageSize.width}
+              height={imageSize.height}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
