@@ -22,18 +22,26 @@ const ClassAndTagsAddModal: React.FC<ClassAndTagsAddModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const pickerRef = useRef<HTMLDivElement | null>(null);
+  const selectedProjectId = useSelector(
+    (state: RootState) => state.project.selectedProjectId
+  );
 
   const handleAddClass = async () => {
     if (!className.trim()) {
       setError("Class name is required!");
       return;
     }
-    setError("");
 
+    if (!selectedProjectId) {
+      setError("Project ID is required! Please select a project.");
+      return;
+    }
+
+    setError("");
     setLoading(true);
 
     const payload = {
-      project_id: 1, // Assuming project_id is known or dynamic
+      project_id: {selectedProjectId},
       class_name: className.trim(),
       class_color: classColor,
     };

@@ -35,7 +35,6 @@ const MonitoringPage: React.FC = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4 text-gray-800">Monitoring</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {cards.map((card) => (
           <div
@@ -51,7 +50,7 @@ const MonitoringPage: React.FC = () => {
                 backgroundSize: "contain",
                 backgroundRepeat: "no-repeat",
                 backgroundPosition: "center",
-                opacity: 0.3, // Transparency effect
+                opacity: 0.3,
               }}
             ></div>
             {/* Card Content */}

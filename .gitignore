@@ -1,5 +1,6 @@
 web/backend/img-adjst/
 web/backend/static/image_output
+web/backend/temp_exports/
 
 *.vscode/
 

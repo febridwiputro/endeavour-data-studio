@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import api from "@/services/apiConfig";
 
 // Async thunk to create a new annotation project
@@ -129,11 +129,22 @@ const projectAnnotationSlice = createSlice({
       sub_feature_1_id: number;
     }>,
     dataCount: 0,
+    selectedAnnotation: null as {
+      id: number;
+      name: string;
+      project_photo_url?: string;
+      annotation_type?: string;
+      code_name?: string;
+    } | null,
     status: "idle",
     creationStatus: "idle",
     creationError: null as string | null,
   },
-  reducers: {},
+  reducers: {
+    setSelectedAnnotation: (state, action: PayloadAction<any>) => {
+      state.selectedAnnotation = action.payload; // ✅ Menyimpan selectedAnnotation ke Redux state
+    },
+  },
   extraReducers: (builder) => {
     builder
       // Fetch Annotations By Type
@@ -242,4 +253,5 @@ const projectAnnotationSlice = createSlice({
   },
 });
 
+export const { setSelectedAnnotation } = projectAnnotationSlice.actions;
 export default projectAnnotationSlice.reducer;

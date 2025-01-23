@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
+import { CodeBracketIcon } from "@heroicons/react/24/solid";
 import SidebarFilters from "./SidebarFilter";
 import { api } from "@/services/apiConfig";
 import { Task } from "./types";
+import ModalBase from "@/components/base/ModalBaseV2";
 
 interface SidebarProps {
   tasks: Task[];
@@ -19,6 +21,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   panelWidth,
 }) => {
   const { accessToken } = useSelector((state: RootState) => state.auth);
+  const selectedProjectId = useSelector(
+    (state: RootState) => state.project.selectedProjectId
+  );
+
   const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<{
@@ -45,15 +51,25 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: string; color: string; name: string }[]
   >([]);
   const [modelApiUrl, setModelApiUrl] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalContent, setModalContent] = useState<string>("");
+
+  const openMetadataModal = (metadata: any) => {
+    setModalContent(JSON.stringify(metadata, null, 2));
+    setModalOpen(true);
+  };
 
   // Fetch annotation classes
   const fetchClasses = async () => {
-    if (!accessToken) return;
+    if (!accessToken || !selectedProjectId) return;
 
     try {
-      const response = await api.get(`/annotations/classes-and-tags/1`, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const response = await api.get(
+        `/annotations/classes-and-tags/${selectedProjectId}`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
       const { data } = response.data;
       const fetchedClasses = data.map((cls: any) => ({
         id: cls.id,
@@ -66,46 +82,46 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  // Fetch model API URL
-// Fetch model API URL dengan perbaikan error handling
-const fetchModelApi = async () => {
-  if (!accessToken) {
-    console.warn("Access token is missing. Skipping fetchModelApi.");
-    return;
-  }
-
-  try {
-    const response = await api.get(
-      "/annotations/models/filter/?project_id=1&is_enable=true",
-      { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-
-    const { data } = response.data;
-
-    if (!data || data.length === 0) {
-      console.warn("No model API found. Setting default state.");
-      setModelApiUrl(null);
+  // Fetch model API URL dengan perbaikan error handling
+  const fetchModelApi = async () => {
+    if (!accessToken || !selectedProjectId) {
+      console.warn("Access token or project ID is missing. Skipping fetchModelApi.");
       return;
     }
 
-    setModelApiUrl(data[0]?.api_url || null);
-  } catch (error: any) {
-    if (error.response?.status === 404) {
-      console.error("Error 404: API endpoint not found or no matching data.");
-    } else {
-      console.error("Error fetching model API:", error);
-    }
-    setModelApiUrl(null);
-  }
-};
+    try {
+      const response = await api.get(
+        `/annotations/models/filter/?project_id=${selectedProjectId}&is_enable=true`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
 
+      const { data } = response.data;
+
+      if (!data || data.length === 0) {
+        console.warn("No model API found. Setting default state.");
+        setModelApiUrl(null);
+        return;
+      }
+
+      setModelApiUrl(data[0]?.api_url || null);
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        console.error("Error 404: API endpoint not found or no matching data.");
+      } else {
+        console.error("Error fetching model API:", error);
+      }
+      setModelApiUrl(null);
+    }
+  };
 
   useEffect(() => {
-    fetchClasses();
-    fetchModelApi();
+    if (selectedProjectId) {
+      fetchClasses();
+      fetchModelApi();
+    }
     const userId = localStorage.getItem("rememberedEmail");
     setCurrentUserId(userId);
-  }, []);
+  }, [selectedProjectId]); // Hanya jalankan saat project_id berubah
 
   const toggleTaskSelection = (taskId: number) => {
     setSelectedTasks((prev) =>
@@ -134,10 +150,6 @@ const fetchModelApi = async () => {
       className="bg-gray-50 border-r border-gray-200 p-4"
       style={{ width: `${100 - panelWidth}%`, height: "100vh" }}
     >
-      {/* Header Section */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-lg font-semibold text-gray-700">Tasks</h2>
-      </div>
 
       {/* Filter Section */}
       <SidebarFilters
@@ -178,6 +190,7 @@ const fetchModelApi = async () => {
                 ))}
             </tr>
           </thead>
+
           <tbody>
             {tasks.map((task, index) => (
               <tr
@@ -203,19 +216,13 @@ const fetchModelApi = async () => {
                 {Object.entries(visibleColumns)
                   .filter(([_, visible]) => visible)
                   .map(([key]) => (
-                    <td
-                      key={key}
-                      className="border border-gray-200 p-2 text-center"
-                    >
+                    <td key={key} className="border border-gray-200 p-2 text-center">
                       {key === "file_url" ? (
-                        <img
-                          src={task[key as keyof Task] as string}
-                          alt={`Task ${task.id}`}
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                      ) : typeof task[key as keyof Task] === "object" &&
-                        task[key as keyof Task] !== null ? (
-                        JSON.stringify(task[key as keyof Task], null, 2)
+                        <img src={task[key as keyof Task] as string} alt={`Task ${task.id}`} className="w-10 h-10 object-cover rounded" />
+                      ) : key === "metadata" ? (
+                        <button onClick={() => openMetadataModal(task.metadata)}>
+                          <CodeBracketIcon className="w-6 h-6 text-gray-500" />
+                        </button>
                       ) : (
                         String(task[key as keyof Task])
                       )}
@@ -226,77 +233,7 @@ const fetchModelApi = async () => {
           </tbody>
         </table>
       </div>
-
-      {/* Table Section */}
-      {/* <div className="relative overflow-y-auto h-[calc(100%-200px)]">
-        <table className="w-full border-collapse border border-gray-200">
-          <thead className="bg-gray-100 sticky top-0 z-10">
-            <tr>
-              <th className="border border-gray-200 p-2 text-center">
-                <input
-                  type="checkbox"
-                  className="form-checkbox h-4 w-4 text-blue-600"
-                  checked={isAllSelected}
-                  onChange={toggleAllSelection}
-                />
-              </th>
-              {Object.entries(visibleColumns)
-                .filter(([_, visible]) => visible)
-                .map(([key]) => (
-                  <th
-                    key={key}
-                    className="border border-gray-200 p-2 text-left"
-                  >
-                    {key.charAt(0).toUpperCase() +
-                      key.slice(1).replace(/_/g, " ")}
-                  </th>
-                ))}
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.map((task) => (
-              <tr
-                key={task.id}
-                className={`cursor-pointer ${selectedTaskId === task.id
-                    ? "bg-blue-100"
-                    : "hover:bg-gray-100"
-                  }`}
-                onClick={() => setSelectedTaskId(task.id)}
-              >
-                <td className="border border-gray-200 p-2 text-center">
-                  <input
-                    type="checkbox"
-                    className="form-checkbox h-4 w-4 text-blue-600"
-                    checked={selectedTasks.includes(task.id)}
-                    onChange={() => toggleTaskSelection(task.id)}
-                  />
-                </td>
-                {Object.entries(visibleColumns)
-                  .filter(([_, visible]) => visible)
-                  .map(([key]) => (
-                    <td
-                      key={key}
-                      className="border border-gray-200 p-2 text-center"
-                    >
-                      {key === "file_url" ? (
-                        <img
-                          src={task[key as keyof Task] as string}
-                          alt={`Task ${task.id}`}
-                          className="w-10 h-10 object-cover rounded"
-                        />
-                      ) : typeof task[key as keyof Task] === "object" &&
-                        task[key as keyof Task] !== null ? (
-                        JSON.stringify(task[key as keyof Task], null, 2)
-                      ) : (
-                        String(task[key as keyof Task])
-                      )}
-                    </td>
-                  ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div> */}
+      <ModalBase show={modalOpen} title="Metadata Details" message={<pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-100 p-4 rounded-md overflow-x-auto">{modalContent}</pre>} onClose={() => setModalOpen(false)} />
     </div>
   );
 };

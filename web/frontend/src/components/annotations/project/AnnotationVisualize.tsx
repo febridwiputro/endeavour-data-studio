@@ -139,7 +139,6 @@ const AnnotationVisualize: React.FC = () => {
     <div className="flex flex-col h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 transition-colors">
       {/* Header */}
       <div className="p-4 border-b bg-white dark:bg-gray-800">
-        <h1 className="text-xl font-bold">Visualize</h1>
         <div className="mt-4">
           <label className="block text-sm font-medium mb-2">
             Switch Model:

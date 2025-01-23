@@ -25,6 +25,9 @@ interface Model {
 
 const ExternalModelPage: React.FC = () => {
   const { accessToken } = useSelector((state: RootState) => state.auth);
+  const selectedProjectId = useSelector(
+    (state: RootState) => state.project.selectedProjectId
+  );
 
   // State for models
   const [models, setModels] = useState<Model[]>([]);
@@ -55,12 +58,12 @@ const ExternalModelPage: React.FC = () => {
   const [predictionResults, setPredictionResults] = useState<any[]>([]);
 
   const fetchModels = async () => {
+    if (!accessToken || !selectedProjectId) return;
+
     try {
       setLoading(true);
-      const projectId = 1;
-
       const response = await api.get(
-        `/annotations/models/project/${projectId}`,
+        `/annotations/models/project/${selectedProjectId}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -83,7 +86,7 @@ const ExternalModelPage: React.FC = () => {
 
   useEffect(() => {
     fetchModels();
-  }, []);
+  }, [selectedProjectId]);
 
   const handleToggle = async (modelId: number, isEnable: boolean) => {
     try {
@@ -228,11 +231,12 @@ const ExternalModelPage: React.FC = () => {
 
   // Save integration callback
   const handleAddModelSave = async () => {
-    if (!selectedModel) return;
+    if (!selectedModel || !accessToken || !selectedProjectId) return;
+
     try {
       const response = await api.post(
         "/annotations/models",
-        { ...selectedModel, project_id: 1 },
+        { ...selectedModel, project_id: selectedProjectId },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -390,9 +394,7 @@ const ExternalModelPage: React.FC = () => {
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-semibold text-gray-800">
-          External Models
-        </h1>
+      <div className="flex-1"></div>{" "}
         <CreateButton onClick={handleAddModalOpen} label="Add Model" />
       </div>
 

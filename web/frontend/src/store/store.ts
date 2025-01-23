@@ -6,6 +6,7 @@ import annotationsReducer from "@/features/annotations/project/projectAnnotation
 import authReducer from "@/features/auth/authSlice";
 import userReducer from "@/features/user/userSlice";
 import projectAnnotationsReducer from "@/features/annotations/project/projectAnnotationSlice";
+import projectReducer from "@/features/annotations/project/projectSlice";
 import annotationProjectUploadDataReducer from "@/features/annotations/project/annotationProjectUploadDataSlice";
 
 export const store = configureStore({
@@ -16,6 +17,7 @@ export const store = configureStore({
     annotations: annotationsReducer,
     auth: authReducer,
     user: userReducer,
+    project: projectReducer,
     projectAnnotations: projectAnnotationsReducer,
     projectUploads: annotationProjectUploadDataReducer,
   },

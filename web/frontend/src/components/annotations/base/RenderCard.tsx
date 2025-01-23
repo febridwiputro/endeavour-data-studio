@@ -1,29 +1,54 @@
-import React, { useState } from "react";
+import React from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { RootState } from "@/store/store";
+import { api } from "@/services/apiConfig";
+import { useQueries } from "@tanstack/react-query";
+import { setSelectedProjectId } from "@/features/annotations/project/projectSlice";
+
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+  FolderIcon,
+  ClockIcon,
+} from "@heroicons/react/24/outline";
 
 interface RenderCardProps {
-  annotations: Array<{ 
-    id: number; 
-    name: string; 
-    project_photo_url?: string 
+  annotations: Array<{
+    id: number;
+    name: string;
+    project_photo_url?: string;
     annotation_type?: string;
+    code_name?: string;
   }>;
   onClick: (id: number) => void;
 }
 
+const fetchAnnotationStats = async (annotationId: number, token: string) => {
+  if (!token) throw new Error("No access token available");
+  const response = await api.get(`/annotations/image-annotations/annotation-status/`, {
+    headers: { Authorization: `Bearer ${token}` },
+    params: { project_id: annotationId },
+  });
+  return response.data.data;
+};
+
 const RenderCard: React.FC<RenderCardProps> = ({ annotations, onClick }) => {
-  const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
-  const [currentDateTime, setCurrentDateTime] = useState("");
-  const toggleMenu = (id: number) => {
-    setMenuOpenId((prev) => (prev === id ? null : id));
-  };
+  const dispatch = useDispatch();
+  const selectedProjectId = useSelector((state: RootState) => state.project.selectedProjectId);
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken) || "";
 
-  const handleOptionClick = (option: string, id: number) => {
-    console.log(`Option "${option}" clicked for annotation ID: ${id}`);
-    setMenuOpenId(null);
-  };
+  // Fetch data for each annotation
+  const annotationQueries = useQueries({
+    queries: annotations.map((annotation) => ({
+      queryKey: ["annotationStats", annotation.id],
+      queryFn: () => fetchAnnotationStats(annotation.id, accessToken),
+      enabled: !!accessToken,
+    })),
+  });
 
-  const getCurrentDateTime = (): string => {
-    const date = new Date();
+  const formatDateTime = (dateString: string | null): string => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
     return date
       .toLocaleString("en-CA", {
         timeZone: "Asia/Jakarta",
@@ -34,7 +59,7 @@ const RenderCard: React.FC<RenderCardProps> = ({ annotations, onClick }) => {
         minute: "2-digit",
         hour12: true,
       })
-      .replace(",", ""); // Remove comma between date and time
+      .replace(",", "");
   };
 
   if (annotations.length === 0) {
@@ -42,154 +67,114 @@ const RenderCard: React.FC<RenderCardProps> = ({ annotations, onClick }) => {
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-      {annotations.map((annotation) => (
-        <div
-          key={annotation.id}
-          className="relative block rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow"
-        >
-          <a href="#" className="block" onClick={() => onClick(annotation.id)}>
-            {/* Card Image */}
-            <div className="relative h-48 w-full">
-              {annotation.project_photo_url ? (
-                <img
-                  alt={annotation.name}
-                  src={annotation.project_photo_url}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 h-full w-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-500">No Image Available</span>
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {annotations.map((annotation, index) => {
+        const query = annotationQueries[index];
+
+        if (query.isLoading) {
+          return (
+            <div
+              key={annotation.id}
+              className="relative block rounded-lg overflow-hidden shadow-md transition-shadow animate-pulse bg-gray-200 h-36 w-full"
+            ></div>
+          );
+        }
+
+        if (query.isError) {
+          return (
+            <div key={annotation.id} className="text-red-500">
+              Failed to load annotation stats.
+            </div>
+          );
+        }
+
+        const stats = query.data;
+
+        return (
+          <div
+            key={annotation.id}
+            className={`relative block rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow ${
+              selectedProjectId === annotation.id ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => dispatch(setSelectedProjectId(annotation.id))}
+          >
+            <div
+              className="block cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault(); // Mencegah halaman berpindah
+                onClick(annotation.id);
+              }}
+            >
+              <div className="relative h-36 w-full">
+                {annotation.project_photo_url ? (
+                  <img
+                    alt={annotation.name}
+                    src={annotation.project_photo_url}
+                    className="absolute inset-0 h-full w-full object-cover rounded-t-lg"
+                  />
+                ) : (
+                  <div className="absolute inset-0 h-full w-full bg-gray-200 flex items-center justify-center rounded-t-lg">
+                    <span className="text-gray-500">No Image Available</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Card Content */}
+            <div className="p-3 bg-white rounded-b-lg">
+              <dl>
+                <div className="flex items-center gap-2">
+                  <ClockIcon className="w-4 h-4 text-gray-500" />
+                  <span className="text-xs text-gray-500">
+                    {formatDateTime(stats?.last_update || null)}
+                  </span>
+                </div>
+
+                <div>
+                  <dt className="sr-only">Feature</dt>
+                  <dd className="font-medium text-sm text-gray-800">{annotation.annotation_type}</dd>
+                  <dd className="font-medium text-sm text-gray-900">{annotation.name}</dd>
+                </div>
+              </dl>
+
+              {/* Statistik Anotasi dengan Hint */}
+              {stats && (
+                <div className="mt-3 flex flex-wrap gap-3 text-xs text-gray-700">
+                  {/* Annotated Data */}
+                  <div className="relative group flex items-center gap-1">
+                    <CheckCircleIcon className="w-5 h-5 text-green-700 cursor-pointer" />
+                    <span>{stats.annotated_data}</span>
+                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded px-3 py-1 flex items-center gap-2">
+                      <CheckCircleIcon className="w-4 h-4 text-white" />
+                      Annotated: {stats.annotated_data}
+                    </div>
+                  </div>
+
+                  {/* Non-Annotated Data */}
+                  <div className="relative group flex items-center gap-1">
+                    <XCircleIcon className="w-5 h-5 text-red-700 cursor-pointer" />
+                    <span>{stats.non_annotated_data}</span>
+                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded px-3 py-1 flex items-center gap-2">
+                      <XCircleIcon className="w-4 h-4 text-white" />
+                      Unannotated: {stats.non_annotated_data}
+                    </div>
+                  </div>
+
+                  {/* Total Data */}
+                  <div className="relative group flex items-center gap-1">
+                    <FolderIcon className="w-5 h-5 text-blue-700 cursor-pointer" />
+                    <span>{stats.total_data}</span>
+                    <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-gray-900 text-white text-xs rounded px-3 py-1 flex items-center gap-2">
+                      <FolderIcon className="w-4 h-4 text-white" />
+                      Total: {stats.total_data}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-          </a>
-
-          {/* Three-dot Menu */}
-          <div className="absolute top-2 right-2">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                toggleMenu(annotation.id);
-              }}
-              className="p-2 bg-white rounded-full shadow-md hover:shadow-lg focus:outline-none"
-            >
-              <svg
-                className="w-5 h-5 text-gray-700"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="2"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 6h.01M12 12h.01M12 18h.01"
-                />
-              </svg>
-            </button>
-            {menuOpenId === annotation.id && (
-              <div className="absolute right-0 mt-2 w-32 bg-white shadow-lg rounded-lg z-10">
-                <ul className="py-1 text-sm text-gray-700">
-                  <li
-                    onClick={() => handleOptionClick("Settings", annotation.id)}
-                    className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-                  >
-                    Settings
-                  </li>
-                  <li
-                    onClick={() => handleOptionClick("Label", annotation.id)}
-                    className="cursor-pointer px-4 py-2 hover:bg-gray-100"
-                  >
-                    Label
-                  </li>
-                </ul>
-              </div>
-            )}
           </div>
-          {/* Card Content */}
-          <div className="p-5 bg-white">
-            <dl>
-              <div>
-                <dt className="sr-only">DateTime</dt>
-                <dd className="text-sm text-gray-500">
-                  {getCurrentDateTime()}
-                </dd>
-              </div>
-
-              <div>
-                <dt className="sr-only">Feature</dt>
-                <dd className="font-medium text-gray-800">{annotation.annotation_type}</dd>
-                <dd className="font-medium text-gray-900">{annotation.name}</dd>
-              </div>
-            </dl>
-
-            {/* Additional Info */}
-            <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-700">
-              <div className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-indigo-700"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
-                  />
-                </svg>
-                <p>
-                  Parking: <span className="font-medium">2 spaces</span>
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-indigo-700"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
-                  />
-                </svg>
-                <p>
-                  Bathroom: <span className="font-medium">2 rooms</span>
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <svg
-                  className="w-4 h-4 text-indigo-700"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-                  />
-                </svg>
-                <p>
-                  Bedroom: <span className="font-medium">4 rooms</span>
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };

@@ -64,11 +64,6 @@ const ClassesAndTagsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Classes & Tags</h1>
-      </div>
-
       {/* Tabs */}
       <div className="flex items-center border-b">
         <button

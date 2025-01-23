@@ -22,6 +22,8 @@ interface SidebarProps {
     name: string;
     project_photo_url?: string;
     annotation_type?: string;
+    code_name?: string;
+    sub_feature_2_name?: string;
   };
 }
 
@@ -63,14 +65,14 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
   ];
 
   const getButtonClass = (item: string) =>
-    `flex items-center px-1 py-2 text-sm font-medium rounded-lg transition 
-    ${activePage === item ? "bg-[#e6f0ff] text-[#1a4f9d]" : "text-gray-700"} 
-    hover:bg-[#e6f0ff] hover:text-[#1a4f9d]`;
+    `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all w-[95%]
+    ${activePage === item ? "bg-transparent text-[#1a4f9d] font-semibold border border-[#1a4f9d] px-2" : "text-gray-700"} 
+    hover:bg-[#e6f0ff] hover:text-[#1a4f9d] hover:shadow-md hover:pl-2`;
 
   return (
     <div
       className={`bg-gray-50 h-screen ${
-        isMinimized ? "w-20" : "w-72"
+        isMinimized ? "w-20" : "w-80"
       } flex flex-col border-r border-gray-200 shadow transition-all duration-300`}
     >
       {/* Header Section */}
@@ -82,7 +84,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
         {/* Title */}
         {!isMinimized && (
           <h1 className="text-lg font-semibold text-gray-800">
-            {selectedAnnotation?.annotation_type || "Annotation Feature"}
+            {selectedAnnotation?.code_name || "Annotation Feature"}
           </h1>
         )}
 
@@ -119,7 +121,7 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
             <h1 className="text-base font-semibold text-gray-800">
               {selectedAnnotation?.name || "Project Name"}
             </h1>
-            <p className="text-sm text-gray-500">Object Detection</p>
+            <p className="text-sm text-gray-500">{selectedAnnotation?.sub_feature_2_name || "-"}</p>
           </div>
         )}
       </div>
@@ -146,18 +148,14 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
                 <button
                   className={`${getButtonClass(
                     item.name
-                  )} ${isMinimized ? "justify-center flex-col h-10 w-10 mx-auto" : "justify-start flex-row px-4 py-2"} flex items-center`}
+                  )} ${isMinimized ? "justify-center flex-col h-10 w-10 mx-auto" : "justify-start flex-row"} flex items-center`}
                   onClick={() => setActivePage(item.name)}
                   title={isMinimized ? item.name : undefined}
                 >
-                  <div
-                    className={`flex items-center justify-center ${
-                      isMinimized ? "w-full h-full" : ""
-                    }`}
-                  >
+                  <div className={`flex items-center justify-center`}>
                     <item.icon
                       className={`${
-                        isMinimized ? "w-4 h-4" : "w-5 h-5"
+                        isMinimized ? "w-5 h-5" : "w-6 h-6"
                       } text-gray-500`}
                     />
                   </div>

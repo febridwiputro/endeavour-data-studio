@@ -24,9 +24,9 @@ const ModelsPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
+      {/* Header Container (Tetap mempertahankan posisi tombol) */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Models</h1>
+        <div className="flex-1"></div>{" "}
         <div className="flex space-x-4">
           <button className="px-4 py-2 text-sm text-[#1a4f9d] border border-[#1a4f9d] rounded-md hover:bg-[#e6f0ff]">
             + Generate Version

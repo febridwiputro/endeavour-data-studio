@@ -1,14 +1,25 @@
 import os
 from typing import Optional, List
-from fastapi import APIRouter, HTTPException, UploadFile, Form, Depends, Request, Query, status
+from fastapi import (
+    APIRouter,
+    HTTPException,
+    UploadFile,
+    Form,
+    Depends,
+    Request,
+    Query,
+    status,
+)
 from sqlalchemy.orm import Session, joinedload
 from app.config.database import get_db
-from app.models.menu.annotations.annotation_project_data_model import AnnotationProjectDataModel
+from app.models.menu.annotations.annotation_project_data_model import (
+    AnnotationProjectDataModel,
+)
 from app.models.menu.annotations.annotate_result_model import (
     ImageMetadataModel,
     TextMetadataModel,
     AudioMetadataModel,
-    VideoMetadataModel
+    VideoMetadataModel,
 )
 from app.models.menu.annotations.annotation_project_model import AnnotationProjectModel
 from app.models.menu.annotations.annotate_result_model import ImageAnnotationResultModel
@@ -39,8 +50,12 @@ router = APIRouter()
 async def upload_data(
     request: Request,
     project_id: int = Form(..., description="Project ID to associate the uploads."),
-    upload_type: UploadType = Form(..., description="Type of upload (e.g., BY_MULTIPLE_DATA, BY_DATA_URL)."),
-    data_type: DataTypeEnum = Form(..., description="Type of data (e.g., IMAGE, AUDIO, TEXT, VIDEO)."),
+    upload_type: UploadType = Form(
+        ..., description="Type of upload (e.g., BY_MULTIPLE_DATA, BY_DATA_URL)."
+    ),
+    data_type: DataTypeEnum = Form(
+        ..., description="Type of data (e.g., IMAGE, AUDIO, TEXT, VIDEO)."
+    ),
     files_upload: Optional[List[UploadFile]] = None,
     urls: Optional[List[str]] = None,
     payload: dict = Depends(jwt_bearer),
@@ -48,18 +63,24 @@ async def upload_data(
 ):
     created_by = payload.get("id")
     if not created_by:
-        return standard_response(status="error", status_code=401, message_code="INVALID_TOKEN")
+        return standard_response(
+            status="error", status_code=401, message_code="INVALID_TOKEN"
+        )
 
     project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
     if not project:
-        return standard_response(status="error", status_code=404, message_code="PROJECT_NOT_FOUND")
+        return standard_response(
+            status="error", status_code=404, message_code="PROJECT_NOT_FOUND"
+        )
 
     uploaded_files = []
 
     try:
         if upload_type == UploadType.BY_MULTIPLE_DATA:
             if not files_upload or len(files_upload) == 0:
-                return standard_response(status="error", status_code=400, message_code="NO_FILES_PROVIDED")
+                return standard_response(
+                    status="error", status_code=400, message_code="NO_FILES_PROVIDED"
+                )
             for file in files_upload:
                 file_path = os.path.join(OUTPUT_FOLDER, file.filename)
                 with open(file_path, "wb") as f:
@@ -81,16 +102,20 @@ async def upload_data(
                 # Update metadata based on data type
                 update_metadata(file_path, data_type, new_upload.id, db)
 
-                uploaded_files.append({
-                    "upload_id": new_upload.id,
-                    "file_name": new_upload.file_name,
-                    "uploaded_at": new_upload.created_at,
-                    "file_url": file_url,
-                })
+                uploaded_files.append(
+                    {
+                        "upload_id": new_upload.id,
+                        "file_name": new_upload.file_name,
+                        "uploaded_at": new_upload.created_at,
+                        "file_url": file_url,
+                    }
+                )
 
         elif upload_type == UploadType.BY_DATA_URL:
             if not urls or len(urls) == 0:
-                return standard_response(status="error", status_code=400, message_code="NO_URLS_PROVIDED")
+                return standard_response(
+                    status="error", status_code=400, message_code="NO_URLS_PROVIDED"
+                )
             for url in urls:
                 new_upload = AnnotationProjectDataModel(
                     project_id=project_id,
@@ -103,20 +128,31 @@ async def upload_data(
                 db.commit()
                 db.refresh(new_upload)
 
-                uploaded_files.append({
-                    "upload_id": new_upload.id,
-                    "file_name": new_upload.file_name,
-                    "uploaded_at": new_upload.created_at,
-                    "file_url": url,
-                })
+                uploaded_files.append(
+                    {
+                        "upload_id": new_upload.id,
+                        "file_name": new_upload.file_name,
+                        "uploaded_at": new_upload.created_at,
+                        "file_url": url,
+                    }
+                )
 
         else:
-            return standard_response(status="error", status_code=400, message_code="INVALID_UPLOAD_TYPE")
+            return standard_response(
+                status="error", status_code=400, message_code="INVALID_UPLOAD_TYPE"
+            )
 
     except Exception as e:
-        return standard_response(status="error", status_code=500, message_code="UPLOAD_FAILED", data=str(e))
+        return standard_response(
+            status="error", status_code=500, message_code="UPLOAD_FAILED", data=str(e)
+        )
 
-    return standard_response(status="success", status_code=201, message_code="UPLOAD_SUCCESS", data=uploaded_files)
+    return standard_response(
+        status="success",
+        status_code=201,
+        message_code="UPLOAD_SUCCESS",
+        data=uploaded_files,
+    )
 
 
 def update_metadata(file_path: str, data_type: DataTypeEnum, data_id: int, db: Session):
@@ -165,11 +201,14 @@ def update_text_metadata(file_path: str, data_id: int, db: Session):
         db.add(metadata_entry)
         db.commit()
 
+
 def update_audio_metadata(file_path: str, data_id: int, db: Session):
     audio = mutagen.File(file_path)
     if audio:
         duration = audio.info.length
-        sample_rate = audio.info.sample_rate if hasattr(audio.info, "sample_rate") else None
+        sample_rate = (
+            audio.info.sample_rate if hasattr(audio.info, "sample_rate") else None
+        )
         channels = audio.info.channels if hasattr(audio.info, "channels") else None
         format = file_path.split(".")[-1].upper()
 
@@ -186,6 +225,7 @@ def update_audio_metadata(file_path: str, data_id: int, db: Session):
 
 def update_video_metadata(file_path: str, data_id: int, db: Session):
     import cv2
+
     video = cv2.VideoCapture(file_path)
     if not video.isOpened():
         raise Exception("Unable to open video file.")
@@ -207,180 +247,6 @@ def update_video_metadata(file_path: str, data_id: int, db: Session):
     )
     db.add(metadata_entry)
     db.commit()
-
-
-
-
-# @router.post("/", summary="Upload Files")
-# async def upload_data(
-#     request: Request,
-#     project_id: int = Form(..., description="Project ID to associate the uploads."),
-#     upload_type: UploadType = Form(..., description="Type of upload (select from dropdown)."),
-#     files_upload: Optional[List[UploadFile]] = None,
-#     folders_upload: Optional[List[UploadFile]] = None,
-#     folder_path: Optional[str] = None,
-#     image_path: Optional[str] = None,
-#     image_urls: Optional[List[str]] = None,
-#     payload: dict = Depends(jwt_bearer),
-#     db: Session = Depends(get_db),
-# ):
-#     created_by = payload.get("id")
-#     if not created_by:
-#         return standard_response(
-#             status="error",
-#             status_code=401,
-#             message_code="INVALID_OR_EXPIRED_TOKEN",
-#             data=None,
-#         )
-
-#     project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
-#     if not project:
-#         return standard_response(
-#             status="error",
-#             status_code=404,
-#             message_code="PROJECT_NOT_FOUND",
-#             data=None,
-#         )
-
-#     uploaded_files = []
-
-#     try:
-#         if upload_type == UploadType.by_multiple_image:
-#             if not files_upload or len(files_upload) == 0:
-#                 return standard_response(
-#                     status="error",
-#                     status_code=400,
-#                     message_code="FILES_REQUIRED",
-#                     data=None,
-#                 )
-#             for file in files_upload:
-#                 file_path = os.path.join(OUTPUT_FOLDER, file.filename)
-#                 with open(file_path, "wb") as f:
-#                     f.write(await file.read())
-
-#                 # Convert URL object to string
-#                 img_url = str(request.url_for("static", path=f"image_output/{file.filename}"))
-
-#                 new_upload = AnnotationProjectDataModel(
-#                     project_id=project_id,
-#                     file_name=file.filename,
-#                     img_url=img_url,  # Pass as string
-#                     created_by=created_by,
-#                 )
-#                 db.add(new_upload)
-#                 db.commit()
-#                 db.refresh(new_upload)
-#                 uploaded_files.append({
-#                     "upload_id": new_upload.id,
-#                     "file_name": new_upload.file_name,
-#                     "uploaded_at": new_upload.created_at,
-#                     "file_path": file_path,
-#                     "image_url": img_url,
-#                 })
-
-#         elif upload_type == UploadType.by_folder:
-#             if not folders_upload or len(folders_upload) == 0:
-#                 return standard_response(
-#                     status="error",
-#                     status_code=400,
-#                     message_code="FOLDER_FILES_REQUIRED",
-#                     data=None,
-#                 )
-#             for file in folders_upload:
-#                 file_path = os.path.join(OUTPUT_FOLDER, file.filename)
-#                 with open(file_path, "wb") as f:
-#                     f.write(await file.read())
-
-#                 # Convert URL object to string
-#                 img_url = str(request.url_for("static", path=f"image_output/{file.filename}"))
-
-#                 new_upload = AnnotationProjectDataModel(
-#                     project_id=project_id,
-#                     file_name=file.filename,
-#                     img_url=img_url,  # Pass as string
-#                     created_by=created_by,
-#                 )
-#                 db.add(new_upload)
-#                 db.commit()
-#                 db.refresh(new_upload)
-#                 uploaded_files.append({
-#                     "upload_id": new_upload.id,
-#                     "file_name": new_upload.file_name,
-#                     "uploaded_at": new_upload.created_at,
-#                     "file_path": file_path,
-#                     "image_url": img_url,
-#                 })
-
-#         elif upload_type == UploadType.by_image_url:
-#             if not image_urls or len(image_urls) == 0:
-#                 return standard_response(
-#                     status="error",
-#                     status_code=400,
-#                     message_code="IMAGE_URLS_REQUIRED",
-#                     data=None,
-#                 )
-#             for url in image_urls:
-#                 new_upload = AnnotationProjectDataModel(
-#                     project_id=project_id,
-#                     file_name=url,
-#                     img_url=url,  # Save the URL string directly
-#                     created_by=created_by,
-#                 )
-#                 db.add(new_upload)
-#                 db.commit()
-#                 db.refresh(new_upload)
-#                 uploaded_files.append({
-#                     "upload_id": new_upload.id,
-#                     "file_name": new_upload.file_name,
-#                     "uploaded_at": new_upload.created_at,
-#                     "image_url": url,
-#                 })
-
-#         elif upload_type == UploadType.by_folder_path:
-#             if not folder_path:
-#                 return standard_response(
-#                     status="error",
-#                     status_code=400,
-#                     message_code="FOLDER_PATH_REQUIRED",
-#                     data=None,
-#                 )
-#             uploaded_files.append({
-#                 "message": f"Folder path '{folder_path}' processed successfully."
-#             })
-
-#         elif upload_type == UploadType.by_image_path:
-#             if not image_path:
-#                 return standard_response(
-#                     status="error",
-#                     status_code=400,
-#                     message_code="IMAGE_PATH_REQUIRED",
-#                     data=None,
-#                 )
-#             uploaded_files.append({
-#                 "message": f"Image path '{image_path}' processed successfully."
-#             })
-
-#         else:
-#             return standard_response(
-#                 status="error",
-#                 status_code=400,
-#                 message_code="INVALID_UPLOAD_TYPE",
-#                 data=None,
-#             )
-#     except Exception as e:
-#         return standard_response(
-#             status="error",
-#             status_code=500,
-#             message_code="UPLOAD_PROCESSING_FAILED",
-#             data=str(e),
-#         )
-
-#     return standard_response(
-#         status="success",
-#         status_code=201,
-#         message_code="UPLOAD_PROCESSED_SUCCESSFULLY",
-#         data=uploaded_files,
-#     )
 
 
 @router.get("/all", summary="Get All Data by User")
@@ -443,6 +309,7 @@ async def get_all_data_by_user(
         next_page=paginated_result["next_page"],
         previous_page=paginated_result["previous_page"],
     )
+
 
 @router.get("/{project_id}", summary="Get Uploaded Files")
 async def get_uploaded_data(
@@ -549,12 +416,26 @@ async def get_uploaded_data(
                 #     ],
                 # },
                 "metadata": {
-                    "image_metadata": {
-                        "width": file.image_metadata.width,
-                        "height": file.image_metadata.height,
-                    }
-                    if file.image_metadata
-                    else None,
+                    "image_metadata": (
+                        {
+                            "width": file.image_metadata.width,
+                            "height": file.image_metadata.height,
+                            "image_annotations": [
+                                {
+                                    "result_type": annotation.result_type,
+                                    "x1": annotation.x1,
+                                    "y1": annotation.y1,
+                                    "x2": annotation.x2,
+                                    "y2": annotation.y2,
+                                    "label": annotation.label,
+                                    "confidence_score": annotation.confidence_score,
+                                }
+                                for annotation in file.image_annotations
+                            ],
+                        }
+                        if file.image_metadata
+                        else None
+                    ),
                     # "audio_metadata": {
                     #     "duration": file.audio_metadata.duration,
                     #     "format": file.audio_metadata.format,
@@ -586,64 +467,61 @@ async def get_uploaded_data(
 
 @router.get(
     "/export-annotations/",
-    summary="Export annotations in YOLOv8 format",
-    description="Exports annotation results including bounding boxes and class labels in YOLOv8-compatible format.",
+    summary="Export annotations in YOLO & Label Studio format",
+    description="Exports annotation results including bounding boxes and class labels in a normalized format.",
     status_code=status.HTTP_200_OK,
 )
 def export_annotations(
     project_id: int = Query(..., description="The ID of the project."),
     db: Session = Depends(get_db),
 ):
-    # Validate if project exists
+    # 🔍 **Cek apakah proyek ada**
     project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
     if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Annotation project not found.",
-        )
-    
-    # Query all annotations for the project
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Annotation project not found.")
+
+    # 🔍 **Ambil semua anotasi dari proyek ini**
     annotations = (
         db.query(ImageAnnotationResultModel)
-        .join(AnnotationProjectModel, AnnotationProjectModel.id == project_id)
-        .filter(AnnotationProjectModel.id == project_id)
+        .join(AnnotationProjectDataModel, AnnotationProjectDataModel.id == ImageAnnotationResultModel.data_id)
+        .filter(AnnotationProjectDataModel.project_id == project_id)
         .all()
     )
-    
+
     if not annotations:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="No annotations found for this project.",
-        )
-    
-    # Get unique class labels
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No annotations found for this project.")
+
+    # 🔍 **Dapatkan daftar kelas unik**
     class_labels = (
         db.query(ImageAnnotationResultModel.label)
         .distinct()
         .filter(ImageAnnotationResultModel.data_id.in_([a.data_id for a in annotations]))
         .all()
     )
-    class_labels = [label[0] for label in class_labels]
-    
-    # Create temporary directory
+    class_labels = [label[0] for label in class_labels]  # Ubah tuple ke list
+
+    # 🗂️ **Buat direktori sementara**
     export_dir = f"./temp_exports/{uuid.uuid4()}"
     images_dir = os.path.join(export_dir, "images")
     labels_dir = os.path.join(export_dir, "labels")
     os.makedirs(images_dir, exist_ok=True)
     os.makedirs(labels_dir, exist_ok=True)
-    
-    # Write class labels to classes.txt
+
+    # 📝 **Tulis daftar kelas ke classes.txt**
     with open(os.path.join(export_dir, "classes.txt"), "w") as f:
         for label in class_labels:
             f.write(f"{label}\n")
-    
-    # Process annotations
+
+    # 🔄 **Proses setiap anotasi**
     for annotation in annotations:
-        # Assume image file paths are stored in annotation.project_data.file_url
-        image_url = annotation.project_data.file_url
+        image_data = db.query(AnnotationProjectDataModel).filter_by(id=annotation.data_id).first()
+        if not image_data:
+            continue
+
+        image_url = image_data.file_url
         image_name = os.path.basename(image_url)
-        
-        # Download the image
+
+        # 🔽 **Unduh gambar**
         response = requests.get(image_url, stream=True)
         if response.status_code == 200:
             with open(os.path.join(images_dir, image_name), "wb") as img_file:
@@ -653,97 +531,42 @@ def export_annotations(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Failed to download image: {image_url}",
             )
-        
-        # Generate label file
+
+        # 🔍 **Ambil dimensi gambar**
+        image_width = image_data.width
+        image_height = image_data.height
+
+        if not image_width or not image_height:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing image dimensions.")
+
+        # 📏 **Normalisasi koordinat bounding box**
+        # ➜ Formula Normalisasi:
+        #    x' = x / width
+        #    y' = y / height
+        x1, y1 = annotation.x1 / image_width, annotation.y1 / image_height  # Kiri Atas
+        x2, y2 = annotation.x2 / image_width, annotation.y1 / image_height  # Kanan Atas
+        x3, y3 = annotation.x2 / image_width, annotation.y2 / image_height  # Kanan Bawah
+        x4, y4 = annotation.x1 / image_width, annotation.y2 / image_height  # Kiri Bawah
+
+        # 📜 **Tulis file label dengan format Label Studio**
+        # Format:
+        #   class_id x1 y1 x2 y2 x3 y3 x4 y4
         label_file_path = os.path.join(labels_dir, f"{os.path.splitext(image_name)[0]}.txt")
         with open(label_file_path, "a") as label_file:
-            bbox = f"{class_labels.index(annotation.label)} " \
-                f"{annotation.x1} {annotation.y1} {annotation.x2} {annotation.y2}\n"
+            bbox = f"{class_labels.index(annotation.label)} {x1:.6f} {y1:.6f} {x2:.6f} {y2:.6f} {x3:.6f} {y3:.6f} {x4:.6f} {y4:.6f}\n"
             label_file.write(bbox)
-    
-    # Create a ZIP archive
+
+    # 📦 **Buat file ZIP**
     zip_file_path = f"{export_dir}.zip"
     with zipfile.ZipFile(zip_file_path, "w") as zipf:
-        for root, dirs, files in os.walk(export_dir):
+        for root, _, files in os.walk(export_dir):
             for file in files:
                 file_path = os.path.join(root, file)
                 arcname = os.path.relpath(file_path, export_dir)
                 zipf.write(file_path, arcname)
-    
-    # Cleanup temporary directory
+
+    # 🧹 **Bersihkan folder sementara**
     shutil.rmtree(export_dir)
-    
+
+    # 📤 **Kembalikan file ZIP**
     return FileResponse(zip_file_path, media_type="application/zip", filename="annotations_export.zip")
-
-
-
-# @router.get("/{project_id}", summary="Get Uploaded Files")
-# async def get_uploaded_data(
-#     project_id: int,
-#     request: Request,
-#     payload: dict = Depends(jwt_bearer),
-#     db: Session = Depends(get_db),
-#     page: int = 1,
-#     per_page: PerPageOptions = PerPageOptions.TEN,
-# ):
-#     """
-#     Retrieve uploaded files for a specific project ID with pagination.
-
-#     Args:
-#         project_id (int): The ID of the project to retrieve files for.
-#         request (Request): The incoming HTTP request object.
-#         payload (dict): JWT payload containing user info.
-#         db (Session): Database session dependency.
-#         page (int): Current page number.
-#         per_page (PerPageOptions): Number of items per page.
-
-#     Returns:
-#         dict: A paginated response containing the list of uploaded files.
-#     """
-#     user_id = payload.get("id")
-#     if not user_id:
-#         return standard_pagination_response(
-#             status="error",
-#             status_code=401,
-#             message_code="INVALID_OR_EXPIRED_TOKEN",
-#             data=[],
-#             count=0,
-#             per_page=per_page.value,
-#             total_pages=0,
-#         )
-
-#     query = db.query(AnnotationProjectDataModel).filter_by(project_id=project_id)
-#     paginated_result = paginate_query(query, page, per_page.value, request)
-
-#     if not paginated_result["items"]:
-#         return standard_pagination_response(
-#             status="error",
-#             status_code=404,
-#             message_code="FILES_NOT_FOUND",
-#             data=[],
-#             count=0,
-#             per_page=per_page.value,
-#             total_pages=0,
-#         )
-
-#     response_data = [
-#         {
-#             "upload_id": upload.id,
-#             "file_name": upload.file_name,
-#             "img_url": upload.img_url,
-#             "uploaded_at": upload.created_at,
-#         }
-#         for upload in paginated_result["items"]
-#     ]
-
-#     return standard_pagination_response(
-#         status="success",
-#         status_code=200,
-#         message_code="FILES_RETRIEVED_SUCCESSFULLY",
-#         data=response_data,
-#         count=paginated_result["total_count"],
-#         per_page=per_page.value,
-#         total_pages=paginated_result["total_pages"],
-#         next_page=paginated_result["next_page"],
-#         previous_page=paginated_result["previous_page"],
-#     )

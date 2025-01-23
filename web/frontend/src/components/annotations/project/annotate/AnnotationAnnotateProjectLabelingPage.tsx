@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { v4 as uuidv4 } from "uuid";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { api } from "@/services/apiConfig";
@@ -636,28 +635,33 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     box: BoundingBox,
     isSelected: boolean
   ) => {
-    ctx.strokeStyle = isSelected ? "#FF0000" : box.color; // Outline color
-    ctx.lineWidth = isSelected ? 2 : 1; // Reduced bounding box thickness
+    ctx.strokeStyle = isSelected ? "#FF0000" : box.color;
+    ctx.lineWidth = isSelected ? 4 : 3;
     ctx.strokeRect(box.x1, box.y1, box.w, box.h);
-
+  
+    // Increase label font size
+    ctx.font = "bold 20px Arial";
+    const textWidth = ctx.measureText(box.label).width;
+    const textHeight = 25;
+  
     // Draw the label background
     ctx.fillStyle = box.color;
     ctx.fillRect(
       box.x1,
-      box.y1 - 20,
-      ctx.measureText(box.label).width + 10,
-      20
+      box.y1 - textHeight - 4,
+      textWidth + 14,
+      textHeight
     );
-
+  
     // Draw the label text
     ctx.fillStyle = "#ffffff";
-    ctx.fillText(box.label, box.x1 + 5, box.y1 - 5);
-
+    ctx.fillText(box.label, box.x1 + 7, box.y1 - 10);
+  
     // Draw corner and midpoint resize handles
-    const handleSize = 8;
+    const handleSize = 10;
     const handleColor = isSelected ? "#FFFFFF" : "#000000";
     ctx.fillStyle = handleColor;
-
+  
     // Corners
     const corners = [
       { x: box.x1, y: box.y1 }, // Top-left
@@ -665,7 +669,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       { x: box.x1, y: box.y2 }, // Bottom-left
       { x: box.x2, y: box.y2 }, // Bottom-right
     ];
-
+  
     // Midpoints
     const midpoints = [
       { x: (box.x1 + box.x2) / 2, y: box.y1 }, // Top-center
@@ -673,7 +677,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       { x: box.x1, y: (box.y1 + box.y2) / 2 }, // Left-center
       { x: box.x2, y: (box.y1 + box.y2) / 2 }, // Right-center
     ];
-
+  
     // Draw all points
     [...corners, ...midpoints].forEach((point) => {
       ctx.fillRect(
@@ -684,6 +688,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       );
     });
   };
+  
 
   useEffect(() => {
     const canvas = canvasRef.current;

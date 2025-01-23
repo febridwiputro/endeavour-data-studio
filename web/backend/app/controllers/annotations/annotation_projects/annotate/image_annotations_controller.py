@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from pydantic import BaseModel
 from typing import List, Optional
 from app.config.database import get_db
@@ -219,7 +219,7 @@ def delete_image_annotation(
 @router.get(
     "/class-count/",
     summary="Get class count by project ID",
-    description="Retrieve the count of each class (label) for a given project ID with color information.",
+    description="Retrieve the count of each class (label) for a given project ID with color information, ordered by count descending.",
     status_code=status.HTTP_200_OK,
 )
 def get_class_count_by_project(
@@ -242,25 +242,21 @@ def get_class_count_by_project(
             detail="Annotation project not found.",
         )
 
-    # Query annotations and join with project data, classes, and tags to get colors
+    # Query all available classes and join with annotation counts
     class_counts = (
         db.query(
-            ImageAnnotationResultModel.label,
-            func.count(ImageAnnotationResultModel.label).label("count"),
-            ClassesAndTagsModel.class_color,
+            ClassesAndTagsModel.class_name.label("label"),
+            func.coalesce(func.count(ImageAnnotationResultModel.label), 0).label("count"),
+            ClassesAndTagsModel.class_color
         )
-        .join(
-            AnnotationProjectDataModel,
-            ImageAnnotationResultModel.data_id == AnnotationProjectDataModel.id,
+        .outerjoin(
+            ImageAnnotationResultModel,
+            (ClassesAndTagsModel.class_name == ImageAnnotationResultModel.label)
+            & (ClassesAndTagsModel.project_id == project_id)
         )
-        .join(
-            ClassesAndTagsModel,
-            (ImageAnnotationResultModel.label == ClassesAndTagsModel.class_name)
-            & (ClassesAndTagsModel.project_id == project_id),
-            isouter=True,
-        )
-        .filter(AnnotationProjectDataModel.project_id == project_id)
-        .group_by(ImageAnnotationResultModel.label, ClassesAndTagsModel.class_color)
+        .filter(ClassesAndTagsModel.project_id == project_id)
+        .group_by(ClassesAndTagsModel.class_name, ClassesAndTagsModel.class_color)
+        .order_by(desc(func.count(ImageAnnotationResultModel.label)))  # Sorting by count descending
         .all()
     )
 
@@ -275,4 +271,56 @@ def get_class_count_by_project(
         status_code=status.HTTP_200_OK,
         message_code="class_count_retrieved",
         data=response_data,
+    )
+
+@router.get(
+    "/annotation-status/",
+    summary="Get total annotated and non-annotated data by project ID",
+    description="Retrieve the total count of annotated and non-annotated data for a given project ID.",
+    status_code=status.HTTP_200_OK,
+)
+def get_annotation_status(
+    project_id: int = Query(..., description="The ID of the project."),
+    payload: dict = Depends(jwt_bearer),
+    db: Session = Depends(get_db),
+):
+    user_id = payload.get("id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
+        )
+
+    project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Annotation project not found.",
+        )
+
+    total_data = db.query(func.count(AnnotationProjectDataModel.id)).filter_by(project_id=project_id).scalar()
+    annotated_data = (
+        db.query(func.count(ImageAnnotationResultModel.id))
+        .join(AnnotationProjectDataModel, ImageAnnotationResultModel.data_id == AnnotationProjectDataModel.id)
+        .filter(AnnotationProjectDataModel.project_id == project_id)
+        .scalar()
+    )
+    non_annotated_data = total_data - annotated_data
+
+    last_update = (
+        db.query(func.max(ImageAnnotationResultModel.updated_at))
+        .join(AnnotationProjectDataModel, ImageAnnotationResultModel.data_id == AnnotationProjectDataModel.id)
+        .filter(AnnotationProjectDataModel.project_id == project_id)
+        .scalar()
+    )
+
+    return standard_response(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        message_code="annotation_status_retrieved",
+        data={
+            "total_data": total_data,
+            "annotated_data": annotated_data,
+            "non_annotated_data": abs(non_annotated_data),
+            "last_update": last_update,
+        },
     )

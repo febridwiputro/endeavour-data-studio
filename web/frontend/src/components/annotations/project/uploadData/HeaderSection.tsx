@@ -15,7 +15,6 @@ const HeaderSection: React.FC<HeaderSectionProps> = ({
 }) => {
   return (
     <div className="mb-6">
-      <h1 className="text-2xl font-semibold text-gray-800 mb-6">Upload</h1>
       <div className="flex space-x-4 mb-6">
         <div className="flex-1">
           <label className="block text-sm font-medium text-gray-700 mb-2">

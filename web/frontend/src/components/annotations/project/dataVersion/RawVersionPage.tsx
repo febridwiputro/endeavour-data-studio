@@ -1,4 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 import { Line } from "react-chartjs-2";
 import {
   FaDownload,
@@ -18,6 +20,7 @@ import {
   Legend,
   ChartOptions,
 } from "chart.js";
+import { api } from "@/services/apiConfig";
 
 ChartJS.register(
   CategoryScale,
@@ -43,27 +46,49 @@ const RawVersionPage: React.FC<RawVersionPageProps> = ({
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
+  const selectedProjectId = useSelector(
+    (state: RootState) => state.project.selectedProjectId
+  );
+
+  // Fungsi untuk mendapatkan timestamp dalam format YYYYMMDD-HHMMSS
+  const getFormattedTimestamp = () => {
+    const now = new Date();
+    const YYYY = now.getFullYear();
+    const MM = String(now.getMonth() + 1).padStart(2, "0"); // Bulan dimulai dari 0
+    const DD = String(now.getDate()).padStart(2, "0");
+    const HH = String(now.getHours()).padStart(2, "0");
+    const mm = String(now.getMinutes()).padStart(2, "0");
+    const SS = String(now.getSeconds()).padStart(2, "0");
+    return `${YYYY}${MM}${DD}-${HH}${mm}${SS}`;
+  };
 
   const handleDownload = async () => {
+    if (!selectedProjectId) {
+      console.error("Project ID is required! Please select a project.");
+      return;
+    }
+
     setIsDownloading(true);
     try {
-      const projectId = 1; // Replace with the actual project ID
-      const response = await axios.get(
-        `http://127.0.0.1:8000/annotations/upload-data/export-annotations/?project_id=${projectId}`,
+      const response = await api.get(
+        `/annotations/upload-data/export-annotations/?project_id=${selectedProjectId}`,
         {
-          responseType: "blob", // Ensure the response is a file (binary data)
+          responseType: "blob",
         }
       );
+
+      // Generate dynamic file name
+      const timestamp = getFormattedTimestamp();
+      const fileName = `export-project-${selectedProjectId}-${timestamp}.zip`;
 
       // Create a URL for the downloaded file
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", "annotations_export.zip"); // Filename
+      link.setAttribute("download", fileName);
       document.body.appendChild(link);
       link.click();
       link.parentNode?.removeChild(link);
@@ -73,7 +98,7 @@ const RawVersionPage: React.FC<RawVersionPageProps> = ({
       setIsDownloading(false);
     }
   };
-
+  
   // Training Graphs Data
   const mAPData = {
     labels: Array.from({ length: 300 }, (_, i) => i), // Epochs 0 - 300
@@ -159,6 +184,7 @@ const RawVersionPage: React.FC<RawVersionPageProps> = ({
             <p className="text-sm text-gray-500">Generated on Dec 13, 2023</p>
           </div>
           <div className="flex items-center space-x-2">
+            {/* Download Button */}
             <button
               onClick={handleDownload}
               className="flex items-center px-4 py-2 text-sm bg-gray-200 rounded-md hover:bg-gray-300"
@@ -167,10 +193,13 @@ const RawVersionPage: React.FC<RawVersionPageProps> = ({
               {isDownloading ? (
                 "Downloading..."
               ) : (
-                <FaDownload className="mr-2" />
+                <>
+                  <FaDownload className="mr-2" />
+                  Download Dataset
+                </>
               )}
-              Download Dataset
             </button>
+
             {/* Edit Button */}
             <button
               onClick={toggleDropdown}

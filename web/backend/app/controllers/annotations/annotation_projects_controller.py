@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
+from datetime import datetime
 from app.config.database import get_db
 from app.models.menu.menu_model import MenuModel
 from app.models.menu.annotations.annotation_project_model import AnnotationProjectModel
@@ -227,57 +228,127 @@ def read_annotation_projects(db: Session = Depends(get_db)):
 def update_annotation_project(project_id: int, updates: dict, db: Session = Depends(get_db)):
     return update_item(AnnotationProjectModel, project_id, updates, db)
 
-# @router.delete("/{project_id}")
-# def delete_annotation_project(project_id: int, db: Session = Depends(get_db)):
-#     return delete_item(AnnotationProjectModel, project_id, db)
-
 @router.get("/by-feature-code/{annotation_feature_code_name}")
-def get_annotation_projects_by_feature_code(annotation_feature_code_name: str, db: Session = Depends(get_db)):
+def get_annotation_projects_by_feature_code(
+    annotation_feature_code_name: str, 
+    db: Session = Depends(get_db)
+):
     """
     Get Annotation Projects by Annotation Feature Code Name
     """
-    # Get annotation feature ID by code_name
+    # ✅ Get annotation feature details
     annotation_feature = (
-        db.query(AnnotationFeatureModel.id)
+        db.query(AnnotationFeatureModel)
         .filter(AnnotationFeatureModel.code_name == annotation_feature_code_name)
         .first()
     )
+    
     if not annotation_feature:
         raise HTTPException(
-            status_code=404, detail=f"Annotation feature with code_name '{annotation_feature_code_name}' not found."
+            status_code=404, 
+            detail=f"Annotation feature with code_name '{annotation_feature_code_name}' not found."
         )
 
-    annotation_feature_id = annotation_feature.id
-
-    # Get sub_feature_1 IDs associated with the annotation feature
+    # ✅ Get sub_feature_1 IDs
     sub_feature_1_ids = db.query(SubFeature1Model.id).filter(
-        SubFeature1Model.feature_id == annotation_feature_id
+        SubFeature1Model.feature_id == annotation_feature.id
     ).all()
 
-    # Flatten the list of sub_feature_1_ids
     sub_feature_1_ids = [sf1.id for sf1 in sub_feature_1_ids]
 
     if not sub_feature_1_ids:
         return standard_response("success", 200, "NO_PROJECTS_FOUND", [])
 
-    # Get sub_feature_2 IDs associated with sub_feature_1
-    sub_feature_2_ids = db.query(SubFeature2Model.id).filter(
+    # ✅ Get sub_feature_2 IDs and their names
+    sub_feature_2_data = db.query(SubFeature2Model.id, SubFeature2Model.name).filter(
         SubFeature2Model.sub_feature_1_id.in_(sub_feature_1_ids)
     ).all()
 
-    # Flatten the list of sub_feature_2_ids
-    sub_feature_2_ids = [sf2.id for sf2 in sub_feature_2_ids]
+    sub_feature_2_map = {sf2.id: sf2.name for sf2 in sub_feature_2_data}
+    sub_feature_2_ids = list(sub_feature_2_map.keys())
 
     if not sub_feature_2_ids:
         return standard_response("success", 200, "NO_PROJECTS_FOUND", [])
 
-    # Get projects associated with sub_feature_2
+    # ✅ Get projects
     projects = db.query(AnnotationProjectModel).filter(
         AnnotationProjectModel.sub_feature_2_id.in_(sub_feature_2_ids)
     ).all()
 
-    # Return projects as a standard response
-    return standard_response("success", 200, "PROJECTS_FOUND", projects)
+    # ✅ Format response data
+    formatted_projects = [
+        {
+            "id": project.id,
+            "annotation_feature_id": annotation_feature.id,
+            "code_name": annotation_feature.code_name,
+            "project_photo_url": project.project_photo_url,
+            "created_by": project.created_by,
+            "created_at": project.created_at.isoformat(),
+            "name": project.name,
+            "description": project.description,
+            "sub_feature_2_id": project.sub_feature_2_id,
+            "sub_feature_2_name": sub_feature_2_map.get(project.sub_feature_2_id, None),
+            "updated_by": project.updated_by,
+            "updated_at": project.updated_at.isoformat() if project.updated_at else None,
+            "timestamp": datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        for project in projects
+    ]
+
+    return standard_response(
+        status="success",
+        status_code=200,
+        message_code="PROJECTS_FOUND",
+        data=formatted_projects
+    )
+
+# @router.get("/by-feature-code/{annotation_feature_code_name}")
+# def get_annotation_projects_by_feature_code(annotation_feature_code_name: str, db: Session = Depends(get_db)):
+#     """
+#     Get Annotation Projects by Annotation Feature Code Name
+#     """
+#     # Get annotation feature ID by code_name
+#     annotation_feature = (
+#         db.query(AnnotationFeatureModel.id)
+#         .filter(AnnotationFeatureModel.code_name == annotation_feature_code_name)
+#         .first()
+#     )
+#     if not annotation_feature:
+#         raise HTTPException(
+#             status_code=404, detail=f"Annotation feature with code_name '{annotation_feature_code_name}' not found."
+#         )
+
+#     annotation_feature_id = annotation_feature.id
+
+#     # Get sub_feature_1 IDs associated with the annotation feature
+#     sub_feature_1_ids = db.query(SubFeature1Model.id).filter(
+#         SubFeature1Model.feature_id == annotation_feature_id
+#     ).all()
+
+#     # Flatten the list of sub_feature_1_ids
+#     sub_feature_1_ids = [sf1.id for sf1 in sub_feature_1_ids]
+
+#     if not sub_feature_1_ids:
+#         return standard_response("success", 200, "NO_PROJECTS_FOUND", [])
+
+#     # Get sub_feature_2 IDs associated with sub_feature_1
+#     sub_feature_2_ids = db.query(SubFeature2Model.id).filter(
+#         SubFeature2Model.sub_feature_1_id.in_(sub_feature_1_ids)
+#     ).all()
+
+#     # Flatten the list of sub_feature_2_ids
+#     sub_feature_2_ids = [sf2.id for sf2 in sub_feature_2_ids]
+
+#     if not sub_feature_2_ids:
+#         return standard_response("success", 200, "NO_PROJECTS_FOUND", [])
+
+#     # Get projects associated with sub_feature_2
+#     projects = db.query(AnnotationProjectModel).filter(
+#         AnnotationProjectModel.sub_feature_2_id.in_(sub_feature_2_ids)
+#     ).all()
+
+#     # Return projects as a standard response
+#     return standard_response("success", 200, "PROJECTS_FOUND", projects)
 
 # AnnotationProjectModel
 @router.get("/by-name/{name}")
