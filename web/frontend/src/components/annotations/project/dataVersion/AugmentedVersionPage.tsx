@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-// import { FaDownload, FaEdit } from "react-icons/fa";
 import {
   FaDownload,
   FaEdit,
