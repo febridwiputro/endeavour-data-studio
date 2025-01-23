@@ -15,7 +15,7 @@ const AugmentedVersionPage: React.FC = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
   return (
-    <div className="flex flex-col min-h-screen bg-gray-100 p-6">
+    <div className="flex flex-col min-h-screen bg-gray-100 p-2">
       {/* Header */}
       <div className="flex justify-between items-center border-b pb-4 mb-6">
         <div>

@@ -1,7 +1,5 @@
 // pages/annotations/index.tsx
 
-// pages/annotations/index.tsx
-
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
@@ -171,74 +169,75 @@ const AnnotationsPage: React.FC = () => {
         )}
 
         {/* ✅ Main Content */}
-        <div className="flex-grow p-4 transition-colors bg-white dark:bg-gray-800 shadow-md rounded-md mx-2 mt-2">
-          <div className="p-4">
-            {selectedAnnotation ? (
-              <AnnotationsProjectPage selectedAnnotation={selectedAnnotation} />
-            ) : (
-              <section className="flex-1 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 w-full">
-                <div className="h-screen overflow-hidden flex">
-                  <div className="flex-1 overflow-auto px-6 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-8">
-                    <DropdownSearch
-                      searchQuery={searchQuery}
-                      setSearchQuery={setSearchQuery}
-                      selectedCategory={selectedCategory}
-                      setSelectedCategory={setSelectedCategory}
-                    />
-                    {annotationFeatures.map((type) => {
-                      const {
-                        code_name: codeName,
-                        name: typeName,
-                        logo_url,
-                      } = type;
-                      const isExpanded = expandedTypes[codeName] || false;
-                      const annotations = annotationsByType[codeName] || [];
+        <div className="flex-1 flex-col transition-colors bg-white dark:bg-gray-800 shadow-md rounded-md mx-2 mt-2">
+          {selectedAnnotation ? (
+            <AnnotationsProjectPage selectedAnnotation={selectedAnnotation} />
+          ) : (
+            <section className="flex-1 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 w-full">
+              <div className="h-screen overflow-hidden flex">
+                <div className="flex-1 overflow-auto px-6 py-4 sm:px-8 sm:py-6 lg:px-6 lg:py-6">
+                  <DropdownSearch
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    selectedCategory={selectedCategory}
+                    setSelectedCategory={setSelectedCategory}
+                  />
+                  {annotationFeatures.map((type) => {
+                    const {
+                      code_name: codeName,
+                      name: typeName,
+                      logo_url,
+                    } = type;
+                    const isExpanded = expandedTypes[codeName] || false;
+                    const annotations = annotationsByType[codeName] || [];
 
-                      return (
-                        <div key={codeName} className="mt-6">
-                          <div
-                            className="flex items-center justify-between cursor-pointer bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition"
-                            onClick={() => handleCategoryClick(codeName)}
-                          >
-                            <div className="flex items-center">
-                              {logo_url && (
-                                <img
-                                  src={logo_url}
-                                  alt={typeName}
-                                  className="h-8 w-8 mr-3 cursor-pointer"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (annotations.length > 0) {
-                                      handleAnnotationSelect(annotations[0]);
-                                    }
-                                  }}
-                                />
-                              )}
-                              <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-                                {typeName}
-                              </h3>
-                            </div>
-                          </div>
-                          {isExpanded && (
-                            <div className="mt-4">
-                              <RenderCard
-                                annotations={annotations}
-                                onClick={(id) =>
-                                  handleAnnotationSelect(
-                                    annotations.find((a) => a.id === id)
-                                  )
-                                }
+                    return (
+                      <div key={codeName} className="mt-6">
+                        <div
+                          className="flex items-center justify-between cursor-pointer bg-gray-100 dark:bg-gray-800 p-4 rounded-lg shadow-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                          onClick={() => handleCategoryClick(codeName)}
+                        >
+                          <div className="flex items-center">
+                            {logo_url && (
+                              <img
+                                src={logo_url}
+                                alt={typeName}
+                                className="h-8 w-8 mr-3 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (annotations.length > 0) {
+                                    handleAnnotationSelect(annotations[0]);
+                                  }
+                                }}
                               />
-                            </div>
-                          )}
+                            )}
+                            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                              {typeName}
+                            </h3>
+                          </div>
+                          <span className="text-gray-500 dark:text-gray-400 text-sm">
+                            {isExpanded ? "Hide" : "Show"}
+                          </span>
                         </div>
-                      );
-                    })}
-                  </div>
+                        {isExpanded && (
+                          <div className="mt-4">
+                            <RenderCard
+                              annotations={annotations}
+                              onClick={(id) =>
+                                handleAnnotationSelect(
+                                  annotations.find((a) => a.id === id)
+                                )
+                              }
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-              </section>
-            )}
-          </div>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>
