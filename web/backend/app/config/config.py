@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     JWT_PRIVATE_KEY: str = None
     JWT_PUBLIC_KEY: str = None
-    ACCESS_TOKEN_EXPIRES_IN: int = 900  # 15 minutes by default
+    ACCESS_TOKEN_EXPIRES_IN: int = 3600  # 15 minutes by default
     REFRESH_TOKEN_EXPIRES_IN: int = 3600  # 1 hour by default
 
     # Database configuration

@@ -4,7 +4,7 @@ from app.config.config import settings
 
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-device = "cpu" # "cpu"
+device = "cuda" # "cpu"
 model = YOLO(settings.YOLO_MODEL_PATH)
 model.to(device)
 

@@ -5,7 +5,7 @@ import api from "@/services/apiConfig";
 export const fetchUploadDataByProjectData = createAsyncThunk(
   "projectUploads/fetchByProjectData",
   async (dataId: number) => {
-    const response = await api.get(`/annotations//upload-data/${dataId}`);
+    const response = await api.get(`/annotations/upload-data/${dataId}`);
     return response.data;
   }
 );
@@ -14,7 +14,7 @@ export const fetchUploadDataByProjectData = createAsyncThunk(
 export const createUploadData = createAsyncThunk(
   "projectUploads/create",
   async (newUpload: { data_id: number; file_name: string }) => {
-    const response = await api.post(`/annotations//upload-data`, newUpload);
+    const response = await api.post(`/annotations/upload-data`, newUpload);
     return response.data;
   }
 );

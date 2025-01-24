@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "@/store/store";
 import { api } from "@/services/apiConfig";
@@ -10,6 +10,7 @@ import {
   XCircleIcon,
   FolderIcon,
   ClockIcon,
+  PhotoIcon,
 } from "@heroicons/react/24/outline";
 
 interface RenderCardProps {
@@ -25,17 +26,24 @@ interface RenderCardProps {
 
 const fetchAnnotationStats = async (annotationId: number, token: string) => {
   if (!token) throw new Error("No access token available");
-  const response = await api.get(`/annotations/image-annotations/annotation-status/`, {
-    headers: { Authorization: `Bearer ${token}` },
-    params: { project_id: annotationId },
-  });
+  const response = await api.get(
+    `/annotations/image-annotations/annotation-status/`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { project_id: annotationId },
+    }
+  );
   return response.data.data;
 };
 
 const RenderCard: React.FC<RenderCardProps> = ({ annotations, onClick }) => {
   const dispatch = useDispatch();
-  const selectedProjectId = useSelector((state: RootState) => state.project.selectedProjectId);
-  const accessToken = useSelector((state: RootState) => state.auth.accessToken) || "";
+  const selectedProjectId = useSelector(
+    (state: RootState) => state.project.selectedProjectId
+  );
+  const accessToken =
+    useSelector((state: RootState) => state.auth.accessToken) || "";
+  const [imageError, setImageError] = useState<Record<number, boolean>>({});
 
   // Fetch data for each annotation
   const annotationQueries = useQueries({
@@ -105,16 +113,23 @@ const RenderCard: React.FC<RenderCardProps> = ({ annotations, onClick }) => {
                 onClick(annotation.id);
               }}
             >
+              {/* ✅ Project Image atau Fallback Icon */}
               <div className="relative h-36 w-full">
-                {annotation.project_photo_url ? (
+                {annotation.project_photo_url && !imageError[annotation.id] ? (
                   <img
                     alt={annotation.name}
                     src={annotation.project_photo_url}
                     className="absolute inset-0 h-full w-full object-cover rounded-t-lg"
+                    onError={() =>
+                      setImageError((prev) => ({
+                        ...prev,
+                        [annotation.id]: true,
+                      }))
+                    }
                   />
                 ) : (
                   <div className="absolute inset-0 h-full w-full bg-gray-200 flex items-center justify-center rounded-t-lg">
-                    <span className="text-gray-500">No Image Available</span>
+                    <PhotoIcon className="h-12 w-12 text-gray-500" />
                   </div>
                 )}
               </div>
@@ -132,8 +147,12 @@ const RenderCard: React.FC<RenderCardProps> = ({ annotations, onClick }) => {
 
                 <div>
                   <dt className="sr-only">Feature</dt>
-                  <dd className="font-medium text-sm text-gray-800">{annotation.annotation_type}</dd>
-                  <dd className="font-medium text-sm text-gray-900">{annotation.name}</dd>
+                  <dd className="font-medium text-sm text-gray-800">
+                    {annotation.annotation_type}
+                  </dd>
+                  <dd className="font-medium text-sm text-gray-900">
+                    {annotation.name}
+                  </dd>
                 </div>
               </dl>
 

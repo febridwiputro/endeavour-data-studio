@@ -11,6 +11,7 @@ from fastapi import (
     status,
 )
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func, or_, and_
 from app.config.database import get_db
 from app.models.menu.annotations.annotation_project_data_model import (
     AnnotationProjectDataModel,
@@ -518,6 +519,15 @@ def export_annotations(
         if not image_data:
             continue
 
+        # 🔍 **Ambil metadata gambar**
+        image_metadata = db.query(ImageMetadataModel).filter_by(data_id=annotation.data_id).first()
+
+        if not image_metadata:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing image metadata.")
+
+        image_width = image_metadata.width
+        image_height = image_metadata.height
+
         image_url = image_data.file_url
         image_name = os.path.basename(image_url)
 
@@ -532,25 +542,13 @@ def export_annotations(
                 detail=f"Failed to download image: {image_url}",
             )
 
-        # 🔍 **Ambil dimensi gambar**
-        image_width = image_data.width
-        image_height = image_data.height
-
-        if not image_width or not image_height:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing image dimensions.")
-
         # 📏 **Normalisasi koordinat bounding box**
-        # ➜ Formula Normalisasi:
-        #    x' = x / width
-        #    y' = y / height
         x1, y1 = annotation.x1 / image_width, annotation.y1 / image_height  # Kiri Atas
         x2, y2 = annotation.x2 / image_width, annotation.y1 / image_height  # Kanan Atas
         x3, y3 = annotation.x2 / image_width, annotation.y2 / image_height  # Kanan Bawah
         x4, y4 = annotation.x1 / image_width, annotation.y2 / image_height  # Kiri Bawah
 
         # 📜 **Tulis file label dengan format Label Studio**
-        # Format:
-        #   class_id x1 y1 x2 y2 x3 y3 x4 y4
         label_file_path = os.path.join(labels_dir, f"{os.path.splitext(image_name)[0]}.txt")
         with open(label_file_path, "a") as label_file:
             bbox = f"{class_labels.index(annotation.label)} {x1:.6f} {y1:.6f} {x2:.6f} {y2:.6f} {x3:.6f} {y3:.6f} {x4:.6f} {y4:.6f}\n"
@@ -570,3 +568,165 @@ def export_annotations(
 
     # 📤 **Kembalikan file ZIP**
     return FileResponse(zip_file_path, media_type="application/zip", filename="annotations_export.zip")
+
+
+# 📌 Mapping operator SQL untuk digunakan dalam filter
+OPERATOR_MAP = {
+    "=": lambda column, value: column == value,
+    "!=": lambda column, value: column != value,
+    "<": lambda column, value: column < value,
+    ">": lambda column, value: column > value,
+    "<=": lambda column, value: column <= value,
+    ">=": lambda column, value: column >= value,
+    "is between": lambda column, values: column.between(values["min"], values["max"]),
+    "not between": lambda column, values: ~column.between(values["min"], values["max"]),
+    "is empty": lambda column, _: column.is_(None),
+    "contains": lambda column, value: column.ilike(f"%{value}%"),
+    "not contains": lambda column, value: ~column.ilike(f"%{value}%"),
+    "regex": lambda column, value: column.op("~")(value),
+    "equal": lambda column, value: column == value,
+    "not equal": lambda column, value: column != value,
+    "is": lambda column, value: column.is_(value),
+    "is before": lambda column, value: column < value,
+    "is after": lambda column, value: column > value,
+}
+
+# 📌 Definisi tipe kolom untuk menentukan operator yang sesuai
+COLUMN_TYPES = {
+    "upload_id": "int",
+    "confidence_score": "float",
+    "avg_confidence_score": "float",
+    "width": "int",
+    "height": "int",
+    "annotated_by": "string",
+    "updated_by": "string",
+    "file_url": "string",
+    "description": "text",
+    "data_type": "string",
+    "completed": "bool",
+    "created_at": "datetime",
+    "updated_at": "datetime",
+}
+
+
+@router.get("/filter-data/", summary="Filter project data based on conditions")
+def filter_project_data(
+    project_id: int = Query(..., description="Project ID to filter data for"),
+    filters: List[str] = Query(
+        [],
+        description="Filters in the format field:operator:value or field:operator:min,max. Multiple filters allowed.",
+    ),
+    payload: dict = Depends(jwt_bearer),
+    db: Session = Depends(get_db),
+):
+    """
+    API untuk memfilter data anotasi berdasarkan berbagai kondisi.
+    """
+
+    user_id = payload.get("id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
+        )
+
+    # Validasi project
+    project = db.query(AnnotationProjectDataModel).filter_by(project_id=project_id).first()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Annotation project not found.",
+        )
+
+    query = db.query(AnnotationProjectDataModel).filter(
+        AnnotationProjectDataModel.project_id == project_id
+    )
+
+    filter_conditions = []
+
+    for filter_item in filters:
+        try:
+            field, operator, *values = filter_item.split(":")
+            if field not in COLUMN_TYPES:
+                raise ValueError(f"Invalid field: {field}")
+
+            column_type = COLUMN_TYPES[field]
+            column = getattr(AnnotationProjectDataModel, field, None)
+
+            if not column:
+                raise ValueError(f"Invalid column: {field}")
+
+            # **Khusus untuk "is between" dan "not between"**
+            if operator in ["is between", "not between"]:
+                if len(values) != 1 or "," not in values[0]:
+                    raise ValueError(f"Operator '{operator}' requires 'min,max' values.")
+                
+                min_value, max_value = values[0].split(",")
+                
+                # **Pastikan min dan max bernilai numerik jika tipe data adalah int/float**
+                if column_type in ["int", "float"]:
+                    min_value, max_value = float(min_value), float(max_value)
+                
+                values = {"min": min_value, "max": max_value}
+
+            # **Konversi nilai berdasarkan tipe data**
+            elif column_type == "float":
+                values = [float(v) for v in values]
+            elif column_type == "int":
+                values = [int(v) for v in values]
+            elif column_type == "bool":
+                values = [v.lower() == "true" for v in values]
+            elif column_type == "datetime":
+                values = [v for v in values]  # Tidak mengubah karena akan diparse di database
+
+            if operator not in OPERATOR_MAP:
+                raise ValueError(f"Invalid operator: {operator}")
+
+            # Gunakan operator yang sesuai
+            condition = OPERATOR_MAP[operator](column, values if isinstance(values, dict) else values[0])
+            filter_conditions.append(condition)
+
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+            )
+
+    # Tambahkan kondisi filter ke dalam query
+    if filter_conditions:
+        query = query.filter(and_(*filter_conditions))
+
+    # Eksekusi query
+    filtered_data = query.all()
+
+    return standard_response(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        message_code="filtered_data_retrieved",
+        data=[{
+            "upload_id": d.id,
+            "file_url": d.file_url,
+            "description": d.description,
+            "data_type": d.data_type,
+            "completed": d.completed,
+            "avg_confidence_score": d.avg_confidence_score,
+            "created_at": d.created_at,
+            "updated_at": d.updated_at,
+            "metadata": {
+                "image_metadata": {
+                    "width": d.image_metadata.width if d.image_metadata else None,
+                    "height": d.image_metadata.height if d.image_metadata else None,
+                    "image_annotations": [
+                        {
+                            "result_type": ann.result_type,
+                            "x1": ann.x1,
+                            "y1": ann.y1,
+                            "x2": ann.x2,
+                            "y2": ann.y2,
+                            "label": ann.label,
+                            "confidence_score": ann.confidence_score,
+                        }
+                        for ann in d.image_annotations
+                    ],
+                }
+            },
+        } for d in filtered_data],
+    )

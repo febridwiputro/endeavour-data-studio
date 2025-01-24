@@ -12,7 +12,7 @@ import {
 } from "@/features/annotations/project/projectAnnotationSlice";
 import Sidebar from "@/components/sidebar/Sidebar";
 import Breadcrumb from "@/components/Breadcrumb";
-import { HomeIcon, FolderIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, FolderIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import AnnotationsProjectPage from "@/components/annotations/project/AnnotationsProjectPage";
 import CreateButton from "@/components/annotations/base/CreateButton";
 import RenderCard from "@/components/annotations/base/RenderCard";

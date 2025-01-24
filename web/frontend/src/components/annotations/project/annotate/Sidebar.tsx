@@ -26,26 +26,38 @@ const Sidebar: React.FC<SidebarProps> = ({
   );
 
   const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [visibleColumns, setVisibleColumns] = useState<{
-    id: boolean;
-    file_url: boolean;
-    data_type: boolean;
-    drafts: boolean;
-    completed: boolean;
-    avg_confidence_score: boolean;
-    updated_at: boolean;
-    metadata: boolean;
-  }>({
-    id: true,
+  const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
+    id: false,
     file_url: true,
-    data_type: true,
-    drafts: true,
-    completed: true,
-    avg_confidence_score: true,
-    updated_at: true,
+    data_type: false,
+    drafts: false,
+    completed: false,
+    avg_confidence_score: false,
+    updated_at: false,
     metadata: true,
   });
+  
+  // const [visibleColumns, setVisibleColumns] = useState<{
+  //   id: boolean;
+  //   file_url: boolean;
+  //   data_type: boolean;
+  //   drafts: boolean;
+  //   completed: boolean;
+  //   avg_confidence_score: boolean;
+  //   updated_at: boolean;
+  //   metadata: boolean;
+  // }>({
+  //   id: false,
+  //   file_url: true,
+  //   data_type: false,
+  //   drafts: false,
+  //   completed: false,
+  //   avg_confidence_score: false,
+  //   updated_at: false,
+  //   metadata: true,
+  // });
 
   const [classes, setClasses] = useState<
     { id: string; color: string; name: string }[]
@@ -153,6 +165,8 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Filter Section */}
       <SidebarFilters
+        projectId={selectedProjectId ?? 0}
+        setFilteredTasks={setFilteredTasks}
         visibleColumns={visibleColumns}
         setVisibleColumns={setVisibleColumns}
         classes={classes}
@@ -165,7 +179,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Table Section */}
       <div className="relative overflow-y-auto h-[calc(100%-200px)]">
-        <table className="w-full border-collapse border border-gray-200">
+        <table className="w-full border-collapse border border-gray-200 text-center">
           <thead className="bg-gray-100 sticky top-0 z-10">
             <tr>
               <th className="border border-gray-200 p-2 text-center">
@@ -176,13 +190,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                   onChange={toggleAllSelection}
                 />
               </th>
-              <th className="border border-gray-200 p-2 text-left">No.</th>
+              <th className="border border-gray-200 p-2 text-center">No.</th>
               {Object.entries(visibleColumns)
                 .filter(([_, visible]) => visible)
                 .map(([key]) => (
                   <th
                     key={key}
-                    className="border border-gray-200 p-2 text-left"
+                    className="border border-gray-200 p-2 text-center"
                   >
                     {key.charAt(0).toUpperCase() +
                       key.slice(1).replace(/_/g, " ")}
@@ -218,10 +232,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                   .map(([key]) => (
                     <td key={key} className="border border-gray-200 p-2 text-center">
                       {key === "file_url" ? (
-                        <img src={task[key as keyof Task] as string} alt={`Task ${task.id}`} className="w-10 h-10 object-cover rounded" />
+                        <img src={task[key as keyof Task] as string} alt={`Task ${task.id}`} className="w-10 h-10 object-cover rounded mx-auto" />
                       ) : key === "metadata" ? (
                         <button onClick={() => openMetadataModal(task.metadata)}>
-                          <CodeBracketIcon className="w-6 h-6 text-gray-500" />
+                          <CodeBracketIcon className="w-6 h-6 text-gray-500 mx-auto" />
                         </button>
                       ) : (
                         String(task[key as keyof Task])

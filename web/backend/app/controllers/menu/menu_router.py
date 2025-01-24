@@ -63,7 +63,13 @@ def create_menu(data: dict, db: Session = Depends(get_db)):
 
 @router.get("/menus")
 def read_menus(db: Session = Depends(get_db)):
-    return read_items(MenuModel, db)
+    # return read_items(MenuModel, db)
+
+    query = db.query(MenuModel)    
+    query = query.filter(MenuModel.is_active == True)
+
+    items = query.all()
+    return standard_response("success", 200, "FETCHED", items)
 
 @router.put("/menus/{menu_id}")
 def update_menu(menu_id: int, updates: dict, db: Session = Depends(get_db)):
