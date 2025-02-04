@@ -27,6 +27,7 @@ class AnnotationProjectDataModel(Base):
     drafts = Column(Text, nullable=True)
     completed = Column(Boolean, default=False)
     avg_confidence_score = Column(Float, nullable=True, default=0.0)
+    is_annotated = Column(Boolean, default=False)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     updated_by = Column(Integer, ForeignKey("users.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

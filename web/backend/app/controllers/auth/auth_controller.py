@@ -71,33 +71,6 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
 
     return tokens
 
-
-# @router.post("/register")
-# async def register(request: RegisterRequest, db: Session = Depends(get_db)):
-#     # Validasi apakah email sudah terdaftar
-#     user = db.query(UserModel).filter(UserModel.email == request.email).first()
-#     if user:
-#         raise HTTPException(status_code=400, detail="Email already registered")
-
-#     # Pengecekan sudah dilakukan pada validator di `RegisterRequest`
-#     # Hash password
-#     hashed_password = bcrypt.hash(request.password)
-#     user = UserModel(email=request.email, hashed_password=hashed_password, is_verified=False, is_superuser=False)
-#     db.add(user)
-#     db.commit()
-
-#     # Generate and send verification code
-#     code = str(random.randint(100000, 999999))
-#     verification_code = VerificationCode(
-#         email=request.email, code=code, delivery_type=DeliveryType.EMAIL  # Set delivery_type explicitly
-#     )
-#     db.add(verification_code)
-#     db.commit()
-
-#     await send_verification_email(request.email, code)
-
-#     return {"message": "User registered. Check your email for the verification code."}
-
 @router.post("/verification/email")
 async def send_verification_email_endpoint(
     request: EmailVerificationRequest, db: Session = Depends(get_db)
@@ -146,25 +119,6 @@ def verify(request: VerifyRequest, db: Session = Depends(get_db)):
         db.commit()
 
     return {"message": "Email verified successfully"}
-
-
-# @router.post("/verify-code")
-# def verify(request: VerifyRequest, db: Session = Depends(get_db)):
-#     code_entry = db.query(VerificationCode).filter(
-#         VerificationCode.email == request.email,
-#         VerificationCode.code == request.code,
-#     ).first()
-
-#     if not code_entry:
-#         raise HTTPException(status_code=400, detail="Invalid verification code")
-
-#     user = db.query(UserModel).filter(UserModel.email == request.email).first()
-#     if user:
-#         user.is_verified = True
-#         db.delete(code_entry)
-#         db.commit()
-
-#     return {"message": "Email verified successfully"}
 
 @router.post("/resend-code")
 async def resend_verification(request: ResendVerificationRequest, db: Session = Depends(get_db)):
@@ -242,6 +196,31 @@ async def password_update(request: PasswordUpdateRequest, db: Session = Depends(
     return {"message": "Password updated successfully."}
 
 
+# @router.post("/register")
+# async def register(request: RegisterRequest, db: Session = Depends(get_db)):
+#     # Validasi apakah email sudah terdaftar
+#     user = db.query(UserModel).filter(UserModel.email == request.email).first()
+#     if user:
+#         raise HTTPException(status_code=400, detail="Email already registered")
+
+#     # Pengecekan sudah dilakukan pada validator di `RegisterRequest`
+#     # Hash password
+#     hashed_password = bcrypt.hash(request.password)
+#     user = UserModel(email=request.email, hashed_password=hashed_password, is_verified=False, is_superuser=False)
+#     db.add(user)
+#     db.commit()
+
+#     # Generate and send verification code
+#     code = str(random.randint(100000, 999999))
+#     verification_code = VerificationCode(
+#         email=request.email, code=code, delivery_type=DeliveryType.EMAIL  # Set delivery_type explicitly
+#     )
+#     db.add(verification_code)
+#     db.commit()
+
+#     await send_verification_email(request.email, code)
+
+#     return {"message": "User registered. Check your email for the verification code."}
 
 # @router.post("/verify")
 # async def verify_code(
@@ -274,3 +253,21 @@ async def password_update(request: PasswordUpdateRequest, db: Session = Depends(
 #     db.commit()
 
 #     return {"access_token": tokens["access_token"], "token_type": "bearer"}
+
+# @router.post("/verify-code")
+# def verify(request: VerifyRequest, db: Session = Depends(get_db)):
+#     code_entry = db.query(VerificationCode).filter(
+#         VerificationCode.email == request.email,
+#         VerificationCode.code == request.code,
+#     ).first()
+
+#     if not code_entry:
+#         raise HTTPException(status_code=400, detail="Invalid verification code")
+
+#     user = db.query(UserModel).filter(UserModel.email == request.email).first()
+#     if user:
+#         user.is_verified = True
+#         db.delete(code_entry)
+#         db.commit()
+
+#     return {"message": "Email verified successfully"}

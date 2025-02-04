@@ -27,7 +27,6 @@ def authenticate_user(db: Session, email: str, password: str) -> UserModel:
         raise HTTPException(status_code=400, detail="User account is not verified")
     return user
 
-
 def generate_tokens(user):
     """
     Generate access and refresh tokens for a user.
@@ -36,12 +35,12 @@ def generate_tokens(user):
     :return: Dict containing access and refresh tokens.
     """
     access_token = generate_jwt(
-        data={"id": user.id, "sub": user.email, "type": "access"},
+        data={"id": user.id, "sub": user.email, "type": "access", "aud": ["access"]},
         lifetime_seconds=settings.ACCESS_TOKEN_EXPIRES_IN,
     )
 
     refresh_token = generate_jwt(
-        data={"id": user.id, "sub": user.email, "type": "refresh"},
+        data={"id": user.id, "sub": user.email, "type": "refresh", "aud": ["refresh"]},
         lifetime_seconds=settings.REFRESH_TOKEN_EXPIRES_IN,
     )
 
@@ -51,22 +50,66 @@ def generate_tokens(user):
         "token_type": "bearer",
     }
 
-
 def refresh_access_token(refresh_token: str) -> str:
     """Refresh access token using a valid refresh token."""
     try:
         decoded = decode_jwt(
-            encoded_jwt=refresh_token,
-            secret=settings.SECRET_KEY,
-            audience=["refresh"],
+            encoded_jwt=refresh_token, 
+            audience=["refresh"]  # Ensure refresh token has the correct "aud" claim
         )
-        user_id = decoded["sub"]
+
+        user_id = decoded["id"]
+
         return generate_jwt(
-            data={"sub": user_id, "aud": ["access"]},
-            secret=settings.SECRET_KEY,
-            lifetime_seconds=ACCESS_TOKEN_LIFETIME_SECONDS,
+            data={"id": user_id, "sub": decoded["sub"], "type": "access", "aud": ["access"]},
+            lifetime_seconds=settings.ACCESS_TOKEN_EXPIRES_IN,
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Refresh token expired")
     except jwt.PyJWTError as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+
+
+
+# def generate_tokens(user):
+#     """
+#     Generate access and refresh tokens for a user.
+
+#     :param user: User instance.
+#     :return: Dict containing access and refresh tokens.
+#     """
+#     access_token = generate_jwt(
+#         data={"id": user.id, "sub": user.email, "type": "access"},
+#         lifetime_seconds=settings.ACCESS_TOKEN_EXPIRES_IN,
+#     )
+
+#     refresh_token = generate_jwt(
+#         data={"id": user.id, "sub": user.email, "type": "refresh"},
+#         lifetime_seconds=settings.REFRESH_TOKEN_EXPIRES_IN,
+#     )
+
+#     return {
+#         "access_token": access_token,
+#         "refresh_token": refresh_token,
+#         "token_type": "bearer",
+#     }
+
+
+# def refresh_access_token(refresh_token: str) -> str:
+#     """Refresh access token using a valid refresh token."""
+#     try:
+#         decoded = decode_jwt(
+#             encoded_jwt=refresh_token,
+#             secret=settings.SECRET_KEY,
+#             audience=["refresh"],
+#         )
+#         user_id = decoded["sub"]
+#         return generate_jwt(
+#             data={"sub": user_id, "aud": ["access"]},
+#             secret=settings.SECRET_KEY,
+#             lifetime_seconds=ACCESS_TOKEN_LIFETIME_SECONDS,
+#         )
+#     except jwt.ExpiredSignatureError:
+#         raise HTTPException(status_code=401, detail="Refresh token expired")
+#     except jwt.PyJWTError as e:
+#         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")

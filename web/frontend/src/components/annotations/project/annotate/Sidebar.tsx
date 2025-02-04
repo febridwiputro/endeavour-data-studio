@@ -26,7 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   );
 
   const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
-  const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks); // ✅ Use filteredTasks instead of tasks
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>({
     id: false,
@@ -35,29 +35,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     drafts: false,
     completed: false,
     avg_confidence_score: false,
+    is_annotated: true,
     updated_at: false,
     metadata: true,
   });
-  
-  // const [visibleColumns, setVisibleColumns] = useState<{
-  //   id: boolean;
-  //   file_url: boolean;
-  //   data_type: boolean;
-  //   drafts: boolean;
-  //   completed: boolean;
-  //   avg_confidence_score: boolean;
-  //   updated_at: boolean;
-  //   metadata: boolean;
-  // }>({
-  //   id: false,
-  //   file_url: true,
-  //   data_type: false,
-  //   drafts: false,
-  //   completed: false,
-  //   avg_confidence_score: false,
-  //   updated_at: false,
-  //   metadata: true,
-  // });
 
   const [classes, setClasses] = useState<
     { id: string; color: string; name: string }[]
@@ -71,7 +52,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     setModalOpen(true);
   };
 
-  // Fetch annotation classes
   const fetchClasses = async () => {
     if (!accessToken || !selectedProjectId) return;
 
@@ -94,12 +74,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
-  // Fetch model API URL dengan perbaikan error handling
   const fetchModelApi = async () => {
-    if (!accessToken || !selectedProjectId) {
-      console.warn("Access token or project ID is missing. Skipping fetchModelApi.");
-      return;
-    }
+    if (!accessToken || !selectedProjectId) return;
 
     try {
       const response = await api.get(
@@ -108,20 +84,9 @@ const Sidebar: React.FC<SidebarProps> = ({
       );
 
       const { data } = response.data;
-
-      if (!data || data.length === 0) {
-        console.warn("No model API found. Setting default state.");
-        setModelApiUrl(null);
-        return;
-      }
-
-      setModelApiUrl(data[0]?.api_url || null);
+      setModelApiUrl(data?.length ? data[0]?.api_url : null);
     } catch (error: any) {
-      if (error.response?.status === 404) {
-        console.error("Error 404: API endpoint not found or no matching data.");
-      } else {
-        console.error("Error fetching model API:", error);
-      }
+      console.error("Error fetching model API:", error);
       setModelApiUrl(null);
     }
   };
@@ -131,9 +96,8 @@ const Sidebar: React.FC<SidebarProps> = ({
       fetchClasses();
       fetchModelApi();
     }
-    const userId = localStorage.getItem("rememberedEmail");
-    setCurrentUserId(userId);
-  }, [selectedProjectId]); // Hanya jalankan saat project_id berubah
+    setCurrentUserId(localStorage.getItem("rememberedEmail"));
+  }, [selectedProjectId]);
 
   const toggleTaskSelection = (taskId: number) => {
     setSelectedTasks((prev) =>
@@ -144,25 +108,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const toggleAllSelection = () => {
-    if (selectedTasks.length === tasks.length) {
+    if (selectedTasks.length === filteredTasks.length) {
       setSelectedTasks([]); // Unselect all
     } else {
-      setSelectedTasks(tasks.map((task) => task.id)); // Select all
+      setSelectedTasks(filteredTasks.map((task) => task.id)); // Select all filtered tasks
     }
   };
 
-  const isAllSelected = selectedTasks.length === tasks.length;
-
-  const handlePredictionComplete = () => {
-    console.log("Prediction process completed.");
-  };
+  const isAllSelected = selectedTasks.length === filteredTasks.length;
 
   return (
     <div
       className="bg-gray-50 border-r border-gray-200 p-4"
       style={{ width: `${100 - panelWidth}%`, height: "100vh" }}
     >
-
       {/* Filter Section */}
       <SidebarFilters
         projectId={selectedProjectId ?? 0}
@@ -174,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         tasks={tasks}
         accessToken={accessToken}
         modelApiUrl={modelApiUrl}
-        onPredictionComplete={handlePredictionComplete}
+        onPredictionComplete={() => console.log("Prediction process completed.")}
       />
 
       {/* Table Section */}
@@ -194,25 +153,19 @@ const Sidebar: React.FC<SidebarProps> = ({
               {Object.entries(visibleColumns)
                 .filter(([_, visible]) => visible)
                 .map(([key]) => (
-                  <th
-                    key={key}
-                    className="border border-gray-200 p-2 text-center"
-                  >
-                    {key.charAt(0).toUpperCase() +
-                      key.slice(1).replace(/_/g, " ")}
+                  <th key={key} className="border border-gray-200 p-2 text-center">
+                    {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")}
                   </th>
                 ))}
             </tr>
           </thead>
 
           <tbody>
-            {tasks.map((task, index) => (
+            {filteredTasks.map((task, index) => (
               <tr
                 key={task.id}
                 className={`cursor-pointer ${
-                  selectedTaskId === task.id
-                    ? "bg-blue-100"
-                    : "hover:bg-gray-100"
+                  selectedTaskId === task.id ? "bg-blue-100" : "hover:bg-gray-100"
                 }`}
                 onClick={() => setSelectedTaskId(task.id)}
               >
@@ -224,15 +177,17 @@ const Sidebar: React.FC<SidebarProps> = ({
                     onChange={() => toggleTaskSelection(task.id)}
                   />
                 </td>
-                <td className="border border-gray-200 p-2 text-center">
-                  {index + 1}
-                </td>
+                <td className="border border-gray-200 p-2 text-center">{index + 1}</td>
                 {Object.entries(visibleColumns)
                   .filter(([_, visible]) => visible)
                   .map(([key]) => (
                     <td key={key} className="border border-gray-200 p-2 text-center">
                       {key === "file_url" ? (
-                        <img src={task[key as keyof Task] as string} alt={`Task ${task.id}`} className="w-10 h-10 object-cover rounded mx-auto" />
+                        <img
+                          src={task[key as keyof Task] as string}
+                          alt={`Task ${task.id}`}
+                          className="w-10 h-10 object-cover rounded mx-auto"
+                        />
                       ) : key === "metadata" ? (
                         <button onClick={() => openMetadataModal(task.metadata)}>
                           <CodeBracketIcon className="w-6 h-6 text-gray-500 mx-auto" />
@@ -247,7 +202,16 @@ const Sidebar: React.FC<SidebarProps> = ({
           </tbody>
         </table>
       </div>
-      <ModalBase show={modalOpen} title="Metadata Details" message={<pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-100 p-4 rounded-md overflow-x-auto">{modalContent}</pre>} onClose={() => setModalOpen(false)} />
+      <ModalBase
+        show={modalOpen}
+        title="Metadata Details"
+        message={
+          <pre className="whitespace-pre-wrap text-sm text-gray-700 bg-gray-100 p-4 rounded-md overflow-x-auto">
+            {modalContent}
+          </pre>
+        }
+        onClose={() => setModalOpen(false)}
+      />
     </div>
   );
 };

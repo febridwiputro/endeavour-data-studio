@@ -1,7 +1,12 @@
+import sys, os
 import psycopg2
 from sqlalchemy import create_engine, text
-from config import settings
 from sqlalchemy.exc import OperationalError
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+
+from app.config.config import settings
+# from app.config.database import engine 
 
 # Database connection settings
 DATABASE_URL = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}:{settings.DATABASE_PORT}/{settings.POSTGRES_DB}"

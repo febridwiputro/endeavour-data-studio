@@ -72,6 +72,7 @@ def create_image_annotation(
         created_by=user_id,
     )
     db.add(new_annotation)
+    annotation_project.is_annotated = True
     db.commit()
     db.refresh(new_annotation)
 
@@ -168,8 +169,6 @@ def update_image_annotation(
         },
     )
 
-
-
 @router.delete(
     "/{annotation_id}",
     summary="Delete image annotation",
@@ -186,35 +185,40 @@ def delete_image_annotation(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
         )
 
-    # Coba cari berdasarkan annotation_id
+    # 🔹 Try to find annotation by ID
     annotation = db.query(ImageAnnotationResultModel).filter_by(id=annotation_id).first()
 
-    # Jika annotation_id tidak ditemukan, cari berdasarkan data_id dan properti bounding box
+    # 🔹 If not found, assume annotation_id might actually be data_id (for bulk delete cases)
     if not annotation:
-        annotation = (
-            db.query(ImageAnnotationResultModel)
-            .filter_by(
-                data_id=annotation_id,  # Assuming data_id was passed instead of annotation_id
-            )
-            .first()
-        )
+        annotation = db.query(ImageAnnotationResultModel).filter_by(data_id=annotation_id).first()
 
     if not annotation:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Annotation with ID {annotation_id} or matching bounding box not found.",
+            detail=f"Annotation with ID {annotation_id} not found.",
         )
 
+    # 🔹 Store the data_id before deletion
+    data_id = annotation.data_id
+
+    # 🔹 Delete the annotation
     db.delete(annotation)
     db.commit()
+
+    # 🔹 Check if there are any remaining annotations for the same data_id
+    remaining_annotations = db.query(ImageAnnotationResultModel).filter_by(data_id=data_id).count()
+
+    if remaining_annotations == 0:
+        # ✅ If no annotations remain, set is_annotated=False for the data
+        db.query(AnnotationProjectDataModel).filter_by(id=data_id).update({"is_annotated": False})
+        db.commit()
 
     return standard_response(
         status="success",
         status_code=status.HTTP_200_OK,
         message_code="annotation_deleted",
-        data={"annotation_id": annotation_id},
+        data={"annotation_id": annotation_id, "is_annotated": remaining_annotations > 0},
     )
-
 
 @router.get(
     "/class-count/",
@@ -297,21 +301,24 @@ def get_annotation_status(
             detail="Annotation project not found.",
         )
 
-    total_data = db.query(func.count(AnnotationProjectDataModel.id)).filter_by(project_id=project_id).scalar()
-    annotated_data = (
-        db.query(func.count(ImageAnnotationResultModel.id))
-        .join(AnnotationProjectDataModel, ImageAnnotationResultModel.data_id == AnnotationProjectDataModel.id)
-        .filter(AnnotationProjectDataModel.project_id == project_id)
-        .scalar()
-    )
+    # 🔹 Count all data for the project
+    total_data = db.query(func.count(AnnotationProjectDataModel.id)).filter(
+        AnnotationProjectDataModel.project_id == project_id
+    ).scalar()
+
+    # 🔹 Count annotated data where is_annotated = True
+    annotated_data = db.query(func.count(AnnotationProjectDataModel.id)).filter(
+        AnnotationProjectDataModel.project_id == project_id,
+        AnnotationProjectDataModel.is_annotated == True  # ✅ Updated to use `is_annotated`
+    ).scalar()
+
+    # 🔹 Calculate non-annotated data
     non_annotated_data = total_data - annotated_data
 
-    last_update = (
-        db.query(func.max(ImageAnnotationResultModel.updated_at))
-        .join(AnnotationProjectDataModel, ImageAnnotationResultModel.data_id == AnnotationProjectDataModel.id)
-        .filter(AnnotationProjectDataModel.project_id == project_id)
-        .scalar()
-    )
+    # 🔹 Get last update timestamp from AnnotationProjectDataModel instead of ImageAnnotationResultModel
+    last_update = db.query(func.max(AnnotationProjectDataModel.updated_at)).filter(
+        AnnotationProjectDataModel.project_id == project_id
+    ).scalar()
 
     return standard_response(
         status="success",
@@ -320,7 +327,7 @@ def get_annotation_status(
         data={
             "total_data": total_data,
             "annotated_data": annotated_data,
-            "non_annotated_data": abs(non_annotated_data),
+            "non_annotated_data": max(non_annotated_data, 0),  # Prevents negative values
             "last_update": last_update,
         },
     )

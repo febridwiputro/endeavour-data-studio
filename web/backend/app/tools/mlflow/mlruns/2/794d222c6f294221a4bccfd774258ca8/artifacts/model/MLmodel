@@ -1,0 +1,34 @@
+artifact_path: model
+flavors:
+  python_function:
+    artifacts:
+      best_model:
+        path: artifacts\best.pt
+        uri: runs\detect\vehicle-detection-model9\weights\best.pt
+    cloudpickle_version: 3.1.1
+    code: null
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pyfunc.model
+    python_model: python_model.pkl
+    python_version: 3.10.0
+    streamable: false
+is_signature_from_type_hint: false
+mlflow_version: 2.20.0
+model_size_bytes: 6242056
+model_uuid: c87af8ff03394ce6a52e0bb515df1582
+run_id: 794d222c6f294221a4bccfd774258ca8
+saved_input_example_info:
+  artifact_path: input_example.json
+  serving_input_path: serving_input_example.json
+  type: json_object
+signature:
+  inputs: '[{"type": "string", "name": "image_source", "required": true}]'
+  outputs: '[{"type": "string", "name": "image_source", "required": true}, {"type":
+    "string", "name": "class_name", "required": true}, {"type": "integer", "name":
+    "class_num", "required": true}, {"type": "double", "name": "confidence", "required":
+    true}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2025-02-03 04:21:56.695428'

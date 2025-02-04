@@ -21,7 +21,7 @@ sys.path.append(this_path)
 
 class Settings(BaseSettings):
     # JWT configuration
-    JWT_ALGORITHM: str = "RS256"    
+    JWT_ALGORITHM: str    
     SECRET_KEY: str
     JWT_PRIVATE_KEY: str = None
     JWT_PUBLIC_KEY: str = None
@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     # Server configuration
     SERVER_HOST: str
     SERVER_PORT: int
+
+    SERVER_HOST_MLFLOW: str
+    SERVER_PORT_MLFLOW: int
+
     CLIENT_ORIGIN: str
     YOLO_MODEL_PATH: str
 

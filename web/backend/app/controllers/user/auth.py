@@ -44,17 +44,16 @@ async def create_user(payload: CreateUserSchema, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-
 @router.post('/login')
 def login(payload: LoginUserSchema, response: Response, db: Session = Depends(get_db), Authorize: AuthJWT = Depends()):
-    # Check if the user exist
+    # Check if the user exists
     user = db.query(User).filter(
         User.email == EmailStr(payload.email.lower())).first()
     if not user:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail='Incorrect Email or Password')
 
-    # Check if user verified his email
+    # Check if user verified their email
     if not user.verified:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Please verify your email address')
@@ -64,15 +63,17 @@ def login(payload: LoginUserSchema, response: Response, db: Session = Depends(ge
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                             detail='Incorrect Email or Password')
 
-    # Create access token
+    # ✅ Add audience claim in access token
     access_token = Authorize.create_access_token(
-        subject=str(user.id), expires_time=timedelta(minutes=ACCESS_TOKEN_EXPIRES_IN))
+        subject=str(user.id), expires_time=timedelta(minutes=ACCESS_TOKEN_EXPIRES_IN), audience="access"
+    )
 
-    # Create refresh token
+    # ✅ Add audience claim in refresh token
     refresh_token = Authorize.create_refresh_token(
-        subject=str(user.id), expires_time=timedelta(minutes=REFRESH_TOKEN_EXPIRES_IN))
+        subject=str(user.id), expires_time=timedelta(minutes=REFRESH_TOKEN_EXPIRES_IN), audience="refresh"
+    )
 
-    # Store refresh and access tokens in cookie
+    # Store refresh and access tokens in cookies
     response.set_cookie('access_token', access_token, ACCESS_TOKEN_EXPIRES_IN * 60,
                         ACCESS_TOKEN_EXPIRES_IN * 60, '/', None, False, True, 'lax')
     response.set_cookie('refresh_token', refresh_token,
@@ -80,26 +81,30 @@ def login(payload: LoginUserSchema, response: Response, db: Session = Depends(ge
     response.set_cookie('logged_in', 'True', ACCESS_TOKEN_EXPIRES_IN * 60,
                         ACCESS_TOKEN_EXPIRES_IN * 60, '/', None, False, False, 'lax')
 
-    # Send both access
     return {'status': 'success', 'access_token': access_token}
-
 
 @router.get('/refresh')
 def refresh_token(response: Response, request: Request, Authorize: AuthJWT = Depends(), db: Session = Depends(get_db)):
     try:
-        print(Authorize._refresh_cookie_key)
         Authorize.jwt_refresh_token_required()
 
         user_id = Authorize.get_jwt_subject()
         if not user_id:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail='Could not refresh access token')
+
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail='The user belonging to this token no logger exist')
+                                detail='The user belonging to this token no longer exists')
+
+        # ✅ Ensure audience is correctly added when refreshing the token
         access_token = Authorize.create_access_token(
-            subject=str(user.id), expires_time=timedelta(minutes=ACCESS_TOKEN_EXPIRES_IN))
+            subject=str(user.id),
+            expires_time=timedelta(minutes=ACCESS_TOKEN_EXPIRES_IN),
+            audience="access"  # ✅ Ensure audience is "access"
+        )
+
     except Exception as e:
         error = e.__class__.__name__
         if error == 'MissingTokenError':
@@ -113,6 +118,78 @@ def refresh_token(response: Response, request: Request, Authorize: AuthJWT = Dep
     response.set_cookie('logged_in', 'True', ACCESS_TOKEN_EXPIRES_IN * 60,
                         ACCESS_TOKEN_EXPIRES_IN * 60, '/', None, False, False, 'lax')
     return {'access_token': access_token}
+
+
+
+
+# @router.post('/login')
+# def login(payload: LoginUserSchema, response: Response, db: Session = Depends(get_db), Authorize: AuthJWT = Depends()):
+#     # Check if the user exist
+#     user = db.query(User).filter(
+#         User.email == EmailStr(payload.email.lower())).first()
+#     if not user:
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+#                             detail='Incorrect Email or Password')
+
+#     # Check if user verified his email
+#     if not user.verified:
+#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+#                             detail='Please verify your email address')
+
+#     # Check if the password is valid
+#     if not verify_password(payload.password, user.password):
+#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+#                             detail='Incorrect Email or Password')
+
+#     # Create access token
+#     access_token = Authorize.create_access_token(
+#         subject=str(user.id), expires_time=timedelta(minutes=ACCESS_TOKEN_EXPIRES_IN))
+
+#     # Create refresh token
+#     refresh_token = Authorize.create_refresh_token(
+#         subject=str(user.id), expires_time=timedelta(minutes=REFRESH_TOKEN_EXPIRES_IN))
+
+#     # Store refresh and access tokens in cookie
+#     response.set_cookie('access_token', access_token, ACCESS_TOKEN_EXPIRES_IN * 60,
+#                         ACCESS_TOKEN_EXPIRES_IN * 60, '/', None, False, True, 'lax')
+#     response.set_cookie('refresh_token', refresh_token,
+#                         REFRESH_TOKEN_EXPIRES_IN * 60, REFRESH_TOKEN_EXPIRES_IN * 60, '/', None, False, True, 'lax')
+#     response.set_cookie('logged_in', 'True', ACCESS_TOKEN_EXPIRES_IN * 60,
+#                         ACCESS_TOKEN_EXPIRES_IN * 60, '/', None, False, False, 'lax')
+
+#     # Send both access
+#     return {'status': 'success', 'access_token': access_token}
+
+
+# @router.get('/refresh')
+# def refresh_token(response: Response, request: Request, Authorize: AuthJWT = Depends(), db: Session = Depends(get_db)):
+#     try:
+#         print(Authorize._refresh_cookie_key)
+#         Authorize.jwt_refresh_token_required()
+
+#         user_id = Authorize.get_jwt_subject()
+#         if not user_id:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+#                                 detail='Could not refresh access token')
+#         user = db.query(User).filter(User.id == user_id).first()
+#         if not user:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+#                                 detail='The user belonging to this token no logger exist')
+#         access_token = Authorize.create_access_token(
+#             subject=str(user.id), expires_time=timedelta(minutes=ACCESS_TOKEN_EXPIRES_IN))
+#     except Exception as e:
+#         error = e.__class__.__name__
+#         if error == 'MissingTokenError':
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST, detail='Please provide refresh token')
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+
+#     response.set_cookie('access_token', access_token, ACCESS_TOKEN_EXPIRES_IN * 60,
+#                         ACCESS_TOKEN_EXPIRES_IN * 60, '/', None, False, True, 'lax')
+#     response.set_cookie('logged_in', 'True', ACCESS_TOKEN_EXPIRES_IN * 60,
+#                         ACCESS_TOKEN_EXPIRES_IN * 60, '/', None, False, False, 'lax')
+#     return {'access_token': access_token}
 
 
 @router.get('/logout', status_code=status.HTTP_200_OK)

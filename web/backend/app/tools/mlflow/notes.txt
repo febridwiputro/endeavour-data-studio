@@ -1,0 +1,11 @@
+# Untuk Training
+python mlflow_trainer.py --mode train
+
+# Untuk Evaluasi Model
+python mlflow_trainer.py --mode evaluate
+
+# Untuk Registrasi Model ke MLflow Model Registry
+python mlflow_trainer.py --mode register
+
+
+mlflow server --backend-store-uri sqlite:///mlruns.db --host 0.0.0.0 --port 5000

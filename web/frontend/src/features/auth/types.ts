@@ -1,6 +1,7 @@
 // Define types for Auth State and API Responses
 interface AuthState {
   accessToken: string | null;
+  refreshToken: string | null;
   email: string | null;
   loading: boolean;
   error: string | null;

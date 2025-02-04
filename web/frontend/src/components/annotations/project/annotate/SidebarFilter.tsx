@@ -1,51 +1,83 @@
 import React, { useState, useRef, forwardRef } from "react";
+import axios from "axios";
+
 import { ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import moment from "moment";
 import { api } from "@/services/apiConfig";
 
 interface Filter {
   field: string;
   operator: string;
-  value: string | { min: string; max: string };
+  value:
+    | string
+    | boolean
+    | null // ✅ Tambahkan null agar valid
+    | { min: string | null; max: string | null }
+    | { min: Date | null; max: Date | null };
   logic: string;
 }
+
+const VALID_OPERATORS: Record<string, string[]> = {
+  float: [
+    "=",
+    "!=",
+    "<",
+    ">",
+    ">=",
+    "<=",
+    "is between",
+    "not between",
+    "is empty",
+  ],
+  int: [
+    "=",
+    "!=",
+    "<",
+    ">",
+    ">=",
+    "<=",
+    "is between",
+    "not between",
+    "is empty",
+  ],
+  score: [
+    "=",
+    "!=",
+    "<",
+    ">",
+    ">=",
+    "<=",
+    "is between",
+    "not between",
+    "is empty",
+  ],
+  string: [
+    "contains",
+    "not contains",
+    "regex",
+    "equal",
+    "not equal",
+    "is empty",
+  ],
+  text: ["contains", "not contains", "regex", "equal", "not equal", "is empty"],
+  char: ["contains", "not contains", "regex", "equal", "not equal", "is empty"],
+  bool: ["is", "is empty"],
+  datetime: ["is before", "is after", "is between", "not between", "is empty"],
+  "Annotated by": ["contains", "not contains", "is empty"],
+  "Updated by": ["contains", "not contains", "is empty"],
+};
 
 interface SidebarFiltersProps {
   projectId: number | null;
   setFilteredTasks: (tasks: any[]) => void;
   visibleColumns: Record<string, boolean>;
-  // visibleColumns: {
-  //   id: boolean;
-  //   file_url: boolean;
-  //   data_type: boolean;
-  //   drafts: boolean;
-  //   completed: boolean;
-  //   avg_confidence_score: boolean;
-  //   updated_at: boolean;
-  //   metadata: boolean;
-  // };
   setVisibleColumns: React.Dispatch<
     React.SetStateAction<Record<string, boolean>>
   >;
-  // setVisibleColumns: React.Dispatch<
-  //   React.SetStateAction<{
-  //     id: boolean;
-  //     file_url: boolean;
-  //     data_type: boolean;
-  //     drafts: boolean;
-  //     completed: boolean;
-  //     avg_confidence_score: boolean;
-  //     updated_at: boolean;
-  //     metadata: boolean;
-  //   }>
-  // >;
   classes: { id: string; color: string; name: string }[];
   selectedTasks: number[];
-  // tasks: {
-  //   id: number;
-  //   file_url: string;
-  // }[];
   tasks: any[];
   accessToken: string | null;
   modelApiUrl: string | null;
@@ -79,30 +111,39 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
   const [filters, setFilters] = useState<Filter[]>([]);
   const [isApplyingFilter, setIsApplyingFilter] = useState(false);
-
+  const [activeDropdown, setActiveDropdown] = useState<
+    "class" | "filter" | "column" | null
+  >(null);
   const taskColumns = tasks.length > 0 ? Object.keys(tasks[0]) : [];
 
-  const getColumnType = (column: string) => {
+  const getColumnType = (
+    column: string
+  ): "text" | "float" | "bool" | "datetime" | "string" | "int" | "score" => {
     if (tasks.length === 0) return "text";
     const sampleValue = tasks[0][column];
 
-    if (typeof sampleValue === "number") return "number";
-    if (typeof sampleValue === "boolean") return "boolean";
+    if (typeof sampleValue === "number") {
+      return column.includes("score")
+        ? "score"
+        : column.includes("int")
+          ? "int"
+          : "float";
+    }
+    if (typeof sampleValue === "boolean") return "bool";
     if (typeof sampleValue === "string") {
       if (sampleValue.match(/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?/))
         return "datetime";
-      return "text";
+      return "string";
     }
-    return "text";
+    return "string"; // Default fallback
   };
 
-  // Custom input for DatePicker
   const CustomDateInput = forwardRef<
     HTMLButtonElement,
     { value?: string; onClick?: React.MouseEventHandler<HTMLButtonElement> }
   >(({ value, onClick }, ref) => (
     <button
-      className="border border-gray-300 bg-white rounded-lg px-3 py-2 w-full text-sm text-gray-700 shadow-sm hover:border-gray-400"
+      className="border border-gray-300 bg-white rounded px-1 py-1 w-full text-xs text-gray-700 shadow-sm hover:border-gray-400"
       onClick={onClick}
       ref={ref}
     >
@@ -110,48 +151,160 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     </button>
   ));
 
-  // Tambah filter baru
   const addFilter = () => {
     setFilters([
       ...filters,
-      { field: "", operator: "contains", value: "", logic: "and" },
+      {
+        field: "", // Field kosong menunggu user memilih kolom
+        operator: "", // Operator akan dipilih berdasarkan kolom
+        value: "", // Default kosong, akan diatur berdasarkan tipe data
+        logic: "and",
+      },
     ]);
   };
 
-  // Hapus filter berdasarkan index
+  const addBooleanFilter = () => {
+    setFilters([
+      ...filters,
+      {
+        field: "",
+        operator: "is",
+        value: true, // ✅ Now this works without type errors
+        logic: "and",
+      },
+    ]);
+  };
+
   const removeFilter = (index: number) => {
     setFilters(filters.filter((_, i) => i !== index));
   };
 
-  // Update filter berdasarkan input
-  const handleFilterChange = (
-    index: number,
-    key: keyof Filter,
-    value: string | Date | { min: string; max: string }
-  ) => {
+  const handleFilterChange = (index: number, key: keyof Filter, value: any) => {
+    setFilters((prev) =>
+      prev.map((filter, i) => {
+        if (i !== index) return filter;
+
+        let updatedValue = value;
+
+        // ✅ Jika operator berubah ke "is before" atau "is after", pastikan `value` adalah string atau null
+        if (["is before", "is after"].includes(filter.operator)) {
+          updatedValue = formatDate(value);
+        }
+
+        // ✅ Jika operator berubah ke "is between" atau "not between", pastikan `value` adalah objek { min, max }
+        if (["is between", "not between"].includes(filter.operator)) {
+          updatedValue = {
+            min: value?.min ? formatDate(value.min) : null,
+            max: value?.max ? formatDate(value.max) : null,
+          };
+        }
+
+        // ✅ Perbaikan filter boolean: ubah "Yes" → `true` dan "No" → `false`
+        if (filter.operator === "is") {
+          updatedValue = value === "Yes" ? true : false;
+        }
+
+        return { ...filter, [key]: updatedValue };
+      })
+    );
+  };
+
+  const handleFilterFieldChange = (index: number, field: string) => {
+    const columnType = getColumnType(field);
+
+    let defaultOperator = "";
+    let defaultValue: any = "";
+
+    switch (columnType) {
+      case "bool":
+        defaultOperator = "is";
+        defaultValue = true;
+        break;
+      case "float":
+      case "int":
+      case "score":
+        defaultOperator = "=";
+        defaultValue = "";
+        break;
+      case "datetime":
+        defaultOperator = "is before";
+        defaultValue = null; // ✅ Pastikan default untuk datetime adalah null, bukan objek
+        break;
+      default:
+        defaultOperator = "contains";
+        defaultValue = "";
+    }
+
     setFilters((prev) =>
       prev.map((filter, i) =>
-        i === index ? { ...filter, [key]: value } : filter
+        i === index
+          ? { ...filter, field, operator: defaultOperator, value: defaultValue }
+          : filter
       )
     );
   };
 
-  // Terapkan filter ke API
+  const parseDate = (dateStr: string | null): Date | null => {
+    if (!dateStr) return null;
+    const parsedDate = new Date(dateStr);
+    return isNaN(parsedDate.getTime()) ? null : parsedDate;
+  };
+
+  const formatDate = (value: any): string | null => {
+    if (!value) return null;
+    if (typeof value === "string")
+      return moment(value).format("YYYY-MM-DDTHH:mm:ss.SSSSSS");
+    if (value instanceof Date)
+      return moment(value).format("YYYY-MM-DDTHH:mm:ss.SSSSSS");
+    return null;
+  };
+
   const applyFilters = async () => {
     setIsApplyingFilter(true);
     try {
       const queryString = filters
         .map((filter) => {
-          if (
-            filter.operator === "is between" ||
-            filter.operator === "not between"
-          ) {
-            const rangeValue = filter.value as { min: string; max: string };
-            return `${filter.field}:${filter.operator}:${rangeValue.min},${rangeValue.max}`;
+          let formattedValue = filter.value;
+
+          // ✅ Jika "is before" atau "is after", hanya gunakan 1 nilai datetime
+          if (["is before", "is after"].includes(filter.operator)) {
+            formattedValue = formatDate(filter.value);
           }
-          return `${filter.field}:${filter.operator}:${filter.value}`;
+
+          // ✅ Jika "is between" atau "not between", pastikan `min` & `max` valid
+          if (
+            ["is between", "not between"].includes(filter.operator) &&
+            typeof filter.value === "object" &&
+            filter.value !== null &&
+            "min" in filter.value &&
+            "max" in filter.value
+          ) {
+            const minDate = formatDate(filter.value.min);
+            const maxDate = formatDate(filter.value.max);
+
+            if (!minDate || !maxDate) return null; // Pastikan min dan max valid
+
+            formattedValue = `${encodeURIComponent(minDate)},${encodeURIComponent(maxDate)}`;
+          }
+
+          // ✅ Perbaikan untuk filter boolean ("is")
+          if (filter.operator === "is" && typeof filter.value === "boolean") {
+            formattedValue = filter.value ? "true" : "false"; // Gunakan "true" / "false" agar sesuai dengan backend
+          }
+
+          return filter.field && filter.operator && formattedValue !== null
+            ? `${filter.field}:${filter.operator}:${formattedValue}`
+            : null;
         })
+        .filter(Boolean) // Hapus nilai null dari array
         .join("&filters=");
+
+      if (!queryString) {
+        console.warn("No valid filters applied.");
+        return;
+      }
+
+      console.log("Applying filters with query:", queryString);
 
       const response = await api.get(
         `/annotations/upload-data/filter-data/?project_id=${projectId}&filters=${queryString}`,
@@ -162,24 +315,19 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
       setFilteredTasks(response.data.data);
     } catch (error) {
-      console.error("Error applying filters:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Axios Error:", error.response?.data || error.message);
+      } else {
+        console.error("Unexpected Error:", error);
+      }
     } finally {
       setIsApplyingFilter(false);
     }
   };
 
-  // // Handle filter updates
-  // const handleFilterChange = (
-  //   index: number,
-  //   key: keyof Filter,
-  //   value: string
-  // ) => {
-  //   setFilters((prev) =>
-  //     prev.map((filter, i) =>
-  //       i === index ? { ...filter, [key]: value } : filter
-  //     )
-  //   );
-  // };
+  const toggleDropdown = (dropdown: "class" | "filter" | "column") => {
+    setActiveDropdown((prev) => (prev === dropdown ? null : dropdown));
+  };
 
   // Toggle column visibility
   const toggleColumnVisibility = (column: string) => {
@@ -188,12 +336,6 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
       [column]: !prev[column],
     }));
   };
-  // const toggleColumnVisibility = (column: keyof typeof visibleColumns) => {
-  //   setVisibleColumns((prev) => ({
-  //     ...prev,
-  //     [column]: !prev[column],
-  //   }));
-  // };
 
   // Toggle class selection
   const toggleClassSelection = (className: string) => {
@@ -335,91 +477,155 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         {/* Predict Button */}
         <button
           className={`px-4 py-1 text-sm font-medium rounded ${
-            isPredictDisabled || isPredicting
+            !modelApiUrl || selectedTasks.length === 0 || isApplyingFilter
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"
           }`}
-          disabled={isPredictDisabled || isPredicting}
+          disabled={
+            !modelApiUrl || selectedTasks.length === 0 || isApplyingFilter
+          }
           onClick={handlePredict}
         >
-          {isPredicting ? "Processing..." : "Predict"}
+          Predict
         </button>
 
         {/* Class Dropdown */}
         <button
           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
-          onClick={() => setIsClassDropdownOpen((prev) => !prev)}
+          onClick={() => toggleDropdown("class")}
         >
           <span className="text-gray-700">Class</span>
           <ChevronDownIcon
-            className={`h-5 w-5 ml-2 transform transition-transform ${
-              isClassDropdownOpen ? "rotate-180" : ""
-            }`}
+            className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "class" ? "rotate-180" : ""}`}
           />
         </button>
 
         {/* Filter Button */}
         <button
           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium"
-          onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
+          onClick={() => toggleDropdown("filter")}
         >
           <span className="text-gray-700">Filters</span>
           <ChevronDownIcon
-            className={`h-5 w-5 ml-2 ${isFilterDropdownOpen ? "rotate-180" : ""}`}
+            className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "filter" ? "rotate-180" : ""}`}
           />
         </button>
-
-        {/* Filter Button */}
-        {/* <button
-          className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
-          onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
-        >
-          <span className="text-gray-700">Filter</span>
-          <ChevronDownIcon
-            className={`h-5 w-5 ml-2 transform transition-transform ${
-              isFilterDropdownOpen ? "rotate-180" : ""
-            }`}
-          />
-        </button> */}
 
         {/* Columns Button */}
         <button
           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
-          onClick={() => setIsColumnDropdownOpen((prev) => !prev)}
+          onClick={() => toggleDropdown("column")}
         >
           <span className="text-gray-700">Columns</span>
           <ChevronDownIcon
-            className={`h-5 w-5 ml-2 transform transition-transform ${
-              isColumnDropdownOpen ? "rotate-180" : ""
-            }`}
+            className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "column" ? "rotate-180" : ""}`}
           />
         </button>
       </div>
 
-      {/* Filters Dropdown */}
-      {isFilterDropdownOpen && (
-        <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-full p-4">
-          <button
-            className="flex items-center bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm font-medium"
-            onClick={addFilter}
-          >
-            <PlusIcon className="h-4 w-4 text-gray-700 mr-1" />
-            Add Filter
-          </button>
+      {/* Class Dropdown Content */}
+      {activeDropdown === "class" && (
+        <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-72 p-4 max-h-96 overflow-y-auto">
+          {/* Search Bar */}
+          <input
+            type="text"
+            placeholder="Search Class..."
+            className="w-full px-2 py-2 border border-gray-300 rounded text-xs"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
 
+          {/* Class List */}
+          {classes
+            .filter((cls) =>
+              cls.name.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .map((cls) => (
+              <div
+                key={cls.id}
+                className="flex items-center cursor-pointer py-2 hover:bg-gray-100"
+                onClick={() => toggleClassSelection(cls.name)}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedClasses[cls.name]}
+                  onChange={() => toggleClassSelection(cls.name)}
+                  className="hidden peer"
+                />
+                <label
+                  className={`relative mr-3 flex items-center justify-center w-5 h-5 rounded overflow-hidden border ${
+                    selectedClasses[cls.name]
+                      ? "bg-blue-600"
+                      : "bg-white border-gray-300"
+                  }`}
+                >
+                  {selectedClasses[cls.name] && (
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-4 h-4 text-white"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M20.292 5.293a1 1 0 0 1 1.416 1.414l-12 12a1 1 0 0 1-1.414 0l-6-6a 1 1 0 0 1 1.414-1.414L9 16.586l11.292-11.293z"
+                      />
+                    </svg>
+                  )}
+                </label>
+                <div
+                  className="w-4 h-4 rounded-full mr-2"
+                  style={{ backgroundColor: cls.color }}
+                ></div>
+                <span className="text-sm text-gray-700">{cls.name}</span>
+              </div>
+            ))}
+        </div>
+      )}
+
+      {/* Filters Dropdown */}
+      {activeDropdown === "filter" && (
+        <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-full p-2">
+          {/* Display Message When No Filters Exist */}
+          {filters.length === 0 && (
+            <p className="text-center text-gray-500 text-xs mb-2">
+              No filters applied
+            </p>
+          )}
+
+          {/* Filter Selection */}
           {filters.map((filter, index) => {
             const columnType = getColumnType(filter.field);
+            const availableOperators = VALID_OPERATORS[columnType] || [];
 
             return (
               <div
                 key={index}
-                className="grid grid-cols-[auto_100px_100px_auto_30px] gap-2 items-center mt-2"
+                className="grid grid-cols-[65px_100px_100px_auto_25px] gap-1 items-center mt-2"
               >
+                {/* "Where" for the first filter, "And/Or" for subsequent filters */}
+                {index === 0 ? (
+                  <span className="text-gray-700 font-semibold text-right text-xs">
+                    Where
+                  </span>
+                ) : (
+                  <select
+                    className="border border-gray-300 rounded px-1 py-1 text-xs"
+                    value={filter.logic}
+                    onChange={(e) =>
+                      handleFilterChange(index, "logic", e.target.value)
+                    }
+                  >
+                    <option value="and">And</option>
+                    <option value="or">Or</option>
+                  </select>
+                )}
+
+                {/* Select Column */}
                 <select
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  className="border border-gray-300 rounded px-1 py-1 text-xs"
                   value={filter.field}
                   onChange={(e) =>
-                    handleFilterChange(index, "field", e.target.value)
+                    handleFilterFieldChange(index, e.target.value)
                   }
                 >
                   <option value="" disabled>
@@ -432,62 +638,167 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
                   ))}
                 </select>
 
+                {/* Select Operator */}
                 <select
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
+                  className="border border-gray-300 rounded px-1 py-1 text-xs"
                   value={filter.operator}
                   onChange={(e) =>
                     handleFilterChange(index, "operator", e.target.value)
                   }
                 >
-                  {["number", "datetime"].includes(columnType) ? (
-                    <>
-                      <option value="is between">Is Between</option>
-                      <option value="not between">Not Between</option>
-                    </>
-                  ) : (
-                    <option value="contains">Contains</option>
-                  )}
+                  {availableOperators.map((op) => (
+                    <option key={op} value={op}>
+                      {op}
+                    </option>
+                  ))}
                 </select>
 
-                {filter.operator === "is between" ||
-                filter.operator === "not between" ? (
+                {/* Value Input - Adjusted for Type */}
+                {filter.operator === "is empty" || filter.operator === "is" ? (
+                  <select
+                    className="border border-gray-300 rounded px-1 py-1 text-xs"
+                    value={
+                      filter.value === undefined || filter.value === ""
+                        ? "Yes"
+                        : filter.value
+                          ? "Yes"
+                          : "No"
+                    }
+                    onChange={(e) =>
+                      handleFilterChange(
+                        index,
+                        "value",
+                        e.target.value === "Yes"
+                      )
+                    }
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                ) : ["is between", "not between"].includes(filter.operator) ? (
                   <>
-                    <input
-                      type="text"
-                      className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
-                      placeholder="Min"
-                      onChange={(e) =>
+                    <DatePicker
+                      selected={
+                        filter.value &&
+                        typeof filter.value === "object" &&
+                        "min" in filter.value &&
+                        filter.value.min
+                          ? new Date(filter.value.min)
+                          : null
+                      }
+                      onChange={(date) =>
                         handleFilterChange(index, "value", {
-                          ...(filter.value as any),
-                          min: e.target.value,
+                          min: date
+                            ? moment(date).format("YYYY-MM-DDTHH:mm:ss.SSSSSS")
+                            : null,
+                          max:
+                            filter.value &&
+                            typeof filter.value === "object" &&
+                            "max" in filter.value
+                              ? filter.value.max
+                              : null, // ✅ Pastikan `max` tetap ada
                         })
                       }
+                      customInput={<CustomDateInput />}
+                      dateFormat="yyyy-MM-dd HH:mm:ss"
+                      showTimeSelect
+                      placeholderText="Min"
                     />
-                    <input
-                      type="text"
-                      className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
-                      placeholder="Max"
-                      onChange={(e) =>
+
+                    <DatePicker
+                      selected={
+                        filter.value &&
+                        typeof filter.value === "object" &&
+                        "max" in filter.value &&
+                        filter.value.max
+                          ? new Date(filter.value.max)
+                          : null
+                      }
+                      onChange={(date) =>
                         handleFilterChange(index, "value", {
-                          ...(filter.value as any),
-                          max: e.target.value,
+                          min:
+                            filter.value &&
+                            typeof filter.value === "object" &&
+                            "min" in filter.value
+                              ? filter.value.min
+                              : null, // ✅ Pastikan `min` tetap ada
+                          max: date
+                            ? moment(date).format("YYYY-MM-DDTHH:mm:ss.SSSSSS")
+                            : null,
                         })
                       }
+                      customInput={<CustomDateInput />}
+                      dateFormat="yyyy-MM-dd HH:mm:ss"
+                      showTimeSelect
+                      placeholderText="Max"
                     />
                   </>
+                ) : columnType === "datetime" ? (
+                  <DatePicker
+                    selected={
+                      typeof filter.value === "string"
+                        ? new Date(filter.value)
+                        : null
+                    }
+                    onChange={(date) =>
+                      handleFilterChange(
+                        index,
+                        "value",
+                        date
+                          ? moment(date).format("YYYY-MM-DDTHH:mm:ss.SSSSSS")
+                          : null
+                      )
+                    }
+                    customInput={<CustomDateInput />}
+                    dateFormat="yyyy-MM-dd HH:mm:ss"
+                    showTimeSelect
+                  />
+                ) : columnType === "bool" ? (
+                  <select
+                    className="border border-gray-300 rounded px-1 py-1 text-xs"
+                    value={
+                      filter.value === undefined || filter.value === ""
+                        ? "Yes"
+                        : filter.value
+                          ? "Yes"
+                          : "No"
+                    }
+                    onChange={(e) =>
+                      handleFilterChange(
+                        index,
+                        "value",
+                        e.target.value === "Yes"
+                      )
+                    }
+                  >
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                ) : columnType === "float" ||
+                  columnType === "int" ||
+                  columnType === "score" ? (
+                  <input
+                    type="number"
+                    className="border border-gray-300 rounded px-1 py-1 text-xs w-full"
+                    value={filter.value as string}
+                    onChange={(e) =>
+                      handleFilterChange(index, "value", e.target.value)
+                    }
+                  />
                 ) : (
                   <input
                     type="text"
-                    className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
-                    value={filter.value as string}
+                    className="border border-gray-300 rounded px-1 py-1 text-xs w-full"
+                    value={typeof filter.value === "string" ? filter.value : ""}
                     onChange={(e) =>
                       handleFilterChange(index, "value", e.target.value)
                     }
                   />
                 )}
 
+                {/* Remove Filter Button */}
                 <button
-                  className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
+                  className="bg-red-500 text-white px-1 py-0.5 text-xs rounded hover:bg-red-600"
                   onClick={() => removeFilter(index)}
                 >
                   ×
@@ -496,92 +807,51 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
             );
           })}
 
-          <button
-            className="w-full mt-4 py-2 bg-blue-500 text-white font-medium rounded hover:bg-blue-600"
-            onClick={applyFilters}
-          >
-            {isApplyingFilter ? "Applying..." : "Apply Filters"}
-          </button>
-        </div>
-      )}
-      
-      {/* Filters Dropdown */}
-      {/* {isFilterDropdownOpen && (
-        <div className="absolute top-14 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-full p-4">
-          <div className="flex items-center justify-between mb-2">
+          {/* Action Buttons - Add Filter & Apply Filters */}
+          <div className="mt-4 flex justify-between">
+            {/* ✅ Single "Add Filter" Button */}
             <button
-              className="flex items-center bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm font-medium"
+              className="flex items-center bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-xs font-medium"
               onClick={addFilter}
             >
-              <PlusIcon className="h-4 w-4 text-gray-700 mr-1" />
-              Add Another Filter
+              <PlusIcon className="h-3 w-3 text-gray-700 mr-1" />
+              Add Filter
+            </button>
+
+            {/* Apply Filters */}
+            <button
+              className="bg-blue-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-blue-600"
+              onClick={applyFilters}
+            >
+              {isApplyingFilter ? "Applying..." : "Apply Filters"}
             </button>
           </div>
-          {filters.map((filter, index) => (
-            <div
-              key={index}
-              className="grid grid-cols-[65px_100px_100px_auto_30px] gap-1 items-center mt-2"
-            >
-              {index === 0 ? (
-                <span className="text-gray-700 font-semibold text-right">
-                  Where
-                </span>
-              ) : (
-                <select
-                  className="border border-gray-300 rounded px-2 py-1 text-sm"
-                  value={filter.logic}
-                  onChange={(e) =>
-                    handleFilterChange(index, "logic", e.target.value)
-                  }
-                >
-                  <option value="and">and</option>
-                  <option value="or">or</option>
-                </select>
-              )}
-              <select
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-                value={filter.field}
-                onChange={(e) =>
-                  handleFilterChange(index, "field", e.target.value)
-                }
-              >
-                <option value="image">Image</option>
-                <option value="id">ID</option>
-                <option value="annotated">Annotated</option>
-              </select>
-              <select
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-                value={filter.operator}
-                onChange={(e) =>
-                  handleFilterChange(index, "operator", e.target.value)
-                }
-              >
-                <option value="contains">contains</option>
-                <option value="not contains">not contains</option>
-                <option value="regex">regex</option>
-                <option value="equal">equal</option>
-                <option value="not equal">not equal</option>
-                <option value="is empty">is empty</option>
-              </select>
+        </div>
+      )}
+
+      {/* Columns Dropdown Content */}
+      {activeDropdown === "column" && (
+        <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-72 p-4">
+          {Object.entries(visibleColumns).map(([key, visible]) => (
+            <div key={key} className="flex items-center mb-2">
               <input
-                type="text"
-                className="border border-gray-300 rounded px-2 py-1 text-sm"
-                value={filter.value}
-                onChange={(e) =>
-                  handleFilterChange(index, "value", e.target.value)
+                type="checkbox"
+                className="form-checkbox h-4 w-4 mr-2"
+                checked={visible}
+                onChange={() =>
+                  setVisibleColumns((prev) => ({
+                    ...prev,
+                    [key]: !prev[key],
+                  }))
                 }
-                placeholder="Enter value"
               />
-              <button
-                className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600"
-                onClick={() => removeFilter(index)}
-              >
-                &times;
-              </button>
+              <label className="text-sm text-gray-700 cursor-pointer">
+                {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")}
+              </label>
             </div>
           ))}
         </div>
-      )} */}
+      )}
 
       {/* Column Visibility Dropdown */}
       {isColumnDropdownOpen && (
@@ -606,60 +876,264 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
           ))}
         </div>
       )}
-
-      {/* Class Selection Dropdown */}
-      {isClassDropdownOpen && (
-        <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 p-4 w-72 max-h-96 overflow-y-auto">
-          <input
-            type="text"
-            placeholder="Search..."
-            className="w-full px-4 py-2 mb-3 border border-gray-300 rounded text-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          {filteredClasses.map((cls) => (
-            <div
-              key={cls.id}
-              className="flex items-center cursor-pointer py-2 hover:bg-gray-100"
-              onClick={() => toggleClassSelection(cls.name)}
-            >
-              <input
-                type="checkbox"
-                checked={selectedClasses[cls.name]}
-                onChange={() => toggleClassSelection(cls.name)}
-                className="hidden peer"
-              />
-              <label
-                className={`relative mr-3 flex items-center justify-center w-5 h-5 rounded overflow-hidden border ${
-                  selectedClasses[cls.name]
-                    ? "bg-blue-600"
-                    : "bg-white border-gray-300"
-                }`}
-              >
-                {selectedClasses[cls.name] && (
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-4 h-4 text-white"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      fill="currentColor"
-                      d="M20.292 5.293a1 1 0 0 1 1.416 1.414l-12 12a1 1 0 0 1-1.414 0l-6-6a 1 1 0 0 1 1.414-1.414L9 16.586l11.292-11.293z"
-                    />
-                  </svg>
-                )}
-              </label>
-              <div
-                className="w-4 h-4 rounded-full mr-2"
-                style={{ backgroundColor: cls.color }}
-              ></div>
-              <span className="text-sm text-gray-700">{cls.name}</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 };
-
 export default SidebarFilters;
+
+//     <div className="mb-4 relative">
+//       {/* Filter and Column Toggles */}
+//       <div className="p-4 flex items-center space-x-4 bg-white shadow-md rounded overflow-x-auto">
+//         {/* Predict Button */}
+//         <button
+//           className={`px-4 py-1 text-sm font-medium rounded ${
+//             isPredictDisabled || isPredicting
+//               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+//               : "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"
+//           }`}
+//           disabled={isPredictDisabled || isPredicting}
+//           onClick={handlePredict}
+//         >
+//           {isPredicting ? "Processing..." : "Predict"}
+//         </button>
+
+//         {/* Class Dropdown */}
+//         <button
+//           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
+//           onClick={() => setIsClassDropdownOpen((prev) => !prev)}
+//         >
+//           <span className="text-gray-700">Class</span>
+//           <ChevronDownIcon
+//             className={`h-5 w-5 ml-2 transform transition-transform ${
+//               isClassDropdownOpen ? "rotate-180" : ""
+//             }`}
+//           />
+//         </button>
+
+// {/* Filter Button */}
+// <button
+//   className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium"
+//   onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
+// >
+//   <span className="text-gray-700">Filters</span>
+//   <ChevronDownIcon
+//     className={`h-5 w-5 ml-2 ${isFilterDropdownOpen ? "rotate-180" : ""}`}
+//   />
+// </button>
+
+//         {/* Filter Button */}
+//         {/* <button
+//           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
+//           onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
+//         >
+//           <span className="text-gray-700">Filter</span>
+//           <ChevronDownIcon
+//             className={`h-5 w-5 ml-2 transform transition-transform ${
+//               isFilterDropdownOpen ? "rotate-180" : ""
+//             }`}
+//           />
+//         </button> */}
+
+//         {/* Columns Button */}
+//         <button
+//           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
+//           onClick={() => setIsColumnDropdownOpen((prev) => !prev)}
+//         >
+//           <span className="text-gray-700">Columns</span>
+//           <ChevronDownIcon
+//             className={`h-5 w-5 ml-2 transform transition-transform ${
+//               isColumnDropdownOpen ? "rotate-180" : ""
+//             }`}
+//           />
+//         </button>
+//       </div>
+
+//       {/* Filters Dropdown */}
+//       {isFilterDropdownOpen && (
+//         <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-full p-4">
+//           <button
+//             className="flex items-center bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm font-medium"
+//             onClick={addFilter}
+//           >
+//             <PlusIcon className="h-4 w-4 text-gray-700 mr-1" />
+//             Add Filter
+//           </button>
+
+//           {filters.map((filter, index) => {
+//             const columnType = getColumnType(filter.field);
+//             const availableOperators = VALID_OPERATORS[columnType] || [];
+
+//             return (
+//               <div
+//                 key={index}
+//                 className="grid grid-cols-[auto_100px_100px_auto_30px] gap-2 items-center mt-2"
+//               >
+//                 <select
+//                   className="border border-gray-300 rounded px-2 py-1 text-sm"
+//                   value={filter.field}
+//                   onChange={(e) =>
+//                     handleFilterChange(index, "field", e.target.value)
+//                   }
+//                 >
+//                   <option value="" disabled>
+//                     Select Field
+//                   </option>
+//                   {taskColumns.map((column) => (
+//                     <option key={column} value={column}>
+//                       {column.replace(/_/g, " ").toUpperCase()}
+//                     </option>
+//                   ))}
+//                 </select>
+
+//                 <select
+//                   className="border border-gray-300 rounded px-2 py-1 text-sm"
+//                   value={filter.operator}
+//                   onChange={(e) =>
+//                     handleFilterChange(index, "operator", e.target.value)
+//                   }
+//                 >
+//                   {availableOperators.map((op) => (
+//                     <option key={op} value={op}>
+//                       {op}
+//                     </option>
+//                   ))}
+//                 </select>
+
+//                 {["is between", "not between"].includes(filter.operator) ? (
+//                   <>
+//                     <input
+//                       type="text"
+//                       className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+//                       placeholder="Min"
+//                       onChange={(e) =>
+//                         handleFilterChange(index, "value", {
+//                           ...(filter.value as any),
+//                           min: e.target.value,
+//                         })
+//                       }
+//                     />
+//                     <input
+//                       type="text"
+//                       className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+//                       placeholder="Max"
+//                       onChange={(e) =>
+//                         handleFilterChange(index, "value", {
+//                           ...(filter.value as any),
+//                           max: e.target.value,
+//                         })
+//                       }
+//                     />
+//                   </>
+//                 ) : columnType === "datetime" ? (
+//                   <DatePicker
+//                     selected={parseDate(filter.value as string)}
+//                     onChange={(date) =>
+//                       handleFilterChange(index, "value", date)
+//                     }
+//                     customInput={<CustomDateInput />}
+//                     dateFormat="yyyy-MM-dd HH:mm"
+//                     showTimeSelect
+//                   />
+//                 ) : columnType === "bool" ? (
+//                   <select
+//                     className="border border-gray-300 rounded px-2 py-1 text-sm"
+//                     onChange={(e) =>
+//                       handleFilterChange(index, "value", e.target.value)
+//                     }
+//                   >
+//                     <option value="Yes">Yes</option>
+//                     <option value="No">No</option>
+//                   </select>
+//                 ) : (
+//                   <input
+//                     type="text"
+//                     className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
+//                     onChange={(e) =>
+//                       handleFilterChange(index, "value", e.target.value)
+//                     }
+//                   />
+//                 )}
+//               </div>
+//             );
+//           })}
+//         </div>
+//       )}
+
+//       {/* Column Visibility Dropdown */}
+//       {isColumnDropdownOpen && (
+//         <div className="absolute top-20 left-0 bg-white border border-gray-300 shadow-md rounded z-50 p-4">
+//           {Object.entries(visibleColumns).map(([key, visible]) => (
+//             <div key={key} className="flex items-center mb-2">
+//               <input
+//                 type="checkbox"
+//                 className="form-checkbox h-4 w-4 mr-2"
+//                 checked={visible}
+//                 onChange={() =>
+//                   toggleColumnVisibility(key as keyof typeof visibleColumns)
+//                 }
+//               />
+//               <label
+//                 htmlFor={key}
+//                 className="text-sm text-gray-700 cursor-pointer"
+//               >
+//                 {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")}
+//               </label>
+//             </div>
+//           ))}
+//         </div>
+//       )}
+
+//       {/* Class Selection Dropdown */}
+//       {isClassDropdownOpen && (
+//         <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 p-4 w-72 max-h-96 overflow-y-auto">
+//           <input
+//             type="text"
+//             placeholder="Search..."
+//             className="w-full px-4 py-2 mb-3 border border-gray-300 rounded text-sm"
+//             value={searchQuery}
+//             onChange={(e) => setSearchQuery(e.target.value)}
+//           />
+//           {filteredClasses.map((cls) => (
+//             <div
+//               key={cls.id}
+//               className="flex items-center cursor-pointer py-2 hover:bg-gray-100"
+//               onClick={() => toggleClassSelection(cls.name)}
+//             >
+//               <input
+//                 type="checkbox"
+//                 checked={selectedClasses[cls.name]}
+//                 onChange={() => toggleClassSelection(cls.name)}
+//                 className="hidden peer"
+//               />
+//               <label
+//                 className={`relative mr-3 flex items-center justify-center w-5 h-5 rounded overflow-hidden border ${
+//                   selectedClasses[cls.name]
+//                     ? "bg-blue-600"
+//                     : "bg-white border-gray-300"
+//                 }`}
+//               >
+//                 {selectedClasses[cls.name] && (
+//                   <svg
+//                     xmlns="http://www.w3.org/2000/svg"
+//                     className="w-4 h-4 text-white"
+//                     viewBox="0 0 24 24"
+//                   >
+//                     <path
+//                       fill="currentColor"
+//                       d="M20.292 5.293a1 1 0 0 1 1.416 1.414l-12 12a1 1 0 0 1-1.414 0l-6-6a 1 1 0 0 1 1.414-1.414L9 16.586l11.292-11.293z"
+//                     />
+//                   </svg>
+//                 )}
+//               </label>
+//               <div
+//                 className="w-4 h-4 rounded-full mr-2"
+//                 style={{ backgroundColor: cls.color }}
+//               ></div>
+//               <span className="text-sm text-gray-700">{cls.name}</span>
+//             </div>
+//           ))}
+//         </div>
+//       )}
+//     </div>
+//   );
+// };

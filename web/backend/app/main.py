@@ -3,6 +3,7 @@ import uvicorn
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from app.config.database import get_db
 
@@ -25,6 +26,7 @@ from app.controllers.annotations.annotation_projects.annotate.image_annotations_
 # from app.controllers.annotations.annotation_projects.annotate_controller import router as annotate_router
 # from app.controllers.annotations.annotation_projects.annotate_result_controller import router as annotate_result_router
 from app.controllers.yolo_routes import router as yolo_router
+from app.controllers.tools.mlflow_controller import router as mlflow_router
 
 logging.basicConfig(level=logging.INFO)
 
@@ -41,13 +43,28 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    # allow_origins=["http://localhost:3000"],
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:8000"],
     allow_credentials=True,
-    # allow_methods=["*"],
-    allow_methods=["GET", "POST", "PUT", "DELETE"],    
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"], 
 )
+
+
+@app.middleware("http")
+async def add_cors_header(request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    return response
+
+# app.add_middleware(
+#     CORSMiddleware,
+#     # allow_origins=["*"],
+#     allow_origins=["http://localhost:3000"],
+#     allow_credentials=True,
+#     # allow_methods=["*"],
+#     allow_methods=["GET", "POST", "PUT", "DELETE"],    
+#     allow_headers=["*"],
+# )
 
 output_dir = "output"
 if not os.path.exists(output_dir):
@@ -74,3 +91,4 @@ app.include_router(image_router, prefix="/images", tags=["images"])
 app.include_router(video_router, prefix="/videos", tags=["videos"])
 app.include_router(menu_router, prefix="/menu", tags=["menu"])
 app.include_router(yolo_router, prefix="/yolo", tags=["/yolo"])
+app.include_router(mlflow_router, prefix="/mlflow", tags=["/mlflow"])

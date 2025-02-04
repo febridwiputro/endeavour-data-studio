@@ -24,6 +24,7 @@ from app.models.menu.annotations.annotate_result_model import (
 )
 from app.models.menu.annotations.annotation_project_model import AnnotationProjectModel
 from app.models.menu.annotations.annotate_result_model import ImageAnnotationResultModel
+from datetime import datetime
 import shutil
 import uuid
 from fastapi.responses import FileResponse
@@ -45,6 +46,234 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 jwt_bearer = JWTBearer()
 router = APIRouter()
+
+# ✅ Fixed Operator Mapping (Added 'is before' and 'is after')
+OPERATOR_MAP = {
+    "=": lambda col, val: col == val,
+    "!=": lambda col, val: col != val,
+    "<": lambda col, val: col < val,
+    ">": lambda col, val: col > val,
+    "<=": lambda col, val: col <= val,
+    ">=": lambda col, val: col >= val,
+    "is before": lambda col, val: col < val,  # ✅ Fixed (Added)
+    "is after": lambda col, val: col > val,  # ✅ Fixed (Added)
+    "is between": lambda col, vals: col.between(vals["min"], vals["max"]),
+    "not between": lambda col, vals: ~col.between(vals["min"], vals["max"]),
+    "is empty": lambda col, _: col.is_(None),
+    "contains": lambda col, val: col.ilike(f"%{val}%"),
+    "not contains": lambda col, val: ~col.ilike(f"%{val}%"),
+    "regex": lambda col, val: col.op("~")(val),
+    "equal": lambda col, val: col == val,
+    "not equal": lambda col, val: col != val,
+    "is": lambda col, val: (
+        col.is_(val) if isinstance(val, bool) else col == val
+    ),  # ✅ Fixed Boolean Handling
+}
+
+# ✅ Fixed Column Type Mapping
+COLUMN_TYPES = {
+    "id": "int",
+    "file_url": "string",
+    "description": "text",
+    "data_type": "string",
+    "completed": "bool",
+    "avg_confidence_score": "float",
+    "is_annotated": "bool",  # ✅ Boolean Fixed
+    "created_at": "datetime",
+    "updated_at": "datetime",
+    "width": "int",
+    "height": "int",
+    "x1": "float",
+    "y1": "float",
+    "x2": "float",
+    "y2": "float",
+    "confidence_score": "float",
+    "label": "string",
+}
+
+
+import re
+
+
+import re
+
+
+@router.get("/filter-data/", summary="Filter project data")
+def filter_project_data(
+    project_id: int = Query(..., description="Project ID to filter data"),
+    filters: list[str] = Query(
+        [],
+        description="Filters in field:operator:value format (e.g., created_at:is between:2025-01-28T02:38:10.443929,2025-01-29T02:38:10.443929).",
+    ),
+    payload: dict = Depends(jwt_bearer),
+    db: Session = Depends(get_db),
+):
+    """Filter project data based on given conditions."""
+
+    user_id = payload.get("id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
+        )
+
+    project_exists = (
+        db.query(AnnotationProjectDataModel.id).filter_by(project_id=project_id).first()
+    )
+    if not project_exists:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Annotation project not found.",
+        )
+
+    query = (
+        db.query(AnnotationProjectDataModel)
+        .filter(AnnotationProjectDataModel.project_id == project_id)
+        .outerjoin(
+            ImageMetadataModel,
+            ImageMetadataModel.data_id == AnnotationProjectDataModel.id,
+        )
+        .outerjoin(
+            ImageAnnotationResultModel,
+            ImageAnnotationResultModel.data_id == AnnotationProjectDataModel.id,
+        )
+        .options(
+            joinedload(AnnotationProjectDataModel.image_metadata),
+            joinedload(AnnotationProjectDataModel.image_annotations),
+        )
+    )
+
+    filter_conditions = []
+
+    for filter_item in filters:
+        try:
+            print(f"Processing filter: {filter_item}")  # Debugging
+
+            # ✅ Gunakan regex untuk parsing field, operator, dan value dengan benar
+            match = re.match(r"([^:]+):([^:]+):(.+)", filter_item)
+            if not match:
+                raise ValueError(f"Invalid filter format: {filter_item}")
+
+            field, operator, values = match.groups()
+
+            # ✅ Pastikan operator valid
+            if operator not in OPERATOR_MAP:
+                raise ValueError(f"Operator '{operator}' not found in OPERATOR_MAP")
+
+            if field not in COLUMN_TYPES:
+                raise ValueError(f"Invalid field: {field}")
+
+            column_type = COLUMN_TYPES[field]
+
+            # ✅ Tentukan kolom yang digunakan berdasarkan field
+            column = getattr(AnnotationProjectDataModel, field, None)
+            if field in ["width", "height"]:
+                column = getattr(ImageMetadataModel, field, None)
+            elif field in ["x1", "y1", "x2", "y2", "label", "confidence_score"]:
+                column = getattr(ImageAnnotationResultModel, field, None)
+
+            if not column:
+                raise ValueError(f"Invalid column: {field}")
+
+            print(f"Operator: {operator}, Values: {values}")  # Debugging
+
+            # ✅ Perbaikan "is before" dan "is after"
+            if operator in ["is before", "is after"]:
+                try:
+                    if values.strip().lower() in ["null", "invalid date"]:
+                        raise ValueError("Received invalid datetime value.")
+
+                    datetime_value = datetime.fromisoformat(values.strip())
+                    condition = OPERATOR_MAP[operator](column, datetime_value)
+                    filter_conditions.append(condition)
+                    continue
+                except ValueError:
+                    raise ValueError(f"Invalid datetime format: {values}")
+
+            # ✅ Perbaikan "is between" dan "not between"
+            elif operator in ["is between", "not between"]:
+                if "," not in values:
+                    raise ValueError(
+                        f"Operator '{operator}' requires 'min,max' values."
+                    )
+
+                try:
+                    min_value, max_value = values.split(",", 1)
+
+                    if min_value.strip().lower() in [
+                        "null",
+                        "invalid date",
+                    ] or max_value.strip().lower() in ["null", "invalid date"]:
+                        raise ValueError("Received invalid datetime range.")
+
+                    min_datetime = datetime.fromisoformat(min_value.strip())
+                    max_datetime = datetime.fromisoformat(max_value.strip())
+
+                    if min_datetime > max_datetime:
+                        raise ValueError(
+                            "Min datetime cannot be greater than Max datetime."
+                        )
+
+                    condition = OPERATOR_MAP[operator](
+                        column, {"min": min_datetime, "max": max_datetime}
+                    )
+                    filter_conditions.append(condition)
+                    continue
+                except ValueError as e:
+                    raise ValueError(
+                        f"Invalid datetime range format: {values} - {str(e)}"
+                    )
+
+            elif column_type in ["int", "float"]:
+                values = float(values)
+
+            # ✅ Pastikan operator ditemukan dalam `OPERATOR_MAP`
+            condition = OPERATOR_MAP[operator](column, values)
+            filter_conditions.append(condition)
+
+        except (ValueError, KeyError) as e:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    if filter_conditions:
+        query = query.filter(and_(*filter_conditions))
+
+    filtered_data = query.all()
+
+    return standard_response(
+        status="success",
+        status_code=status.HTTP_200_OK,
+        message_code="filtered_data_retrieved",
+        data=[
+            {
+                "upload_id": d.id,
+                "file_url": d.file_url,
+                "description": d.description,
+                "data_type": d.data_type,
+                "completed": d.completed,
+                "avg_confidence_score": d.avg_confidence_score,
+                "is_annotated": d.is_annotated,
+                "created_at": d.created_at.isoformat() if d.created_at else None,
+                "updated_at": d.updated_at.isoformat() if d.updated_at else None,
+                "metadata": {
+                    "image_metadata": {
+                        "width": d.image_metadata.width if d.image_metadata else None,
+                        "height": d.image_metadata.height if d.image_metadata else None,
+                    },
+                    "image_annotations": [
+                        {
+                            "x1": ann.x1,
+                            "y1": ann.y1,
+                            "x2": ann.x2,
+                            "y2": ann.y2,
+                            "label": ann.label,
+                            "confidence_score": ann.confidence_score,
+                        }
+                        for ann in d.image_annotations
+                    ],
+                },
+            }
+            for d in filtered_data
+        ],
+    )
 
 
 @router.post("/", summary="Upload Data")
@@ -383,6 +612,7 @@ async def get_uploaded_data(
                 "drafts": file.drafts,
                 "completed": file.completed,
                 "avg_confidence_score": file.avg_confidence_score,
+                "is_annotated": file.is_annotated,
                 "created_at": file.created_at,
                 "updated_at": file.updated_at,
                 # "project": file.project.name if file.project else None,
@@ -466,6 +696,7 @@ async def get_uploaded_data(
         data=response_data,
     )
 
+
 @router.get(
     "/export-annotations/",
     summary="Export annotations in YOLO & Label Studio format",
@@ -479,24 +710,35 @@ def export_annotations(
     # 🔍 **Cek apakah proyek ada**
     project = db.query(AnnotationProjectModel).filter_by(id=project_id).first()
     if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Annotation project not found.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Annotation project not found.",
+        )
 
     # 🔍 **Ambil semua anotasi dari proyek ini**
     annotations = (
         db.query(ImageAnnotationResultModel)
-        .join(AnnotationProjectDataModel, AnnotationProjectDataModel.id == ImageAnnotationResultModel.data_id)
+        .join(
+            AnnotationProjectDataModel,
+            AnnotationProjectDataModel.id == ImageAnnotationResultModel.data_id,
+        )
         .filter(AnnotationProjectDataModel.project_id == project_id)
         .all()
     )
 
     if not annotations:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No annotations found for this project.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No annotations found for this project.",
+        )
 
     # 🔍 **Dapatkan daftar kelas unik**
     class_labels = (
         db.query(ImageAnnotationResultModel.label)
         .distinct()
-        .filter(ImageAnnotationResultModel.data_id.in_([a.data_id for a in annotations]))
+        .filter(
+            ImageAnnotationResultModel.data_id.in_([a.data_id for a in annotations])
+        )
         .all()
     )
     class_labels = [label[0] for label in class_labels]  # Ubah tuple ke list
@@ -515,15 +757,24 @@ def export_annotations(
 
     # 🔄 **Proses setiap anotasi**
     for annotation in annotations:
-        image_data = db.query(AnnotationProjectDataModel).filter_by(id=annotation.data_id).first()
+        image_data = (
+            db.query(AnnotationProjectDataModel)
+            .filter_by(id=annotation.data_id)
+            .first()
+        )
         if not image_data:
             continue
 
         # 🔍 **Ambil metadata gambar**
-        image_metadata = db.query(ImageMetadataModel).filter_by(data_id=annotation.data_id).first()
+        image_metadata = (
+            db.query(ImageMetadataModel).filter_by(data_id=annotation.data_id).first()
+        )
 
         if not image_metadata:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing image metadata.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing image metadata.",
+            )
 
         image_width = image_metadata.width
         image_height = image_metadata.height
@@ -545,11 +796,16 @@ def export_annotations(
         # 📏 **Normalisasi koordinat bounding box**
         x1, y1 = annotation.x1 / image_width, annotation.y1 / image_height  # Kiri Atas
         x2, y2 = annotation.x2 / image_width, annotation.y1 / image_height  # Kanan Atas
-        x3, y3 = annotation.x2 / image_width, annotation.y2 / image_height  # Kanan Bawah
+        x3, y3 = (
+            annotation.x2 / image_width,
+            annotation.y2 / image_height,
+        )  # Kanan Bawah
         x4, y4 = annotation.x1 / image_width, annotation.y2 / image_height  # Kiri Bawah
 
         # 📜 **Tulis file label dengan format Label Studio**
-        label_file_path = os.path.join(labels_dir, f"{os.path.splitext(image_name)[0]}.txt")
+        label_file_path = os.path.join(
+            labels_dir, f"{os.path.splitext(image_name)[0]}.txt"
+        )
         with open(label_file_path, "a") as label_file:
             bbox = f"{class_labels.index(annotation.label)} {x1:.6f} {y1:.6f} {x2:.6f} {y2:.6f} {x3:.6f} {y3:.6f} {x4:.6f} {y4:.6f}\n"
             label_file.write(bbox)
@@ -567,166 +823,170 @@ def export_annotations(
     shutil.rmtree(export_dir)
 
     # 📤 **Kembalikan file ZIP**
-    return FileResponse(zip_file_path, media_type="application/zip", filename="annotations_export.zip")
-
-
-# 📌 Mapping operator SQL untuk digunakan dalam filter
-OPERATOR_MAP = {
-    "=": lambda column, value: column == value,
-    "!=": lambda column, value: column != value,
-    "<": lambda column, value: column < value,
-    ">": lambda column, value: column > value,
-    "<=": lambda column, value: column <= value,
-    ">=": lambda column, value: column >= value,
-    "is between": lambda column, values: column.between(values["min"], values["max"]),
-    "not between": lambda column, values: ~column.between(values["min"], values["max"]),
-    "is empty": lambda column, _: column.is_(None),
-    "contains": lambda column, value: column.ilike(f"%{value}%"),
-    "not contains": lambda column, value: ~column.ilike(f"%{value}%"),
-    "regex": lambda column, value: column.op("~")(value),
-    "equal": lambda column, value: column == value,
-    "not equal": lambda column, value: column != value,
-    "is": lambda column, value: column.is_(value),
-    "is before": lambda column, value: column < value,
-    "is after": lambda column, value: column > value,
-}
-
-# 📌 Definisi tipe kolom untuk menentukan operator yang sesuai
-COLUMN_TYPES = {
-    "upload_id": "int",
-    "confidence_score": "float",
-    "avg_confidence_score": "float",
-    "width": "int",
-    "height": "int",
-    "annotated_by": "string",
-    "updated_by": "string",
-    "file_url": "string",
-    "description": "text",
-    "data_type": "string",
-    "completed": "bool",
-    "created_at": "datetime",
-    "updated_at": "datetime",
-}
-
-
-@router.get("/filter-data/", summary="Filter project data based on conditions")
-def filter_project_data(
-    project_id: int = Query(..., description="Project ID to filter data for"),
-    filters: List[str] = Query(
-        [],
-        description="Filters in the format field:operator:value or field:operator:min,max. Multiple filters allowed.",
-    ),
-    payload: dict = Depends(jwt_bearer),
-    db: Session = Depends(get_db),
-):
-    """
-    API untuk memfilter data anotasi berdasarkan berbagai kondisi.
-    """
-
-    user_id = payload.get("id")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
-        )
-
-    # Validasi project
-    project = db.query(AnnotationProjectDataModel).filter_by(project_id=project_id).first()
-    if not project:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Annotation project not found.",
-        )
-
-    query = db.query(AnnotationProjectDataModel).filter(
-        AnnotationProjectDataModel.project_id == project_id
+    return FileResponse(
+        zip_file_path, media_type="application/zip", filename="annotations_export.zip"
     )
 
-    filter_conditions = []
 
-    for filter_item in filters:
-        try:
-            field, operator, *values = filter_item.split(":")
-            if field not in COLUMN_TYPES:
-                raise ValueError(f"Invalid field: {field}")
+# # 📌 Mapping operator SQL untuk digunakan dalam filter
+# OPERATOR_MAP = {
+#     "=": lambda column, value: column == value,
+#     "!=": lambda column, value: column != value,
+#     "<": lambda column, value: column < value,
+#     ">": lambda column, value: column > value,
+#     "<=": lambda column, value: column <= value,
+#     ">=": lambda column, value: column >= value,
+#     "is between": lambda column, values: column.between(values["min"], values["max"]),
+#     "not between": lambda column, values: ~column.between(values["min"], values["max"]),
+#     "is empty": lambda column, _: column.is_(None),
+#     "contains": lambda column, value: column.ilike(f"%{value}%"),
+#     "not contains": lambda column, value: ~column.ilike(f"%{value}%"),
+#     "regex": lambda column, value: column.op("~")(value),
+#     "equal": lambda column, value: column == value,
+#     "not equal": lambda column, value: column != value,
+#     "is": lambda column, value: column.is_(value),
+#     "is before": lambda column, value: column < value,
+#     "is after": lambda column, value: column > value,
+# }
 
-            column_type = COLUMN_TYPES[field]
-            column = getattr(AnnotationProjectDataModel, field, None)
+# # 📌 Definisi tipe kolom untuk menentukan operator yang sesuai
+# COLUMN_TYPES = {
+#     "upload_id": "int",
+#     "confidence_score": "float",
+#     "avg_confidence_score": "float",
+#     "is_annotated": "bool",
+#     "width": "int",
+#     "height": "int",
+#     "annotated_by": "string",
+#     "updated_by": "string",
+#     "file_url": "string",
+#     "description": "text",
+#     "data_type": "string",
+#     "completed": "bool",
+#     "created_at": "datetime",
+#     "updated_at": "datetime",
+# }
 
-            if not column:
-                raise ValueError(f"Invalid column: {field}")
 
-            # **Khusus untuk "is between" dan "not between"**
-            if operator in ["is between", "not between"]:
-                if len(values) != 1 or "," not in values[0]:
-                    raise ValueError(f"Operator '{operator}' requires 'min,max' values.")
-                
-                min_value, max_value = values[0].split(",")
-                
-                # **Pastikan min dan max bernilai numerik jika tipe data adalah int/float**
-                if column_type in ["int", "float"]:
-                    min_value, max_value = float(min_value), float(max_value)
-                
-                values = {"min": min_value, "max": max_value}
+# @router.get("/filter-data/", summary="Filter project data based on conditions")
+# def filter_project_data(
+#     project_id: int = Query(..., description="Project ID to filter data for"),
+#     filters: List[str] = Query(
+#         [],
+#         description="Filters in the format field:operator:value or field:operator:min,max. Multiple filters allowed.",
+#     ),
+#     payload: dict = Depends(jwt_bearer),
+#     db: Session = Depends(get_db),
+# ):
+#     """
+#     API untuk memfilter data anotasi berdasarkan berbagai kondisi.
+#     """
 
-            # **Konversi nilai berdasarkan tipe data**
-            elif column_type == "float":
-                values = [float(v) for v in values]
-            elif column_type == "int":
-                values = [int(v) for v in values]
-            elif column_type == "bool":
-                values = [v.lower() == "true" for v in values]
-            elif column_type == "datetime":
-                values = [v for v in values]  # Tidak mengubah karena akan diparse di database
+#     user_id = payload.get("id")
+#     if not user_id:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token."
+#         )
 
-            if operator not in OPERATOR_MAP:
-                raise ValueError(f"Invalid operator: {operator}")
+#     # Validasi project
+#     project = db.query(AnnotationProjectDataModel).filter_by(project_id=project_id).first()
+#     if not project:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Annotation project not found.",
+#         )
 
-            # Gunakan operator yang sesuai
-            condition = OPERATOR_MAP[operator](column, values if isinstance(values, dict) else values[0])
-            filter_conditions.append(condition)
+#     query = db.query(AnnotationProjectDataModel).filter(
+#         AnnotationProjectDataModel.project_id == project_id
+#     )
 
-        except ValueError as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
-            )
+#     filter_conditions = []
 
-    # Tambahkan kondisi filter ke dalam query
-    if filter_conditions:
-        query = query.filter(and_(*filter_conditions))
+#     for filter_item in filters:
+#         try:
+#             field, operator, *values = filter_item.split(":")
+#             if field not in COLUMN_TYPES:
+#                 raise ValueError(f"Invalid field: {field}")
 
-    # Eksekusi query
-    filtered_data = query.all()
+#             column_type = COLUMN_TYPES[field]
+#             column = getattr(AnnotationProjectDataModel, field, None)
 
-    return standard_response(
-        status="success",
-        status_code=status.HTTP_200_OK,
-        message_code="filtered_data_retrieved",
-        data=[{
-            "upload_id": d.id,
-            "file_url": d.file_url,
-            "description": d.description,
-            "data_type": d.data_type,
-            "completed": d.completed,
-            "avg_confidence_score": d.avg_confidence_score,
-            "created_at": d.created_at,
-            "updated_at": d.updated_at,
-            "metadata": {
-                "image_metadata": {
-                    "width": d.image_metadata.width if d.image_metadata else None,
-                    "height": d.image_metadata.height if d.image_metadata else None,
-                    "image_annotations": [
-                        {
-                            "result_type": ann.result_type,
-                            "x1": ann.x1,
-                            "y1": ann.y1,
-                            "x2": ann.x2,
-                            "y2": ann.y2,
-                            "label": ann.label,
-                            "confidence_score": ann.confidence_score,
-                        }
-                        for ann in d.image_annotations
-                    ],
-                }
-            },
-        } for d in filtered_data],
-    )
+#             if not column:
+#                 raise ValueError(f"Invalid column: {field}")
+
+#             # **Khusus untuk "is between" dan "not between"**
+#             if operator in ["is between", "not between"]:
+#                 if len(values) != 1 or "," not in values[0]:
+#                     raise ValueError(f"Operator '{operator}' requires 'min,max' values.")
+
+#                 min_value, max_value = values[0].split(",")
+
+#                 # **Pastikan min dan max bernilai numerik jika tipe data adalah int/float**
+#                 if column_type in ["int", "float"]:
+#                     min_value, max_value = float(min_value), float(max_value)
+
+#                 values = {"min": min_value, "max": max_value}
+
+#             # **Konversi nilai berdasarkan tipe data**
+#             elif column_type == "float":
+#                 values = [float(v) for v in values]
+#             elif column_type == "int":
+#                 values = [int(v) for v in values]
+#             elif column_type == "bool":
+#                 values = [v.lower() == "true" for v in values]
+#             elif column_type == "datetime":
+#                 values = [v for v in values]  # Tidak mengubah karena akan diparse di database
+
+#             if operator not in OPERATOR_MAP:
+#                 raise ValueError(f"Invalid operator: {operator}")
+
+#             # Gunakan operator yang sesuai
+#             condition = OPERATOR_MAP[operator](column, values if isinstance(values, dict) else values[0])
+#             filter_conditions.append(condition)
+
+#         except ValueError as e:
+#             raise HTTPException(
+#                 status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)
+#             )
+
+#     # Tambahkan kondisi filter ke dalam query
+#     if filter_conditions:
+#         query = query.filter(and_(*filter_conditions))
+
+#     # Eksekusi query
+#     filtered_data = query.all()
+
+#     return standard_response(
+#         status="success",
+#         status_code=status.HTTP_200_OK,
+#         message_code="filtered_data_retrieved",
+#         data=[{
+#             "upload_id": d.id,
+#             "file_url": d.file_url,
+#             "description": d.description,
+#             "data_type": d.data_type,
+#             "completed": d.completed,
+#             "avg_confidence_score": d.avg_confidence_score,
+#             "is_annotated": d.is_annotated,
+#             "created_at": d.created_at,
+#             "updated_at": d.updated_at,
+#             "metadata": {
+#                 "image_metadata": {
+#                     "width": d.image_metadata.width if d.image_metadata else None,
+#                     "height": d.image_metadata.height if d.image_metadata else None,
+#                     "image_annotations": [
+#                         {
+#                             "result_type": ann.result_type,
+#                             "x1": ann.x1,
+#                             "y1": ann.y1,
+#                             "x2": ann.x2,
+#                             "y2": ann.y2,
+#                             "label": ann.label,
+#                             "confidence_score": ann.confidence_score,
+#                         }
+#                         for ann in d.image_annotations
+#                     ],
+#                 }
+#             },
+#         } for d in filtered_data],
+#     )

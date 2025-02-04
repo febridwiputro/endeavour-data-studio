@@ -1,0 +1,7 @@
+path: D:\dataset\vehicle_detection\VIDEO-SELECTION\dataset\dataset
+train: train\images
+val: val\images
+test: test\images
+
+nc: 2
+names: ['plate', 'car']

@@ -94,6 +94,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
           drafts: item.drafts,
           completed: item.completed,
           avg_confidence_score: item.avg_confidence_score,
+          is_annotated: item.is_annotated,
           created_at: item.created_at,
           updated_at: item.updated_at,
           metadata: item.metadata,
