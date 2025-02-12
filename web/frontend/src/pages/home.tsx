@@ -15,6 +15,22 @@ import DashboardMenu from "@/components/dashboard/DashboardMenu";
 import DashboardPage from "./dashboard";
 // import AnnotationsPage from "@/pages/annotations";
 import AnnotationsPage from "./annotations";
+import ImageColorPickerPage from "./image-color-picker";
+import Dashboard from "./data-visualization/dashboard4";
+import ImageEditorPage from "./images-editor";
+import VideoEditor from "@/components/video/ConcatenateVideo";
+import AudioEditorPage from "./audio-editor";
+import TextEditorPage from "./text-editor";
+import NumericDataEditorPage from "./numeric-data-editor";
+import DocumentEditorPage from "./document-editor";
+import RegexEditorPage from "./regex-editor";
+import JsonEditorPage from "./json-editor";
+import URLExtractorPage from "./url-extractor";
+import DatasetSplitPage from "./dataset-split";
+import DataScraperPage from "./data-scraper";
+import CryptographyGeneratorPage from "./cryptography-generator";
+import GeospatialDataEditorPage from "./geospatial-data-editor";
+
 
 const HomePage: React.FC = () => {
   const { isDarkMode } = useDarkMode();
@@ -37,7 +53,6 @@ const HomePage: React.FC = () => {
   }, [accessToken, dispatch, router]);
 
   useEffect(() => {
-    // **Pindahkan URL ke "/annotations" jika menu "Annotations" dipilih**
     if (selectedMenu === "Annotations" && router.pathname !== "/annotations") {
       router.push("/annotations");
     }
@@ -49,31 +64,25 @@ const HomePage: React.FC = () => {
 
   return (
     <div
-      className={`min-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}
+      className={`max-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}
     >
-      {/* Sidebar tetap ada */}
       <Sidebar
         onMenuClick={handleMenuClick}
         selectedMenu={selectedMenu}
         menuData={menu}
       />
 
-      {/* Main Content Wrapper */}
       <div className="flex flex-col flex-grow">
-        {/* Breadcrumb di luar Main Content */}
+        {/* Breadcrumb */}
         <div className="bg-white dark:bg-gray-800 shadow-sm px-3">
           <Breadcrumb
             items={[
-              {
-                label: "Home",
-                href: "/home",
-                icon: <HomeIcon className="w-4 h-4" />,
-              },
-              ...(selectedMenu === "Annotations"
+              { label: "Home", href: "/home", icon: <HomeIcon className="w-4 h-4" /> },
+              ...(selectedMenu !== "Dashboard"
                 ? [
                     {
-                      label: "Annotations",
-                      href: "/annotations",
+                      label: selectedMenu,
+                      href: `/${selectedMenu.toLowerCase().replace(/ /g, "-")}`,
                       icon: <FolderIcon className="w-4 h-4" />,
                       isActive: true,
                     },
@@ -83,22 +92,28 @@ const HomePage: React.FC = () => {
           />
         </div>
 
-        {/* Main Content */}
         <div
-          className={`flex-grow p-4 transition-colors ${isDarkMode ? "bg-gray-800" : "bg-white"} shadow-md rounded-md mx-2 mt-2`}
+          className={`flex-grow p-0 transition-colors ${isDarkMode ? "bg-gray-800" : "bg-white"} shadow-md rounded-md mx-2 mt-2`}
         >
-          <div className="p-4">
-            {selectedMenu === "Dashboard" && <DashboardPage />}
-            {selectedMenu === "Annotations" && <AnnotationsPage />}
-            {selectedMenu === "Split by Number of Images" && <VideoToImage />}
-            {selectedMenu === "Concatenate by Composition" && (
-              <ConcatenateVideo />
-            )}
-            {selectedMenu === "Compress" && <CompressImagesInFolder />}
-            {selectedMenu === "Image Size Adjustment" && (
-              <ImageSizeAdjustment />
-            )}
-          </div>
+          {selectedMenu === "Dashboard" && (
+            <DashboardPage onMenuClick={handleMenuClick} />
+          )}
+          {selectedMenu === "Annotations" && <AnnotationsPage />}
+          {selectedMenu === "Image Color Picker" && <ImageColorPickerPage />}
+          {selectedMenu === "Data Visualization" && <Dashboard />}
+          {selectedMenu === "Image Editor" && <ImageEditorPage />}
+          {selectedMenu === "Video Editor" && <VideoEditor />}
+          {selectedMenu === "Audio Editor" && <AudioEditorPage />}
+          {selectedMenu === "Text Editor" && <TextEditorPage />}
+          {selectedMenu === "Numeric Data Editor" && <NumericDataEditorPage />}
+          {selectedMenu === "Document Editor" && <DocumentEditorPage />}
+          {selectedMenu === "Regex Editor" && <RegexEditorPage />}
+          {selectedMenu === "JSON Editor" && <JsonEditorPage />}
+          {selectedMenu === "URL Extractor" && <URLExtractorPage />}
+          {selectedMenu === "Dataset Split" && <DatasetSplitPage />}
+          {selectedMenu === "Data Scraper" && <DataScraperPage />}
+          {selectedMenu === "Cryptography Generator" && <CryptographyGeneratorPage />}
+          {selectedMenu === "Geospatial Data Editor" && <GeospatialDataEditorPage />}
         </div>
       </div>
     </div>
@@ -106,6 +121,120 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+
+
+
+
+// import React, { useEffect, useState } from "react";
+// import { useDispatch, useSelector } from "react-redux";
+// import { useRouter } from "next/router";
+// import { fetchMenu } from "@/features/menu/menuSlice";
+// import { RootState, AppDispatch } from "@/store/store";
+// import Sidebar from "@/components/sidebar/Sidebar";
+// import VideoToImage from "@/components/video/VideoToImage";
+// import ConcatenateVideo from "@/components/video/ConcatenateVideo";
+// import CompressImagesInFolder from "@/components/images/CompressImagesInFolder";
+// import ImageSizeAdjustment from "@/components/images/ImageSizeAdjusment";
+// import { useDarkMode } from "@/context/DarkModeContext";
+// import Breadcrumb from "@/components/Breadcrumb";
+// import { HomeIcon, FolderIcon } from "@heroicons/react/24/outline";
+// import DashboardMenu from "@/components/dashboard/DashboardMenu";
+// import DashboardPage from "./dashboard";
+// // import AnnotationsPage from "@/pages/annotations";
+// import AnnotationsPage from "./annotations";
+
+// const HomePage: React.FC = () => {
+//   const { isDarkMode } = useDarkMode();
+//   const dispatch = useDispatch<AppDispatch>();
+//   const router = useRouter();
+//   const { accessToken } = useSelector((state: RootState) => state.auth);
+//   const { menu } = useSelector((state: RootState) => state.menu);
+
+//   const [selectedMenu, setSelectedMenu] = useState<string>("Dashboard");
+
+//   useEffect(() => {
+//     const token = accessToken || localStorage.getItem("accessToken");
+
+//     if (!token) {
+//       router.push("/login");
+//       return;
+//     }
+
+//     dispatch(fetchMenu());
+//   }, [accessToken, dispatch, router]);
+
+//   useEffect(() => {
+//     // **Pindahkan URL ke "/annotations" jika menu "Annotations" dipilih**
+//     if (selectedMenu === "Annotations" && router.pathname !== "/annotations") {
+//       router.push("/annotations");
+//     }
+//   }, [selectedMenu, router]);
+
+//   const handleMenuClick = (menuName: string) => {
+//     setSelectedMenu(menuName);
+//   };
+
+//   return (
+//     <div
+//       className={`max-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}
+//     >
+//       {/* Sidebar tetap ada */}
+//       <Sidebar
+//         onMenuClick={handleMenuClick}
+//         selectedMenu={selectedMenu}
+//         menuData={menu}
+//       />
+
+//       {/* Main Content Wrapper */}
+//       <div className="flex flex-col flex-grow">
+//         {/* Breadcrumb di luar Main Content */}
+//         <div className="bg-white dark:bg-gray-800 shadow-sm px-3">
+//           <Breadcrumb
+//             items={[
+//               {
+//                 label: "Home",
+//                 href: "/home",
+//                 icon: <HomeIcon className="w-4 h-4" />,
+//               },
+//               ...(selectedMenu === "Annotations"
+//                 ? [
+//                     {
+//                       label: "Annotations",
+//                       href: "/annotations",
+//                       icon: <FolderIcon className="w-4 h-4" />,
+//                       isActive: true,
+//                     },
+//                   ]
+//                 : []),
+//             ]}
+//           />
+//         </div>
+
+//         {/* Main Content */}
+//         <div
+//           className={`flex-grow p-0 transition-colors ${isDarkMode ? "bg-gray-800" : "bg-white"} shadow-md rounded-md mx-2 mt-2`}
+//         >
+//           <div className="p-0">
+//             {selectedMenu === "Dashboard" && <DashboardPage />}
+//             {selectedMenu === "Annotations" && <AnnotationsPage />}
+//             {selectedMenu === "Split by Number of Images" && <VideoToImage />}
+//             {selectedMenu === "Concatenate by Composition" && (
+//               <ConcatenateVideo />
+//             )}
+//             {selectedMenu === "Compress" && <CompressImagesInFolder />}
+//             {selectedMenu === "Image Size Adjustment" && (
+//               <ImageSizeAdjustment />
+//             )}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default HomePage;
+
+
 
 // // src/pages/home.tsx
 
@@ -150,7 +279,7 @@ export default HomePage;
 //   };
 
 //   return (
-//     <div className={`min-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
+//     <div className={`max-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
 //       {/* Sidebar dengan lebar tetap */}
 //       <Sidebar onMenuClick={handleMenuClick} selectedMenu={selectedMenu} menuData={menu} />
 

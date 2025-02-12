@@ -16,7 +16,7 @@ const CompressSingleImage = () => {
       const formData = new FormData();
       formData.append('image', imageFile);
       formData.append('target_size_kb', targetSize.toString());
-      formData.append('folder_name', folderName); // Add folder name to FormData
+      formData.append('folder_name', folderName);
 
       dispatch(compressSelectedImages(formData));
     }

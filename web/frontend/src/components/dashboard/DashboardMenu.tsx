@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import AnnotationsPage from "@/pages/annotations";
+import DataVisualization from "@/pages/data-visualization";
 
 // Halaman kosong untuk "Image Color Picker"
 const ImageColorPickerPage: React.FC = () => {
@@ -41,6 +42,11 @@ const DashboardMenu: React.FC = () => {
   if (selectedMenu === "Image Color Picker") {
     return <ImageColorPickerPage />;
   }
+
+  if (selectedMenu === "Data Visualization") {
+    return <DataVisualization />;
+  }
+  
 
   return (
     <div>

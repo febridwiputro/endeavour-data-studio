@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional, List
 from fastapi import (
     APIRouter,
@@ -90,13 +91,6 @@ COLUMN_TYPES = {
     "confidence_score": "float",
     "label": "string",
 }
-
-
-import re
-
-
-import re
-
 
 @router.get("/filter-data/", summary="Filter project data")
 def filter_project_data(
@@ -244,7 +238,7 @@ def filter_project_data(
         message_code="filtered_data_retrieved",
         data=[
             {
-                "upload_id": d.id,
+                "id": d.id,
                 "file_url": d.file_url,
                 "description": d.description,
                 "data_type": d.data_type,

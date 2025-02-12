@@ -11,6 +11,7 @@ import { api } from "@/services/apiConfig";
 
 interface MainPanelProps {
   tasks: Task[];
+  filteredTasks: Task[];
   selectedTaskId: number | null;
   setSelectedTaskId: React.Dispatch<React.SetStateAction<number | null>>;
   panelWidth: number;
@@ -89,6 +90,7 @@ interface MainPanelProps {
 
 const MainPanel: React.FC<MainPanelProps> = ({
   tasks,
+  filteredTasks,
   selectedTaskId,
   setSelectedTaskId,
   panelWidth,
@@ -153,6 +155,8 @@ const MainPanel: React.FC<MainPanelProps> = ({
   // const [deletedBoundingBoxes, setDeletedBoundingBoxes] = useState<number[]>(
   //   []
   // );
+
+
   const [alertConfig, setAlertConfig] = useState({
     show: false,
     type: "info" as "success" | "error" | "warning" | "info",
@@ -389,82 +393,82 @@ const MainPanel: React.FC<MainPanelProps> = ({
         transition: isDragging ? "none" : "width 0.2s ease",
       }}
     >
-      {selectedTask ? (
-        <>
-          <TaskDetails
-            taskId={selectedTask.id}
-            onNext={() => {
-              const currentIndex = tasks.findIndex(
-                (task) => task.id === selectedTask.id
-              );
-              if (currentIndex < tasks.length - 1) {
-                setSelectedTaskId(tasks[currentIndex + 1].id);
-              }
-            }}
-            onPrev={() => {
-              const currentIndex = tasks.findIndex(
-                (task) => task.id === selectedTask.id
-              );
-              if (currentIndex > 0) {
-                setSelectedTaskId(tasks[currentIndex - 1].id);
-              }
-            }}
-          />
-          <div
-            className="relative bg-gray-100 border border-gray-200 rounded overflow-hidden"
-            style={{ cursor: cursorStyle }}
-            onMouseDown={handleMouseDownForMove}
-            onMouseMove={handleMouseMoveForMove}
-            onMouseUp={handleMouseUpForMove}
-            onMouseLeave={handleMouseUpForMove}
-          >
-            <div
-              className="transform"
-              style={{
-                transform: `scale(${zoomLevel}) translate(${currentPanOffset.x}px, ${currentPanOffset.y}px)`,
-                transformOrigin: "center",
-                transition: isPanning ? "none" : "transform 0.2s ease-in-out",
-              }}
-            >
-              <img
-                ref={imageRef}
-                src={selectedTask.file_url}
-                alt={`Task ${selectedTask.id}`}
-                className="w-full object-contain"
-                onLoad={() => {
-                  if (imageRef.current) {
-                    setImageSize({
-                      width: imageRef.current.naturalWidth,
-                      height: imageRef.current.naturalHeight,
-                    });
-                  }
-                }}
-              />
-            </div>
-            <canvas
-              ref={canvasRef}
-              className="absolute top-0 left-0 w-full h-full"
-              width={imageSize.width}
-              height={imageSize.height}
-              onMouseDown={handleMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseLeave}
-            />
-            <TaskToolbar
-              activeTool={
-                isDashLineMode ? "dashLine" : isMoveMode ? "move" : activeTool
-              }
-              handleNormalCursor={handleNormalCursor}
-              handleZoomIn={handleZoomIn}
-              handleZoomOut={handleZoomOut}
-              handleMove={toggleMoveMode}
-              handlePan={handlePan}
-              handleDashLineCursor={toggleDashLineMode}
-              handleZoomToFit={handleZoomToFit}
-              handleZoomToActualSize={handleZoomToActualSize}
-            />
-          </div>
+  {selectedTask ? (
+  <>
+    <TaskDetails
+      taskId={selectedTask.id}
+      onNext={() => {
+        const currentIndex = filteredTasks.findIndex(
+          (task) => task.id === selectedTask.id
+        );
+        if (currentIndex < filteredTasks.length - 1) {
+          setSelectedTaskId(filteredTasks[currentIndex + 1].id);
+        }
+      }}
+      onPrev={() => {
+        const currentIndex = filteredTasks.findIndex(
+          (task) => task.id === selectedTask.id
+        );
+        if (currentIndex > 0) {
+          setSelectedTaskId(filteredTasks[currentIndex - 1].id);
+        }
+      }}
+    />
+    <div
+      className="relative bg-gray-100 border border-gray-200 rounded overflow-hidden"
+      style={{ cursor: cursorStyle }}
+      onMouseDown={handleMouseDownForMove}
+      onMouseMove={handleMouseMoveForMove}
+      onMouseUp={handleMouseUpForMove}
+      onMouseLeave={handleMouseUpForMove}
+    >
+      <div
+        className="transform"
+        style={{
+          transform: `scale(${zoomLevel}) translate(${currentPanOffset.x}px, ${currentPanOffset.y}px)`,
+          transformOrigin: "center",
+          transition: isPanning ? "none" : "transform 0.2s ease-in-out",
+        }}
+      >
+        <img
+          ref={imageRef}
+          src={selectedTask.file_url}
+          alt={`Task ${selectedTask.id}`}
+          className="w-full object-contain"
+          onLoad={() => {
+            if (imageRef.current) {
+              setImageSize({
+                width: imageRef.current.naturalWidth,
+                height: imageRef.current.naturalHeight,
+              });
+            }
+          }}
+        />
+      </div>
+      <canvas
+        ref={canvasRef}
+        className="absolute top-0 left-0 w-full h-full"
+        width={imageSize.width}
+        height={imageSize.height}
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+      />
+      <TaskToolbar
+        activeTool={
+          isDashLineMode ? "dashLine" : isMoveMode ? "move" : activeTool
+        }
+        handleNormalCursor={handleNormalCursor}
+        handleZoomIn={handleZoomIn}
+        handleZoomOut={handleZoomOut}
+        handleMove={toggleMoveMode}
+        handlePan={handlePan}
+        handleDashLineCursor={toggleDashLineMode}
+        handleZoomToFit={handleZoomToFit}
+        handleZoomToActualSize={handleZoomToActualSize}
+      />
+    </div>
           <ToolbarActions
             onUndo={handleUndo}
             onRedo={handleRedo}

@@ -114,7 +114,7 @@ const AnnotationsPage: React.FC = () => {
   }[];
 
   return (
-    <div className="min-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
+    <div className="max-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
       {/* ✅ Sidebar Tetap Muncul */}
       <Sidebar
         onMenuClick={() => {
@@ -246,6 +246,8 @@ const AnnotationsPage: React.FC = () => {
 
 export default AnnotationsPage;
 
+
+
 // // pages/annotations/index.tsx
 
 // import React, { useEffect, useState } from "react";
@@ -315,7 +317,7 @@ export default AnnotationsPage;
 //   };
 
 //   return (
-//     <div className="min-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
+//     <div className="max-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
 //       <Sidebar
 //         onMenuClick={() => {
 //           setSelectedMenu("Annotations");
@@ -550,7 +552,7 @@ export default AnnotationsPage;
 //   }[];
 
 //   return (
-//     <div className="min-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
+//     <div className="max-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
 //       <Sidebar
 //         onMenuClick={handleMenuClick}
 //         selectedMenu={selectedMenu}
@@ -777,7 +779,7 @@ export default AnnotationsPage;
 //   ].filter(Boolean) as { label: string; href: string; icon?: React.ReactNode; isActive?: boolean }[];
 
 //   return (
-//     <div className="min-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
+//     <div className="max-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
 //       <Sidebar onMenuClick={handleMenuClick} selectedMenu={selectedMenu} menuData={menu} />
 
 //       <div className="flex flex-col flex-grow">
@@ -926,7 +928,7 @@ export default AnnotationsPage;
 //   };
 
 //   return (
-//     <div className="min-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
+//     <div className="max-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
 //       {/* ✅ Sidebar Always Visible */}
 //       <Sidebar onMenuClick={handleMenuClick} selectedMenu={selectedMenu} menuData={menu} />
 
@@ -1073,7 +1075,7 @@ export default AnnotationsPage;
 //   };
 
 //   return (
-//     <div className="min-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
+//     <div className="max-h-screen flex transition-colors bg-gray-100 dark:bg-gray-900">
 //       <Sidebar onMenuClick={handleMenuClick} selectedMenu={selectedMenu} menuData={menu} />
 
 //       <div className="flex flex-col flex-grow">

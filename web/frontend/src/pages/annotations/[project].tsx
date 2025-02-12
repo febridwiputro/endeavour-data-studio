@@ -9,7 +9,7 @@ import SidebarAnnotationProject from "@/components/annotations/project/SidebarAn
 import AnnotationUploadDataProjectPage from "@/components/annotations/project/uploadData/AnnotationUploadDataProjectPage";
 import AnnotationAnnotateProjectLabelingPage from "@/components/annotations/project/annotate/AnnotationAnnotateProjectLabelingPage";
 import AnnotationDatasetProjectPage from "@/components/annotations/project/dataset/AnnotationDatasetProjectPage";
-import ExternalModelPage from "@/components/annotations/project/externalModel/ExternalModelPage";
+import ExternalModelPage from "@/components/annotations/project/models/externalModel/ExternalModelPage";
 import AnnotationVisualize from "@/components/annotations/project/AnnotationVisualize";
 import DataVersionPage from "@/components/annotations/project/dataVersion/DataVersionPage";
 import ClassesAndTagsPage from "@/components/annotations/project/classesAndTags/ClassesAndTagsPage";
@@ -79,7 +79,7 @@ const AnnotationsProject = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex max-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       <SidebarAnnotationProject
         activePage={activePage}
         setActivePage={setActivePage}

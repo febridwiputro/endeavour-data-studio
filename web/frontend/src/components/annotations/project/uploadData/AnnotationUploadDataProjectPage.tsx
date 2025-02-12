@@ -125,7 +125,7 @@ const AnnotationUploadDataProjectPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col bg-gray-50 min-h-screen py-6 px-6">
+    <div className="flex flex-col bg-gray-50 max-h-screen py-6 px-6">
       <AlertBase
         show={alert.show}
         type={alert.type}
@@ -294,7 +294,7 @@ export default AnnotationUploadDataProjectPage;
 //   };
 
 //   return (
-//     <div className="flex flex-col bg-gray-50 min-h-screen py-6 px-6">
+//     <div className="flex flex-col bg-gray-50 max-h-screen py-6 px-6">
 //       <AlertBase
 //         show={alert.show}
 //         type={alert.type}

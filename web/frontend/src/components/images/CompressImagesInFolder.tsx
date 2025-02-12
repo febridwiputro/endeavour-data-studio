@@ -16,7 +16,7 @@ const CompressImagesInFolder = () => {
   const [useFileInput, setUseFileInput] = useState<boolean>(false);
   const [showProgressModal, setShowProgressModal] = useState<boolean>(false);
   const [showSuccessMessage, setShowSuccessMessage] = useState<boolean>(false);
-  const [processedCount, setProcessedCount] = useState<number>(0); // State to hold the count of processed images
+  const [processedCount, setProcessedCount] = useState<number>(0);
 
   const dispatch = useDispatch<AppDispatch>();
   const { progress, loading } = useSelector((state: RootState) => state.images);

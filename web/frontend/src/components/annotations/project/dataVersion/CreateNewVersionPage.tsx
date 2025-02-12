@@ -2,7 +2,7 @@ import React from "react";
 
 const CreateNewVersionPage: React.FC = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6">
+    <div className="flex flex-col max-h-screen bg-gray-50 p-6">
       <h1 className="text-2xl font-bold mb-6">Generate a Dataset Version</h1>
       <div className="grid grid-cols-4 gap-4">
         {/* Sidebar */}

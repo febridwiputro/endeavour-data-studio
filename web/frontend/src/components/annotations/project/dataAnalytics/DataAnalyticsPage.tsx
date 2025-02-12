@@ -239,7 +239,7 @@ const DataAnalyticsPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 p-6">
+    <div className="flex flex-col max-h-screen bg-gray-50 p-6">
       {/* Page Wrapper */}
       <div className="overflow-auto h-full p-6 bg-gray-50">
         {/* Regenerate Section */}

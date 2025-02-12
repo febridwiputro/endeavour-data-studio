@@ -1,25 +1,26 @@
 import React, { JSX, useState } from "react";
-import SidebarMenu from "./SidebarMenu";
 import SidebarHeader from "./SidebarHeader";
-import DarkModeToggle from "./DarkModeToggle";
 import ProfileInfo from "./ProfileInfo";
+import DarkModeToggle from "./DarkModeToggle";
 import {
-  HomeIcon,
-  PencilSquareIcon,
-  PhotoIcon,
-  DocumentTextIcon,
-  MusicalNoteIcon,
-  VideoCameraIcon,
-  CalculatorIcon,
-  ScissorsIcon,
-  DocumentIcon,
-  LinkIcon,
-  CodeBracketIcon,
-  PaintBrushIcon,
-  MagnifyingGlassIcon,
-  LockClosedIcon,
-} from "@heroicons/react/24/outline"
-
+  AiFillHome,
+  AiOutlineHighlight,
+  AiOutlinePicture,
+  AiOutlineFileText,
+  AiOutlineAudio,
+  AiOutlineVideoCamera,
+  AiOutlineCalculator,
+  AiOutlineScissor,
+  AiOutlineFolderOpen,
+  AiOutlineLink,
+  AiOutlineCode,
+  AiOutlineBgColors,
+  AiOutlineSearch,
+  AiOutlineLock,
+  AiOutlinePieChart,
+  AiOutlineCloudServer,
+  AiOutlineGlobal,
+} from "react-icons/ai";
 
 interface SidebarProps {
   menuData: any[];
@@ -27,9 +28,17 @@ interface SidebarProps {
   selectedMenu: string;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ menuData, onMenuClick, selectedMenu }) => {
-  const [openSubMenus, setOpenSubMenus] = useState<{ [key: string]: string | null }>({});
-  const [openSubSubMenus, setOpenSubSubMenus] = useState<{ [key: string]: string | null }>({});
+const Sidebar: React.FC<SidebarProps> = ({
+  menuData,
+  onMenuClick,
+  selectedMenu,
+}) => {
+  const [openSubMenus, setOpenSubMenus] = useState<{
+    [key: string]: string | null;
+  }>({});
+  const [openSubSubMenus, setOpenSubSubMenus] = useState<{
+    [key: string]: string | null;
+  }>({});
   const [isOpen, setIsOpen] = useState(true);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(
@@ -43,7 +52,6 @@ const Sidebar: React.FC<SidebarProps> = ({ menuData, onMenuClick, selectedMenu }
 
   const handleSidebarToggle = () => {
     if (isOpen) {
-      // Close all menus when minimizing
       setOpenMenu(null);
       setOpenSubMenus({});
       setOpenSubSubMenus({});
@@ -51,15 +59,8 @@ const Sidebar: React.FC<SidebarProps> = ({ menuData, onMenuClick, selectedMenu }
     setIsOpen(!isOpen);
   };
 
-  const handleMenuClick = (menuName: string) => {
-    if (!isOpen) {
-      // Maximize sidebar and auto-expand clicked menu
-      setIsOpen(true);
-      setOpenMenu(menuName);
-    } else {
-      // Expand or collapse menu as usual
-      setOpenMenu((prev) => (prev === menuName ? null : menuName));
-    }
+  const handleMenuClickWrapper = (menuName: string) => {
+    onMenuClick(menuName);
   };
 
   const handleSubMenuToggle = (menuName: string, subFeatureName: string) => {
@@ -97,54 +98,28 @@ const Sidebar: React.FC<SidebarProps> = ({ menuData, onMenuClick, selectedMenu }
 
   const getMenuIcon = (menuName: string) => {
     const iconSize = isOpen ? "w-6 h-6" : "w-4 h-4";
-    return (
-      <div className="cursor-pointer" onClick={() => handleMenuClick(menuName)}>
-        {menuIcons[menuName] || <DocumentTextIcon className={iconSize} />}
-      </div>
-    );
+    return menuIcons[menuName] || <AiOutlineFolderOpen className={iconSize} />;
   };
 
   const menuIcons: { [key: string]: JSX.Element } = {
-    Home: <HomeIcon className="w-6 h-6" />,
-    Annotations: <PencilSquareIcon className="w-6 h-6" />,
-    "Image Editor": <PhotoIcon className="w-6 h-6" />,
-    "Text Editor": <DocumentTextIcon className="w-6 h-6" />,
-    "Audio Editor": <MusicalNoteIcon className="w-6 h-6" />,
-    "Video Editor": <VideoCameraIcon className="w-6 h-6" />,
-    "Numeric Data Editor": <CalculatorIcon className="w-6 h-6" />,
-    "Dataset Split": <ScissorsIcon className="w-6 h-6" />,
-    "Document Editor": <DocumentIcon className="w-6 h-6" />,
-    "URL Extractor": <LinkIcon className="w-6 h-6" />,
-    "JSON Editor": <CodeBracketIcon className="w-6 h-6" />,
-    "Image Color Picker": <PaintBrushIcon className="w-6 h-6" />,
-    "Regex Editor": <MagnifyingGlassIcon className="w-6 h-6" />,
-    "Cryptography Generator": <LockClosedIcon className="w-6 h-6" />,
+    Home: <AiFillHome className="w-6 h-6" />,
+    Annotations: <AiOutlineHighlight className="w-6 h-6" />,
+    "Image Editor": <AiOutlinePicture className="w-6 h-6" />,
+    "Text Editor": <AiOutlineFileText className="w-6 h-6" />,
+    "Audio Editor": <AiOutlineAudio className="w-6 h-6" />,
+    "Video Editor": <AiOutlineVideoCamera className="w-6 h-6" />,
+    "Numeric Data Editor": <AiOutlineCalculator className="w-6 h-6" />,
+    "Dataset Split": <AiOutlineScissor className="w-6 h-6" />,
+    "Document Editor": <AiOutlineFolderOpen className="w-6 h-6" />,
+    "URL Extractor": <AiOutlineLink className="w-6 h-6" />,
+    "JSON Editor": <AiOutlineCode className="w-6 h-6" />,
+    "Image Color Picker": <AiOutlineBgColors className="w-6 h-6" />,
+    "Regex Editor": <AiOutlineSearch className="w-6 h-6" />,
+    "Cryptography Generator": <AiOutlineLock className="w-6 h-6" />,
+    "Data Visualization": <AiOutlinePieChart className="w-6 h-6" />,
+    "Data Scraper": <AiOutlineCloudServer className="w-6 h-6" />,
+    "Geospatial Data Editor": <AiOutlineGlobal className="w-6 h-6" />,
   };
-
-  const applyHoverStyles = (
-    e: React.MouseEvent<HTMLDivElement | HTMLAnchorElement, MouseEvent>
-  ) => {
-    const element = e.currentTarget;
-    const isDarkMode = document.documentElement.classList.contains("dark");
-
-    element.style.backgroundColor = isDarkMode
-      ? "#1a4f9d"
-      : "var(--hover-blue)";
-    element.style.color = isDarkMode ? "white" : "var(--text-light)";
-  };
-
-  const resetHoverStyles = (
-    e: React.MouseEvent<HTMLDivElement | HTMLAnchorElement, MouseEvent>
-  ) => {
-    const element = e.currentTarget;
-    const isDarkMode = document.documentElement.classList.contains("dark");
-
-    element.style.backgroundColor = "";
-    element.style.color = isDarkMode
-      ? "var(--default-light)"
-      : "var(--default-blue)";
-  };
-
 
   return (
     <div
@@ -152,27 +127,43 @@ const Sidebar: React.FC<SidebarProps> = ({ menuData, onMenuClick, selectedMenu }
         isOpen ? "w-50" : "w-16"
       }`}
     >
-      <div className="px-2 py-6" style={{ overflowY: "auto", maxHeight: "calc(100vh - 96px)" }}>
-        <SidebarHeader isOpen={isOpen} handleSidebarToggle={handleSidebarToggle} />
-        <SidebarMenu
-          menuData={menuData}
-          onMenuClick={onMenuClick}
-          selectedMenu={selectedMenu}
-          openMenu={openMenu}
-          openSubMenus={openSubMenus}
-          openSubSubMenus={openSubSubMenus}
-          handleMenuToggle={handleMenuToggle}
-          handleSubMenuToggle={handleSubMenuToggle}
-          handleSubSubMenuToggle={handleSubSubMenuToggle}
-          getMenuIcon={getMenuIcon}
+      <div
+        className="px-2 py-6"
+        style={{ overflowY: "auto", maxHeight: "calc(100vh - 96px)" }}
+      >
+        <SidebarHeader
           isOpen={isOpen}
-          applyHoverStyles={applyHoverStyles}
-          resetHoverStyles={resetHoverStyles}
+          handleSidebarToggle={handleSidebarToggle}
         />
+        {/* Tambahkan margin di bawah SidebarHeader */}
+        <div className="mt-6 space-y-2">
+          {menuData.map((menu) => (
+            <div
+              key={menu.name}
+              className={`flex items-center px-4 py-2 text-sm font-medium cursor-pointer rounded-lg transition ${
+                selectedMenu === menu.name
+                  ? "bg-blue-100 text-blue-600"
+                  : "hover:bg-gray-200 dark:hover:bg-gray-700"
+              }`}
+              onClick={() => handleMenuClickWrapper(menu.name)}
+            >
+              {getMenuIcon(menu.name)}
+              {isOpen && <span className="ml-3">{menu.name}</span>}
+            </div>
+          ))}
+        </div>
       </div>
       <div className="flex flex-col items-start space-y-4 p-4 border-t border-gray-200 dark:border-gray-700">
-        <DarkModeToggle isDarkMode={isDarkMode} toggleDarkMode={() => setIsDarkMode(!isDarkMode)} isOpen={isOpen} />
-        <ProfileInfo isProfileMenuOpen={isProfileMenuOpen} toggleProfileMenu={() => setIsProfileMenuOpen(!isProfileMenuOpen)} isOpen={isOpen} />
+        <DarkModeToggle
+          isDarkMode={isDarkMode}
+          toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+          isOpen={isOpen}
+        />
+        <ProfileInfo
+          isProfileMenuOpen={isProfileMenuOpen}
+          toggleProfileMenu={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+          isOpen={isOpen}
+        />
       </div>
     </div>
   );
@@ -181,6 +172,274 @@ const Sidebar: React.FC<SidebarProps> = ({ menuData, onMenuClick, selectedMenu }
 export default Sidebar;
 
 
+
+// import React, { JSX, useState } from "react";
+// import SidebarMenu from "./SidebarMenu";
+// import SidebarHeader from "./SidebarHeader";
+// import DarkModeToggle from "./DarkModeToggle";
+// import ProfileInfo from "./ProfileInfo";
+// // import {
+// //   HomeIcon,
+// //   PencilSquareIcon,
+// //   PhotoIcon,
+// //   DocumentTextIcon,
+// //   MusicalNoteIcon,
+// //   VideoCameraIcon,
+// //   CalculatorIcon,
+// //   ScissorsIcon,
+// //   DocumentIcon,
+// //   LinkIcon,
+// //   CodeBracketIcon,
+// //   PaintBrushIcon,
+// //   MagnifyingGlassIcon,
+// //   LockClosedIcon,
+// // } from "@heroicons/react/24/outline"
+
+// import {
+//   FaHome,
+//   FaPencilRuler,
+//   FaEdit,
+//   FaMusic,
+//   FaFilm,
+//   FaCalculator,
+//   FaCut,
+//   FaFileAlt,
+//   FaLink,
+//   FaProjectDiagram,
+//   FaPalette,
+//   FaSearchPlus,
+//   FaLock,
+//   FaChartPie,
+//   FaNetworkWired,
+//   FaGlobeAmericas,
+// } from "react-icons/fa";
+
+// import {
+//   AiFillHome,
+//   AiOutlineHighlight,
+//   AiOutlinePicture,
+//   AiOutlineFileText,
+//   AiOutlineAudio,
+//   AiOutlineVideoCamera,
+//   AiOutlineCalculator,
+//   AiOutlineScissor,
+//   AiOutlineFolderOpen,
+//   AiOutlineLink,
+//   AiOutlineCode,
+//   AiOutlineBgColors,
+//   AiOutlineSearch,
+//   AiFillLock,
+//   AiOutlineBarChart,
+//   AiOutlineCloudServer,
+//   AiOutlineGlobal,
+//   AiOutlinePieChart,
+//   AiTwotonePieChart,
+//   AiFillPieChart,
+//   AiOutlineLock,
+// } from "react-icons/ai";
+
+// interface SidebarProps {
+//   menuData: any[];
+//   onMenuClick: (menuName: string) => void;
+//   selectedMenu: string;
+// }
+
+// const Sidebar: React.FC<SidebarProps> = ({
+//   menuData,
+//   onMenuClick,
+//   selectedMenu,
+// }) => {
+//   const [openSubMenus, setOpenSubMenus] = useState<{
+//     [key: string]: string | null;
+//   }>({});
+//   const [openSubSubMenus, setOpenSubSubMenus] = useState<{
+//     [key: string]: string | null;
+//   }>({});
+//   const [isOpen, setIsOpen] = useState(true);
+//   const [openMenu, setOpenMenu] = useState<string | null>(null);
+//   const [isDarkMode, setIsDarkMode] = useState(
+//     typeof window !== "undefined" && localStorage.getItem("theme") === "dark"
+//   );
+//   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+
+//   const handleMenuToggle = (menuName: string) => {
+//     setOpenMenu((prev) => (prev === menuName ? null : menuName));
+//   };
+
+//   const handleSidebarToggle = () => {
+//     if (isOpen) {
+//       // Close all menus when minimizing
+//       setOpenMenu(null);
+//       setOpenSubMenus({});
+//       setOpenSubSubMenus({});
+//     }
+//     setIsOpen(!isOpen);
+//   };
+
+//   const handleMenuClick = (menuName: string) => {
+//     if (!isOpen) {
+//       // Maximize sidebar and auto-expand clicked menu
+//       setIsOpen(true);
+//       setOpenMenu(menuName);
+//     } else {
+//       // Expand or collapse menu as usual
+//       setOpenMenu((prev) => (prev === menuName ? null : menuName));
+//     }
+//   };
+
+//   const handleSubMenuToggle = (menuName: string, subFeatureName: string) => {
+//     setOpenSubMenus((prev) => ({
+//       ...prev,
+//       [menuName]: prev[menuName] === subFeatureName ? null : subFeatureName,
+//     }));
+//     setOpenSubSubMenus({});
+//   };
+
+//   const handleSubSubMenuToggle = (
+//     menuName: string,
+//     subFeatureName: string,
+//     subSubFeatureName: string
+//   ) => {
+//     setOpenSubSubMenus((prev) => ({
+//       ...prev,
+//       [`${menuName}-${subFeatureName}`]:
+//         prev[`${menuName}-${subFeatureName}`] === subSubFeatureName
+//           ? null
+//           : subSubFeatureName,
+//     }));
+//   };
+
+//   const toggleDarkMode = () => {
+//     const newMode = !isDarkMode;
+//     setIsDarkMode(newMode);
+//     localStorage.setItem("theme", newMode ? "dark" : "light");
+//     document.documentElement.classList.toggle("dark", newMode);
+//   };
+
+//   const toggleProfileMenu = () => {
+//     setIsProfileMenuOpen(!isProfileMenuOpen);
+//   };
+
+//   const getMenuIcon = (menuName: string) => {
+//     const iconSize = isOpen ? "w-6 h-6" : "w-4 h-4";
+//     return (
+//       <div className="cursor-pointer" onClick={() => handleMenuClick(menuName)}>
+//         {menuIcons[menuName] || <AiOutlineFolderOpen className={iconSize} />}
+//       </div>
+//     );
+//   };
+
+//   const menuIcons: { [key: string]: JSX.Element } = {
+//     Home: <AiFillHome className="w-6 h-6" />,
+//     Annotations: <AiOutlineHighlight className="w-6 h-6" />,
+//     "Image Editor": <AiOutlinePicture className="w-6 h-6" />,
+//     "Text Editor": <AiOutlineFileText className="w-6 h-6" />,
+//     "Audio Editor": <AiOutlineAudio className="w-6 h-6" />,
+//     "Video Editor": <AiOutlineVideoCamera className="w-6 h-6" />,
+//     "Numeric Data Editor": <AiOutlineCalculator className="w-6 h-6" />,
+//     "Dataset Split": <AiOutlineScissor className="w-6 h-6" />,
+//     "Document Editor": <AiOutlineFolderOpen className="w-6 h-6" />,
+//     "URL Extractor": <AiOutlineLink className="w-6 h-6" />,
+//     "JSON Editor": <AiOutlineCode className="w-6 h-6" />,
+//     "Image Color Picker": <AiOutlineBgColors className="w-6 h-6" />,
+//     "Regex Editor": <AiOutlineSearch className="w-6 h-6" />,
+//     "Cryptography Generator": <AiOutlineLock className="w-6 h-6" />,
+//     "Data Visualization": <AiOutlinePieChart className="w-6 h-6" />,
+//     "Data Scraper": <AiOutlineCloudServer className="w-6 h-6" />,
+//     "Geospatial Data Editor": <AiOutlineGlobal className="w-6 h-6" />,
+//   };
+
+//   // const menuIcons: { [key: string]: JSX.Element } = {
+//   //   Home: <HomeIcon className="w-6 h-6" />,
+//   //   Annotations: <PencilSquareIcon className="w-6 h-6" />,
+//   //   "Image Editor": <PhotoIcon className="w-6 h-6" />,
+//   //   "Text Editor": <DocumentTextIcon className="w-6 h-6" />,
+//   //   "Audio Editor": <MusicalNoteIcon className="w-6 h-6" />,
+//   //   "Video Editor": <VideoCameraIcon className="w-6 h-6" />,
+//   //   "Numeric Data Editor": <CalculatorIcon className="w-6 h-6" />,
+//   //   "Dataset Split": <ScissorsIcon className="w-6 h-6" />,
+//   //   "Document Editor": <DocumentIcon className="w-6 h-6" />,
+//   //   "URL Extractor": <LinkIcon className="w-6 h-6" />,
+//   //   "JSON Editor": <CodeBracketIcon className="w-6 h-6" />,
+//   //   "Image Color Picker": <PaintBrushIcon className="w-6 h-6" />,
+//   //   "Regex Editor": <MagnifyingGlassIcon className="w-6 h-6" />,
+//   //   "Cryptography Generator": <LockClosedIcon className="w-6 h-6" />,
+//   //   "Data Visualization": <MagnifyingGlassIcon className="w-6 h-6" />,
+//   //   "Data Scraper": <MagnifyingGlassIcon className="w-6 h-6" />,
+//   //   "GeospatialDataEditor": <MagnifyingGlassIcon className="w-6 h-6" />,
+//   // };
+
+//   const applyHoverStyles = (
+//     e: React.MouseEvent<HTMLDivElement | HTMLAnchorElement, MouseEvent>
+//   ) => {
+//     const element = e.currentTarget;
+//     const isDarkMode = document.documentElement.classList.contains("dark");
+
+//     element.style.backgroundColor = isDarkMode
+//       ? "#1a4f9d"
+//       : "var(--hover-blue)";
+//     element.style.color = isDarkMode ? "white" : "var(--text-light)";
+//   };
+
+//   const resetHoverStyles = (
+//     e: React.MouseEvent<HTMLDivElement | HTMLAnchorElement, MouseEvent>
+//   ) => {
+//     const element = e.currentTarget;
+//     const isDarkMode = document.documentElement.classList.contains("dark");
+
+//     element.style.backgroundColor = "";
+//     element.style.color = isDarkMode
+//       ? "var(--default-light)"
+//       : "var(--default-blue)";
+//   };
+
+//   return (
+//     <div
+//       className={`relative flex h-screen flex-col justify-between border-e bg-white dark:bg-gray-900 transition-all duration-300 ${
+//         isOpen ? "w-50" : "w-16"
+//       }`}
+//     >
+//       <div
+//         className="px-2 py-6"
+//         style={{ overflowY: "auto", maxHeight: "calc(100vh - 96px)" }}
+//       >
+//         <SidebarHeader
+//           isOpen={isOpen}
+//           handleSidebarToggle={handleSidebarToggle}
+//         />
+//         <SidebarMenu
+//           menuData={menuData}
+//           onMenuClick={onMenuClick}
+//           selectedMenu={selectedMenu}
+//           openMenu={openMenu}
+//           openSubMenus={openSubMenus}
+//           openSubSubMenus={openSubSubMenus}
+//           handleMenuToggle={handleMenuToggle}
+//           handleSubMenuToggle={handleSubMenuToggle}
+//           handleSubSubMenuToggle={handleSubSubMenuToggle}
+//           getMenuIcon={getMenuIcon}
+//           isOpen={isOpen}
+//           applyHoverStyles={applyHoverStyles}
+//           resetHoverStyles={resetHoverStyles}
+//         />
+//       </div>
+//       <div className="flex flex-col items-start space-y-4 p-4 border-t border-gray-200 dark:border-gray-700">
+//         <DarkModeToggle
+//           isDarkMode={isDarkMode}
+//           toggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+//           isOpen={isOpen}
+//         />
+//         <ProfileInfo
+//           isProfileMenuOpen={isProfileMenuOpen}
+//           toggleProfileMenu={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+//           isOpen={isOpen}
+//         />
+//       </div>
+//     </div>
+//   );
+// };
+
+// export default Sidebar;
 
 // import React, { JSX, useState } from "react";
 // import {

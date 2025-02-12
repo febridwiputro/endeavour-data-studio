@@ -3,7 +3,7 @@ import SidebarAnnotationProject from "./SidebarAnnotationProject";
 import AnnotationUploadDataProjectPage from "./uploadData/AnnotationUploadDataProjectPage";
 import AnnotationAnnotateProjectLabelingPage from "./annotate/AnnotationAnnotateProjectLabelingPage";
 import AnnotationDatasetProjectPage from "./dataset/AnnotationDatasetProjectPage";
-import ExternalModelPage from "./externalModel/ExternalModelPage";
+import ExternalModelPage from "./models/externalModel/ExternalModelPage";
 import AnnotationVisualize from "./AnnotationVisualize";
 import DataVersionPage from "./dataVersion/DataVersionPage";
 import ClassesAndTagsPage from "./classesAndTags/ClassesAndTagsPage";
@@ -85,7 +85,7 @@ const AnnotationsProjectPage: React.FC<AnnotationsProjectPageProps> = ({
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex max-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Sidebar */}
       <SidebarAnnotationProject
         activePage={activePage}

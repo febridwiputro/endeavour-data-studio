@@ -64,7 +64,7 @@ const DataVersionControlPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
+    <div className="p-6 bg-gray-100 max-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-800">
           Data Version Control (DVC)
@@ -88,7 +88,7 @@ const DataVersionControlPage: React.FC = () => {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-300 bg-white rounded-lg shadow-lg">
+          <table className="max-w-full divide-y divide-gray-300 bg-white rounded-lg shadow-lg">
             <thead className="bg-gray-100">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
@@ -147,7 +147,7 @@ const DataVersionControlPage: React.FC = () => {
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (
-          <table className="min-w-full divide-y divide-gray-300 bg-white rounded-lg shadow-lg">
+          <table className="max-w-full divide-y divide-gray-300 bg-white rounded-lg shadow-lg">
             <thead className="bg-gray-100">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">

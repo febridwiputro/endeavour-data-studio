@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import EditExternalModel from "./EditExternalModel";
 import AddExternalModel from "./AddExternalModel";
 import PredictionControls from "./PredictionControls";
-import CreateButton from "../../base/CreateButton";
+import CreateButton from "../../../base/CreateButton";
 import { Dialog } from "@headlessui/react";
 import { EyeIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/outline";
 import DeleteModal from "@/components/base/DeleteModal";
@@ -392,7 +392,7 @@ const ExternalModelPage: React.FC = () => {
   
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen">
+    <div className="p-6 bg-gray-50 max-h-screen">
       <div className="flex justify-between items-center mb-6">
       <div className="flex-1"></div>{" "}
         <CreateButton onClick={handleAddModalOpen} label="Add Model" />
@@ -404,7 +404,7 @@ const ExternalModelPage: React.FC = () => {
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg shadow">
-          <table className="min-w-full divide-y divide-gray-200 bg-white">
+          <table className="max-w-full divide-y divide-gray-200 bg-white">
             <thead className="bg-gray-100">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">

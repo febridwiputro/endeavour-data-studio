@@ -45,7 +45,7 @@ const AnnotationsPage: React.FC = () => {
   };
 
   return (
-    <div className={`min-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
+    <div className={`max-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
       {/* Sidebar tetap ada */}
       <Sidebar onMenuClick={handleMenuClick} selectedMenu={selectedMenu} menuData={menu} />
 
@@ -140,7 +140,7 @@ export default AnnotationsPage;
 //   };
 
 //   return (
-//     <div className={`min-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
+//     <div className={`max-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
 //       {/* Sidebar tetap ada */}
 //       <Sidebar onMenuClick={setSelectedMenu} selectedMenu={selectedMenu} menuData={menu} />
 
@@ -233,7 +233,7 @@ export default AnnotationsPage;
 //   };
 
 //   return (
-//     <div className={`min-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
+//     <div className={`max-h-screen flex transition-colors ${isDarkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-black"}`}>
 //       {/* Sidebar tetap ada */}
 //       <Sidebar onMenuClick={handleMenuClick} selectedMenu={selectedMenu} menuData={menu} />
 
@@ -328,7 +328,7 @@ export default AnnotationsPage;
 
 //   return (
 //     <div
-//       className={`min-h-screen transition-colors ${
+//       className={`max-h-screen transition-colors ${
 //         isDarkMode
 //           ? "bg-gray-900 text-gray-200"
 //           : "bg-white text-gray-800"

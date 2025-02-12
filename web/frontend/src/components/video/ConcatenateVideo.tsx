@@ -41,7 +41,7 @@ const VideoEditor = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 flex">
+    <div className="max-h-screen bg-gray-100 flex">
       {/* Feature Bar */}
       <div className="w-16 bg-[#1a4f9d] text-white flex flex-col items-center py-4 space-y-6 relative">
         {features.map((feature) => (

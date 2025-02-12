@@ -11,6 +11,7 @@ import { Task, BoundingBox, Annotation } from "./types";
 const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   const { accessToken } = useSelector((state: RootState) => state.auth);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [panelWidth, setPanelWidth] = useState(60);
@@ -33,6 +34,16 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [boundingBoxes, setBoundingBoxes] = useState<BoundingBox[]>([]);
   const [classes, setClasses] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (filteredTasks.length > 0 && !selectedTaskId) {
+      setSelectedTaskId(filteredTasks[0].id);
+    }
+  }, [filteredTasks, selectedTaskId]);
+
+  useEffect(() => {
+    setFilteredTasks(tasks);
+  }, [tasks]);
 
   // Fetch annotation classes
   const fetchClasses = async () => {
@@ -101,6 +112,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
         }));
 
         setTasks(mappedTasks);
+        setFilteredTasks(mappedTasks); // Inisialisasi filteredTasks dengan tasks
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to fetch tasks.");
       } finally {
@@ -111,8 +123,12 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     fetchTasks();
   }, [accessToken]);
 
+  // const selectedTask =
+  //   tasks.find((task) => task.id === selectedTaskId) || tasks[0];
   const selectedTask =
-    tasks.find((task) => task.id === selectedTaskId) || tasks[0];
+    filteredTasks.find((task) => task.id === selectedTaskId) ||
+    filteredTasks[0];
+
   const [selectedColors, setSelectedColors] = useState<Record<string, boolean>>(
     {}
   );
@@ -639,30 +655,25 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     ctx.strokeStyle = isSelected ? "#FF0000" : box.color;
     ctx.lineWidth = isSelected ? 4 : 3;
     ctx.strokeRect(box.x1, box.y1, box.w, box.h);
-  
+
     // Increase label font size
     ctx.font = "bold 20px Arial";
     const textWidth = ctx.measureText(box.label).width;
     const textHeight = 25;
-  
+
     // Draw the label background
     ctx.fillStyle = box.color;
-    ctx.fillRect(
-      box.x1,
-      box.y1 - textHeight - 4,
-      textWidth + 14,
-      textHeight
-    );
-  
+    ctx.fillRect(box.x1, box.y1 - textHeight - 4, textWidth + 14, textHeight);
+
     // Draw the label text
     ctx.fillStyle = "#ffffff";
     ctx.fillText(box.label, box.x1 + 7, box.y1 - 10);
-  
+
     // Draw corner and midpoint resize handles
     const handleSize = 10;
     const handleColor = isSelected ? "#FFFFFF" : "#000000";
     ctx.fillStyle = handleColor;
-  
+
     // Corners
     const corners = [
       { x: box.x1, y: box.y1 }, // Top-left
@@ -670,7 +681,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       { x: box.x1, y: box.y2 }, // Bottom-left
       { x: box.x2, y: box.y2 }, // Bottom-right
     ];
-  
+
     // Midpoints
     const midpoints = [
       { x: (box.x1 + box.x2) / 2, y: box.y1 }, // Top-center
@@ -678,7 +689,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       { x: box.x1, y: (box.y1 + box.y2) / 2 }, // Left-center
       { x: box.x2, y: (box.y1 + box.y2) / 2 }, // Right-center
     ];
-  
+
     // Draw all points
     [...corners, ...midpoints].forEach((point) => {
       ctx.fillRect(
@@ -689,7 +700,6 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       );
     });
   };
-  
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -773,9 +783,9 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   if (!tasks.length) return <p>No tasks available.</p>;
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex max-h-screen">
       <Sidebar
-        tasks={tasks}
+        tasks={filteredTasks}
         selectedTaskId={selectedTaskId}
         setSelectedTaskId={setSelectedTaskId}
         panelWidth={panelWidth}
@@ -788,7 +798,8 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       />
       <MainPanel
         accessToken={accessToken || localStorage.getItem("accessToken") || ""}
-        tasks={tasks}
+        tasks={filteredTasks}
+        filteredTasks={filteredTasks}
         selectedTaskId={selectedTaskId}
         setSelectedTaskId={setSelectedTaskId}
         panelWidth={panelWidth}

@@ -58,7 +58,7 @@ const DataVersionPage: React.FC = () => {
   }, [version, router]);
 
   return (
-    <div className="flex min-h-screen bg-gray-100 p-2">
+    <div className="flex max-h-screen bg-gray-100 p-2">
       {/* Sidebar */}
       <div className="w-1/5 bg-white shadow-md rounded-lg p-2">
         <button

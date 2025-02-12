@@ -1,7 +1,13 @@
-import React, { useState, useRef, forwardRef } from "react";
+import React, { useState, useRef, forwardRef, useCallback } from "react";
 import axios from "axios";
-
-import { ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { SortAscIcon, SortDescIcon } from "lucide-react";
+import {
+  ChevronDownIcon,
+  ChevronUpIcon,
+  PlusIcon,
+  ArrowsUpDownIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
@@ -13,7 +19,7 @@ interface Filter {
   value:
     | string
     | boolean
-    | null // ✅ Tambahkan null agar valid
+    | null
     | { min: string | null; max: string | null }
     | { min: Date | null; max: Date | null };
   logic: string;
@@ -72,6 +78,7 @@ const VALID_OPERATORS: Record<string, string[]> = {
 interface SidebarFiltersProps {
   projectId: number | null;
   setFilteredTasks: (tasks: any[]) => void;
+  setSelectedTaskId: (id: number | null) => void;
   visibleColumns: Record<string, boolean>;
   setVisibleColumns: React.Dispatch<
     React.SetStateAction<Record<string, boolean>>
@@ -81,12 +88,16 @@ interface SidebarFiltersProps {
   tasks: any[];
   accessToken: string | null;
   modelApiUrl: string | null;
+  isFilterPredicting: boolean;
+  setIsFilterPredicting: React.Dispatch<React.SetStateAction<boolean>>;
+  onPredict: () => void;
   onPredictionComplete: () => void;
 }
 
 const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   projectId,
   setFilteredTasks,
+  setSelectedTaskId,
   visibleColumns,
   setVisibleColumns,
   classes,
@@ -94,6 +105,9 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   tasks,
   accessToken,
   modelApiUrl,
+  isFilterPredicting,
+  setIsFilterPredicting,
+  onPredict,
   onPredictionComplete,
 }) => {
   // const [filters, setFilters] = useState<Filter[]>([
@@ -111,10 +125,38 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
   const [filters, setFilters] = useState<Filter[]>([]);
   const [isApplyingFilter, setIsApplyingFilter] = useState(false);
-  const [activeDropdown, setActiveDropdown] = useState<
-    "class" | "filter" | "column" | null
-  >(null);
+  // const [activeDropdown, setActiveDropdown] = useState<
+  //   "class" | "filter" | "column" | null
+  // >(null);
   const taskColumns = tasks.length > 0 ? Object.keys(tasks[0]) : [];
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortColumn, setSortColumn] = useState<string>("id");
+  const [isActionsDropdownOpen, setIsActionsDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<
+    "class" | "filter" | "column" | "actions" | null
+  >(null);
+  const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+
+  // Ambil semua kolom yang ada di visibleColumns (visible & unvisible)
+  const allColumns = Object.keys(visibleColumns);
+
+  const toggleSortOrder = (column: string) => {
+    const newOrder =
+      sortColumn === column && sortOrder === "asc" ? "desc" : "asc";
+    setSortOrder(newOrder);
+    setSortColumn(column);
+
+    // Urutkan data berdasarkan kolom yang dipilih
+    const sortedTasks = [...tasks].sort((a, b) => {
+      if (newOrder === "asc") {
+        return a[column] > b[column] ? 1 : -1;
+      } else {
+        return a[column] < b[column] ? 1 : -1;
+      }
+    });
+
+    setFilteredTasks(sortedTasks);
+  };
 
   const getColumnType = (
     column: string
@@ -228,7 +270,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         break;
       case "datetime":
         defaultOperator = "is before";
-        defaultValue = null; // ✅ Pastikan default untuk datetime adalah null, bukan objek
+        defaultValue = null;
         break;
       default:
         defaultOperator = "contains";
@@ -259,19 +301,39 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     return null;
   };
 
-  const applyFilters = async () => {
+  const applyFilters = useCallback(async () => {
     setIsApplyingFilter(true);
     try {
+      if (filters.length === 0) {
+        // ✅ Jika tidak ada filter, ambil data default dari endpoint utama
+        console.log("No filters applied, fetching default data...");
+        const response = await api.get(
+          `/annotations/upload-data/?project_id=${projectId}`,
+          {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
+
+        if (response.data.data.length === 0) {
+          setFilteredTasks([]); // Jika tidak ada data, kosongkan daftar
+          setSelectedTaskId(null);
+        } else {
+          setFilteredTasks(response.data.data);
+          setSelectedTaskId(response.data.data[0].id); // Pilih ID pertama yang valid
+        }
+        setIsApplyingFilter(false);
+        return;
+      }
+
+      // ✅ Jika ada filter yang diterapkan, buat query string
       const queryString = filters
         .map((filter) => {
           let formattedValue = filter.value;
 
-          // ✅ Jika "is before" atau "is after", hanya gunakan 1 nilai datetime
           if (["is before", "is after"].includes(filter.operator)) {
             formattedValue = formatDate(filter.value);
           }
 
-          // ✅ Jika "is between" atau "not between", pastikan `min` & `max` valid
           if (
             ["is between", "not between"].includes(filter.operator) &&
             typeof filter.value === "object" &&
@@ -281,30 +343,25 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
           ) {
             const minDate = formatDate(filter.value.min);
             const maxDate = formatDate(filter.value.max);
-
-            if (!minDate || !maxDate) return null; // Pastikan min dan max valid
-
+            if (!minDate || !maxDate) return null;
             formattedValue = `${encodeURIComponent(minDate)},${encodeURIComponent(maxDate)}`;
           }
 
-          // ✅ Perbaikan untuk filter boolean ("is")
           if (filter.operator === "is" && typeof filter.value === "boolean") {
-            formattedValue = filter.value ? "true" : "false"; // Gunakan "true" / "false" agar sesuai dengan backend
+            formattedValue = filter.value ? "true" : "false";
           }
 
           return filter.field && filter.operator && formattedValue !== null
             ? `${filter.field}:${filter.operator}:${formattedValue}`
             : null;
         })
-        .filter(Boolean) // Hapus nilai null dari array
+        .filter(Boolean)
         .join("&filters=");
 
       if (!queryString) {
         console.warn("No valid filters applied.");
         return;
       }
-
-      console.log("Applying filters with query:", queryString);
 
       const response = await api.get(
         `/annotations/upload-data/filter-data/?project_id=${projectId}&filters=${queryString}`,
@@ -313,7 +370,13 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         }
       );
 
-      setFilteredTasks(response.data.data);
+      if (response.data.data.length === 0) {
+        setFilteredTasks([]);
+        setSelectedTaskId(null);
+      } else {
+        setFilteredTasks(response.data.data);
+        setSelectedTaskId(response.data.data[0].id);
+      }
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error("Axios Error:", error.response?.data || error.message);
@@ -323,7 +386,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     } finally {
       setIsApplyingFilter(false);
     }
-  };
+  }, [filters, projectId, accessToken, setFilteredTasks, setSelectedTaskId]);
 
   const toggleDropdown = (dropdown: "class" | "filter" | "column") => {
     setActiveDropdown((prev) => (prev === dropdown ? null : dropdown));
@@ -474,19 +537,63 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     <div className="mb-4 relative">
       {/* Filter and Column Toggles */}
       <div className="p-4 flex items-center space-x-4 bg-white shadow-md rounded overflow-x-auto">
+        {/* Sorting Controls */}
+        <div className="flex items-center space-x-0">
+          {" "}
+          <span className="text-gray-700 font-medium">Order</span>
+          {/* Sorting Column Dropdown */}
+          <div className="relative flex items-center border border-gray-300 rounded text-sm font-medium">
+            <button
+              className="flex items-center px-2 py-1"
+              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+            >
+              <span className="text-gray-700">
+                {sortColumn.replace(/_/g, " ").toUpperCase()}
+              </span>
+              <ChevronDownIcon className="h-5 w-5 text-gray-500 ml-1" />
+            </button>
+
+            {/* Sorting Toggle Button (Melekat tanpa jarak) */}
+            <button
+              className="flex items-center px-2 py-1 border border-gray-300 rounded-l-none rounded-r"
+              onClick={() => toggleSortOrder(sortColumn)}
+            >
+              {sortOrder === "asc" ? (
+                <SortAscIcon className="h-5 w-5 text-gray-500" />
+              ) : (
+                <SortDescIcon className="h-5 w-5 text-gray-500" />
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Actions Dropdown */}
+        <div className="relative">
+          <button
+            className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium"
+            onClick={() =>
+              setActiveDropdown(activeDropdown === "actions" ? null : "actions")
+            }
+          >
+            <span className="text-gray-700">{selectedTasks.length}</span>
+            <span className="text-gray-700 ml-1">Task</span>
+            <ChevronDownIcon className="h-5 w-5 ml-2" />
+          </button>
+        </div>
+
         {/* Predict Button */}
         <button
           className={`px-4 py-1 text-sm font-medium rounded ${
-            !modelApiUrl || selectedTasks.length === 0 || isApplyingFilter
+            !modelApiUrl || selectedTasks.length === 0 || isFilterPredicting
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"
           }`}
           disabled={
-            !modelApiUrl || selectedTasks.length === 0 || isApplyingFilter
+            !modelApiUrl || selectedTasks.length === 0 || isFilterPredicting
           }
           onClick={handlePredict}
         >
-          Predict
+          {isFilterPredicting ? "Predicting..." : "Predict"}
         </button>
 
         {/* Class Dropdown */}
@@ -522,6 +629,54 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
           />
         </button>
       </div>
+
+      {/* Dropdown List of Sorting Column*/}
+      {isSortDropdownOpen && (
+        <div className="absolute left-0 mt-1 bg-white border border-gray-300 shadow-lg rounded-md w-48 z-50 max-h-60 overflow-y-auto">
+          {allColumns.map((column) => (
+            <button
+              key={column}
+              className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100"
+              onClick={() => {
+                setSortColumn(column);
+                setIsSortDropdownOpen(false);
+              }}
+            >
+              {column.replace(/_/g, " ").toUpperCase()}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Dropdown Actions */}
+      {activeDropdown === "actions" && (
+        <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-72 p-4 max-h-96 overflow-y-auto">
+          <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100">
+            Retrieve Predictions
+          </button>
+          <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100">
+            Create Annotations from Predictions
+          </button>
+          <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100">
+            Remove Duplicated Tasks
+          </button>
+          <hr className="my-1" />
+
+          {/* Delete Options with Trash Icon */}
+          <button className="flex items-center w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-100">
+            <TrashIcon className="h-5 w-5 text-red-600 mr-2" />
+            Delete Tasks
+          </button>
+          <button className="flex items-center w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-100">
+            <TrashIcon className="h-5 w-5 text-red-600 mr-2" />
+            Delete Annotations
+          </button>
+          <button className="flex items-center w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-100">
+            <TrashIcon className="h-5 w-5 text-red-600 mr-2" />
+            Delete Predictions
+          </button>
+        </div>
+      )}
 
       {/* Class Dropdown Content */}
       {activeDropdown === "class" && (
@@ -879,261 +1034,5 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     </div>
   );
 };
+
 export default SidebarFilters;
-
-//     <div className="mb-4 relative">
-//       {/* Filter and Column Toggles */}
-//       <div className="p-4 flex items-center space-x-4 bg-white shadow-md rounded overflow-x-auto">
-//         {/* Predict Button */}
-//         <button
-//           className={`px-4 py-1 text-sm font-medium rounded ${
-//             isPredictDisabled || isPredicting
-//               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-//               : "bg-blue-500 text-white hover:bg-blue-600 focus:ring-2 focus:ring-blue-400"
-//           }`}
-//           disabled={isPredictDisabled || isPredicting}
-//           onClick={handlePredict}
-//         >
-//           {isPredicting ? "Processing..." : "Predict"}
-//         </button>
-
-//         {/* Class Dropdown */}
-//         <button
-//           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
-//           onClick={() => setIsClassDropdownOpen((prev) => !prev)}
-//         >
-//           <span className="text-gray-700">Class</span>
-//           <ChevronDownIcon
-//             className={`h-5 w-5 ml-2 transform transition-transform ${
-//               isClassDropdownOpen ? "rotate-180" : ""
-//             }`}
-//           />
-//         </button>
-
-// {/* Filter Button */}
-// <button
-//   className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium"
-//   onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
-// >
-//   <span className="text-gray-700">Filters</span>
-//   <ChevronDownIcon
-//     className={`h-5 w-5 ml-2 ${isFilterDropdownOpen ? "rotate-180" : ""}`}
-//   />
-// </button>
-
-//         {/* Filter Button */}
-//         {/* <button
-//           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
-//           onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
-//         >
-//           <span className="text-gray-700">Filter</span>
-//           <ChevronDownIcon
-//             className={`h-5 w-5 ml-2 transform transition-transform ${
-//               isFilterDropdownOpen ? "rotate-180" : ""
-//             }`}
-//           />
-//         </button> */}
-
-//         {/* Columns Button */}
-//         <button
-//           className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
-//           onClick={() => setIsColumnDropdownOpen((prev) => !prev)}
-//         >
-//           <span className="text-gray-700">Columns</span>
-//           <ChevronDownIcon
-//             className={`h-5 w-5 ml-2 transform transition-transform ${
-//               isColumnDropdownOpen ? "rotate-180" : ""
-//             }`}
-//           />
-//         </button>
-//       </div>
-
-//       {/* Filters Dropdown */}
-//       {isFilterDropdownOpen && (
-//         <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-full p-4">
-//           <button
-//             className="flex items-center bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm font-medium"
-//             onClick={addFilter}
-//           >
-//             <PlusIcon className="h-4 w-4 text-gray-700 mr-1" />
-//             Add Filter
-//           </button>
-
-//           {filters.map((filter, index) => {
-//             const columnType = getColumnType(filter.field);
-//             const availableOperators = VALID_OPERATORS[columnType] || [];
-
-//             return (
-//               <div
-//                 key={index}
-//                 className="grid grid-cols-[auto_100px_100px_auto_30px] gap-2 items-center mt-2"
-//               >
-//                 <select
-//                   className="border border-gray-300 rounded px-2 py-1 text-sm"
-//                   value={filter.field}
-//                   onChange={(e) =>
-//                     handleFilterChange(index, "field", e.target.value)
-//                   }
-//                 >
-//                   <option value="" disabled>
-//                     Select Field
-//                   </option>
-//                   {taskColumns.map((column) => (
-//                     <option key={column} value={column}>
-//                       {column.replace(/_/g, " ").toUpperCase()}
-//                     </option>
-//                   ))}
-//                 </select>
-
-//                 <select
-//                   className="border border-gray-300 rounded px-2 py-1 text-sm"
-//                   value={filter.operator}
-//                   onChange={(e) =>
-//                     handleFilterChange(index, "operator", e.target.value)
-//                   }
-//                 >
-//                   {availableOperators.map((op) => (
-//                     <option key={op} value={op}>
-//                       {op}
-//                     </option>
-//                   ))}
-//                 </select>
-
-//                 {["is between", "not between"].includes(filter.operator) ? (
-//                   <>
-//                     <input
-//                       type="text"
-//                       className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
-//                       placeholder="Min"
-//                       onChange={(e) =>
-//                         handleFilterChange(index, "value", {
-//                           ...(filter.value as any),
-//                           min: e.target.value,
-//                         })
-//                       }
-//                     />
-//                     <input
-//                       type="text"
-//                       className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
-//                       placeholder="Max"
-//                       onChange={(e) =>
-//                         handleFilterChange(index, "value", {
-//                           ...(filter.value as any),
-//                           max: e.target.value,
-//                         })
-//                       }
-//                     />
-//                   </>
-//                 ) : columnType === "datetime" ? (
-//                   <DatePicker
-//                     selected={parseDate(filter.value as string)}
-//                     onChange={(date) =>
-//                       handleFilterChange(index, "value", date)
-//                     }
-//                     customInput={<CustomDateInput />}
-//                     dateFormat="yyyy-MM-dd HH:mm"
-//                     showTimeSelect
-//                   />
-//                 ) : columnType === "bool" ? (
-//                   <select
-//                     className="border border-gray-300 rounded px-2 py-1 text-sm"
-//                     onChange={(e) =>
-//                       handleFilterChange(index, "value", e.target.value)
-//                     }
-//                   >
-//                     <option value="Yes">Yes</option>
-//                     <option value="No">No</option>
-//                   </select>
-//                 ) : (
-//                   <input
-//                     type="text"
-//                     className="border border-gray-300 rounded px-2 py-1 text-sm w-full"
-//                     onChange={(e) =>
-//                       handleFilterChange(index, "value", e.target.value)
-//                     }
-//                   />
-//                 )}
-//               </div>
-//             );
-//           })}
-//         </div>
-//       )}
-
-//       {/* Column Visibility Dropdown */}
-//       {isColumnDropdownOpen && (
-//         <div className="absolute top-20 left-0 bg-white border border-gray-300 shadow-md rounded z-50 p-4">
-//           {Object.entries(visibleColumns).map(([key, visible]) => (
-//             <div key={key} className="flex items-center mb-2">
-//               <input
-//                 type="checkbox"
-//                 className="form-checkbox h-4 w-4 mr-2"
-//                 checked={visible}
-//                 onChange={() =>
-//                   toggleColumnVisibility(key as keyof typeof visibleColumns)
-//                 }
-//               />
-//               <label
-//                 htmlFor={key}
-//                 className="text-sm text-gray-700 cursor-pointer"
-//               >
-//                 {key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, " ")}
-//               </label>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-
-//       {/* Class Selection Dropdown */}
-//       {isClassDropdownOpen && (
-//         <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 p-4 w-72 max-h-96 overflow-y-auto">
-//           <input
-//             type="text"
-//             placeholder="Search..."
-//             className="w-full px-4 py-2 mb-3 border border-gray-300 rounded text-sm"
-//             value={searchQuery}
-//             onChange={(e) => setSearchQuery(e.target.value)}
-//           />
-//           {filteredClasses.map((cls) => (
-//             <div
-//               key={cls.id}
-//               className="flex items-center cursor-pointer py-2 hover:bg-gray-100"
-//               onClick={() => toggleClassSelection(cls.name)}
-//             >
-//               <input
-//                 type="checkbox"
-//                 checked={selectedClasses[cls.name]}
-//                 onChange={() => toggleClassSelection(cls.name)}
-//                 className="hidden peer"
-//               />
-//               <label
-//                 className={`relative mr-3 flex items-center justify-center w-5 h-5 rounded overflow-hidden border ${
-//                   selectedClasses[cls.name]
-//                     ? "bg-blue-600"
-//                     : "bg-white border-gray-300"
-//                 }`}
-//               >
-//                 {selectedClasses[cls.name] && (
-//                   <svg
-//                     xmlns="http://www.w3.org/2000/svg"
-//                     className="w-4 h-4 text-white"
-//                     viewBox="0 0 24 24"
-//                   >
-//                     <path
-//                       fill="currentColor"
-//                       d="M20.292 5.293a1 1 0 0 1 1.416 1.414l-12 12a1 1 0 0 1-1.414 0l-6-6a 1 1 0 0 1 1.414-1.414L9 16.586l11.292-11.293z"
-//                     />
-//                   </svg>
-//                 )}
-//               </label>
-//               <div
-//                 className="w-4 h-4 rounded-full mr-2"
-//                 style={{ backgroundColor: cls.color }}
-//               ></div>
-//               <span className="text-sm text-gray-700">{cls.name}</span>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// };

@@ -174,7 +174,7 @@ const RawVersionPage: React.FC<RawVersionPageProps> = ({
   };
 
   return (
-    <div className="flex-1 flex-col min-h-screen bg-gray-100 px-2">
+    <div className="flex-1 flex-col max-h-screen bg-gray-100 px-2">
       {/* Main Panel */}
       <div className="bg-white rounded-md shadow p-6 flex-grow">
         {/* Dataset Header */}

@@ -47,8 +47,10 @@ VALUES
     (10, 'JSON Editor', 'JSON Editor tool for various tasks.', TRUE, NULL, 'https://www.svgrepo.com/show/349117/json.svg', 1, NULL, NOW(), NOW()),
     (11, 'Image Color Picker', 'Image Color Picker tool for various tasks.', TRUE, NULL, 'https://www.svgrepo.com/show/419889/color-picker.svg', 1, NULL, NOW(), NOW()),
     (12, 'Regex Editor', 'Regex Editor tool for various tasks.', TRUE, NULL, 'https://www.svgrepo.com/show/203836/regex.svg', 1, NULL, NOW(), NOW()),
-    (13, 'Cryptography Generator', 'Cryptography Generator tool for various tasks.', TRUE, NULL, 'https://www.svgrepo.com/show/407117/cryptography.svg', 1, NULL, NOW(), NOW());
-
+    (13, 'Cryptography Generator', 'Cryptography Generator tool for various tasks.', TRUE, NULL, 'https://www.svgrepo.com/show/407117/cryptography.svg', 1, NULL, NOW(), NOW()),
+    (14, 'Data Visualization', 'Data Visualization tool for various tasks.', TRUE, NULL, 'https://www.svgrepo.com/show/526885/chart-2.svg', 1, NULL, NOW(), NOW()),
+    (15, 'Data Scraper', 'A web scraping tool for extracting structured data from web pages.', TRUE, NULL, 'https://www.svgrepo.com/show/310722/web-scraping.svg', 1, NULL, NOW(), NOW()),
+    (16, 'Geospatial Data Editor', 'Tools for analyzing, visualizing, and editing geospatial data.', TRUE, NULL, 'https://www.svgrepo.com/show/310733/map.svg', 1, NULL, NOW(), NOW());
 
 UPDATE menu_tbl 
 SET logo_url = CASE 
@@ -88,14 +90,25 @@ SET logo_url = CASE
 </svg>'
     WHEN name = 'Regex Editor' THEN '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="m6.75 7.5 3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0 0 21 18V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v12a2.25 2.25 0 0 0 2.25 2.25Z" />
-</svg>
-'
+</svg>'
     WHEN name = 'Cryptography Generator' THEN '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
-</svg>
-'
+</svg>'
     ELSE logo_url
 END;
+
+UPDATE menu_tbl
+SET logo_url = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" /></svg>'
+WHERE name = 'Data Visualization';
+
+UPDATE menu_tbl
+SET logo_url = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 9.75h15m-15 4.5h15m-15 0H3.75m15.75 0h.75M3 6h18m-15 4.5H2.25m15.75 0H21m-18 0v7.5m15-7.5v7.5" /></svg>'
+WHERE name = 'Data Scraper';
+
+UPDATE menu_tbl
+SET logo_url = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15.75A6.75 6.75 0 1 1 15.75 8.25m-7.5 7.5L2.25 21 8.25 15.75Zm7.5 0c-1.992 1.992-5.232 1.992-7.224 0" /></svg>'
+WHERE name = 'Geospatial Data Editor';
+
 
 
 --UPDATE menu_tbl 
