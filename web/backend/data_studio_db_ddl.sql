@@ -52,6 +52,8 @@ VALUES
     (15, 'Data Scraper', 'A web scraping tool for extracting structured data from web pages.', TRUE, NULL, 'https://www.svgrepo.com/show/310722/web-scraping.svg', 1, NULL, NOW(), NOW()),
     (16, 'Geospatial Data Editor', 'Tools for analyzing, visualizing, and editing geospatial data.', TRUE, NULL, 'https://www.svgrepo.com/show/310733/map.svg', 1, NULL, NOW(), NOW());
 
+d
+
 UPDATE menu_tbl 
 SET logo_url = CASE 
     WHEN name = 'Annotations' THEN '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
@@ -109,6 +111,13 @@ UPDATE menu_tbl
 SET logo_url = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15.75A6.75 6.75 0 1 1 15.75 8.25m-7.5 7.5L2.25 21 8.25 15.75Zm7.5 0c-1.992 1.992-5.232 1.992-7.224 0" /></svg>'
 WHERE name = 'Geospatial Data Editor';
 
+UPDATE menu_tbl
+SET logo_url = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M3 9h18M9 21V9m6 12v-6" /></svg>'
+WHERE name = 'Statistical Analysis';
+
+UPDATE menu_tbl
+SET logo_url = '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 6.75h10.5v10.5H6.75zM9 3h6m4.5 2.25L20.25 3m-16.5 16.5l1.5 1.5M3 9h3m3.75 8.25H9" /></svg>'
+WHERE name = 'Algorithm Explanation';
 
 
 --UPDATE menu_tbl 

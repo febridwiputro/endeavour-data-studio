@@ -2,6 +2,11 @@ import React, { useState } from "react";
 import { FaImage, FaExpandAlt, FaTimes } from "react-icons/fa";
 import { templates } from "./data";
 
+interface ChartsPageProps {
+    onSelectTemplate: (template: any) => void;
+    onClose: () => void;
+  }
+
 const typeTags = [
   "All",
   "3D",
@@ -37,7 +42,8 @@ const purposeTags = [
   "Ranking",
 ];
 
-const DataVisualizationPage: React.FC = () => {
+const ChartsPage: React.FC<ChartsPageProps> = ({ onSelectTemplate, onClose }) => {
+    // const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<"Categories" | "Type">(
     "Categories"
   );
@@ -97,7 +103,7 @@ const DataVisualizationPage: React.FC = () => {
     <div className="max-h-screen bg-gray-100 p-0">
       {/* Header */}
       <header className="mb-6 p-0 bg-white shadow">
-        <h1 className="text-2xl font-bold text-gray-800">Data Visualization</h1>
+        <h1 className="text-2xl font-bold text-gray-800">Choose a Chart Template</h1>
         <p className="text-gray-600">
           Choose a template to start your visualization.
         </p>
@@ -483,4 +489,4 @@ const DataVisualizationPage: React.FC = () => {
   );
 };
 
-export default DataVisualizationPage;
+export default ChartsPage;

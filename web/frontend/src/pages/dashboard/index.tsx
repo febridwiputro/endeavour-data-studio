@@ -1,24 +1,6 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import AnnotationsPage from "../annotations";
-import DataVisualization from "../data-visualization";
-import Dashboard from "../data-visualization/dashboard4";
-import CompressImagesInFolder from "@/components/images/CompressImagesInFolder";
-import VideoEditor from "@/components/video/VideoEditorPage";
-import ImageColorPickerPage from "../image-color-picker";
-import ImageEditorPage from "../images-editor";
-import DocumentEditorPage from "../document-editor";
-import AudioEditorPage from "../audio-editor";
-import TextEditorPage from "../text-editor";
-import NumericDataEditorPage from "../numeric-data-editor";
-import RegexEditorPage from "../regex-editor";
-import JsonEditorPage from "../json-editor";
-import URLExtractorPage from "../url-extractor";
-import DatasetSplitPage from "../dataset-split";
-import CryptographyGeneratorPage from "../cryptography-generator";
-import DataScraperPage from "../data-scraper";
-import GeospatialDataEditorPage from "../geospatial-data-editor";
 
 interface DashboardPageProps {
   onMenuClick: (menuName: string) => void;

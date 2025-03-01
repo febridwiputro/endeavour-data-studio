@@ -64,9 +64,13 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
     },
   ];
 
-  const getButtonClass = (item: string) =>
+  const getButtonClass = (item: { name: string }) =>
     `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all w-[95%]
-    ${activePage === item ? "bg-transparent text-[#1a4f9d] font-semibold border border-[#1a4f9d] px-2" : "text-gray-700"} 
+    ${
+      activePage === item.name
+        ? "bg-blue-100 text-[#1a4f9d] font-semibold px-2"
+        : "text-gray-700"
+    }
     hover:bg-[#e6f0ff] hover:text-[#1a4f9d] hover:shadow-md hover:pl-2`;
 
   return (
@@ -121,7 +125,9 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
             <h1 className="text-base font-semibold text-gray-800">
               {selectedAnnotation?.name || "Project Name"}
             </h1>
-            <p className="text-sm text-gray-500">{selectedAnnotation?.sub_feature_2_name || "-"}</p>
+            <p className="text-sm text-gray-500">
+              {selectedAnnotation?.sub_feature_2_name || "-"}
+            </p>
           </div>
         )}
       </div>
@@ -146,9 +152,11 @@ const SidebarAnnotationProject: React.FC<SidebarProps> = ({
             {section.items.map((item) => (
               <li key={item.name}>
                 <button
-                  className={`${getButtonClass(
-                    item.name
-                  )} ${isMinimized ? "justify-center flex-col h-10 w-10 mx-auto" : "justify-start flex-row"} flex items-center`}
+                  className={`${getButtonClass(item)} ${
+                    isMinimized
+                      ? "justify-center flex-col h-10 w-10 mx-auto"
+                      : "justify-start flex-row"
+                  } flex items-center`}
                   onClick={() => setActivePage(item.name)}
                   title={isMinimized ? item.name : undefined}
                 >

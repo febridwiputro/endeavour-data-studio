@@ -12,6 +12,7 @@ from fastapi import (
     status,
 )
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import func, or_, and_
 from app.config.database import get_db
 from app.models.menu.annotations.annotation_project_data_model import (
@@ -25,6 +26,10 @@ from app.models.menu.annotations.annotate_result_model import (
 )
 from app.models.menu.annotations.annotation_project_model import AnnotationProjectModel
 from app.models.menu.annotations.annotate_result_model import ImageAnnotationResultModel
+from app.schemas.annotations.dataset.delete_annotations_schema import (
+    DeleteAnnotationsRequest,
+    DeleteTasksRequest,
+)
 from datetime import datetime
 import shutil
 import uuid
@@ -41,14 +46,13 @@ import mutagen
 from langdetect import detect
 import requests
 
-# Create or ensure the folder exists
+
 OUTPUT_FOLDER = "static/image_output"
 os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 jwt_bearer = JWTBearer()
 router = APIRouter()
 
-# ✅ Fixed Operator Mapping (Added 'is before' and 'is after')
 OPERATOR_MAP = {
     "=": lambda col, val: col == val,
     "!=": lambda col, val: col != val,
@@ -56,8 +60,8 @@ OPERATOR_MAP = {
     ">": lambda col, val: col > val,
     "<=": lambda col, val: col <= val,
     ">=": lambda col, val: col >= val,
-    "is before": lambda col, val: col < val,  # ✅ Fixed (Added)
-    "is after": lambda col, val: col > val,  # ✅ Fixed (Added)
+    "is before": lambda col, val: col < val,
+    "is after": lambda col, val: col > val,
     "is between": lambda col, vals: col.between(vals["min"], vals["max"]),
     "not between": lambda col, vals: ~col.between(vals["min"], vals["max"]),
     "is empty": lambda col, _: col.is_(None),
@@ -66,12 +70,9 @@ OPERATOR_MAP = {
     "regex": lambda col, val: col.op("~")(val),
     "equal": lambda col, val: col == val,
     "not equal": lambda col, val: col != val,
-    "is": lambda col, val: (
-        col.is_(val) if isinstance(val, bool) else col == val
-    ),  # ✅ Fixed Boolean Handling
+    "is": lambda col, val: (col.is_(val) if isinstance(val, bool) else col == val),
 }
 
-# ✅ Fixed Column Type Mapping
 COLUMN_TYPES = {
     "id": "int",
     "file_url": "string",
@@ -79,7 +80,7 @@ COLUMN_TYPES = {
     "data_type": "string",
     "completed": "bool",
     "avg_confidence_score": "float",
-    "is_annotated": "bool",  # ✅ Boolean Fixed
+    "is_annotated": "bool",
     "created_at": "datetime",
     "updated_at": "datetime",
     "width": "int",
@@ -91,6 +92,140 @@ COLUMN_TYPES = {
     "confidence_score": "float",
     "label": "string",
 }
+
+
+@router.delete("/delete-tasks/", summary="Delete selected tasks")
+def delete_tasks(
+    request: DeleteTasksRequest,
+    payload: dict = Depends(jwt_bearer),
+    db: Session = Depends(get_db),
+):
+    """
+    Deletes selected tasks based on provided task IDs and project ID, ensuring foreign key constraints are handled.
+
+    Args:
+        request (DeleteTasksRequest): Request body containing project_id and task_ids.
+        payload (dict): JWT payload for authentication.
+        db (Session): Database session.
+
+    Returns:
+        Standard response with success or failure message.
+    """
+    if not request.task_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No task IDs provided."
+        )
+
+    user_id = payload.get("id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token.",
+        )
+
+    try:
+        # ✅ 1. Delete related annotations first (Fix: Removed `project_id` reference)
+        db.query(ImageAnnotationResultModel).filter(
+            ImageAnnotationResultModel.data_id.in_(request.task_ids)
+        ).delete(synchronize_session=False)
+
+        # ✅ 2. Delete related metadata (e.g., Image Metadata)
+        db.query(ImageMetadataModel).filter(
+            ImageMetadataModel.data_id.in_(request.task_ids),
+        ).delete(synchronize_session=False)
+
+        # ✅ 3. Now delete the main task records
+        deleted_count = (
+            db.query(AnnotationProjectDataModel)
+            .filter(
+                AnnotationProjectDataModel.id.in_(request.task_ids),
+                AnnotationProjectDataModel.project_id == request.project_id,
+            )
+            .delete(synchronize_session=False)
+        )
+
+        db.commit()
+
+        if deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No matching tasks found to delete.",
+            )
+
+        return standard_response(
+            status="success",
+            status_code=status.HTTP_200_OK,
+            message_code="TASKS_DELETED_SUCCESSFULLY",
+            data={"deleted_count": deleted_count},
+        )
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}",
+        )
+
+
+@router.delete("/delete-annotations/", summary="Delete annotations for selected tasks")
+def delete_annotations(
+    request: DeleteAnnotationsRequest,
+    payload: dict = Depends(jwt_bearer),
+    db: Session = Depends(get_db),
+):
+    """
+    Deletes annotations linked to the provided task IDs and project ID.
+
+    Args:
+        request (DeleteAnnotationsRequest): Request body containing project_id and task_ids.
+        payload (dict): JWT payload for authentication.
+        db (Session): Database session.
+
+    Returns:
+        Standard response with success or failure message.
+    """
+    if not request.task_ids:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="No task IDs provided."
+        )
+
+    user_id = payload.get("id")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token.",
+        )
+
+    try:
+        # ✅ Fix: Removed `project_id`, use `data_id`
+        deleted_count = (
+            db.query(ImageAnnotationResultModel)
+            .filter(ImageAnnotationResultModel.data_id.in_(request.task_ids))
+            .delete(synchronize_session=False)
+        )
+
+        db.commit()
+
+        if deleted_count == 0:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No annotations found to delete.",
+            )
+
+        return standard_response(
+            status="success",
+            status_code=status.HTTP_200_OK,
+            message_code="ANNOTATIONS_DELETED_SUCCESSFULLY",
+            data={"deleted_count": deleted_count},
+        )
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Database error: {str(e)}",
+        )
+
 
 @router.get("/filter-data/", summary="Filter project data")
 def filter_project_data(

@@ -1,4 +1,10 @@
-import React, { useState, useRef, forwardRef, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  forwardRef,
+  useEffect,
+  useCallback,
+} from "react";
 import axios from "axios";
 import { SortAscIcon, SortDescIcon } from "lucide-react";
 import {
@@ -12,6 +18,8 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import moment from "moment";
 import { api } from "@/services/apiConfig";
+import AlertBase from "@/components/base/AlertBase";
+import ModalBase from "@/components/base/ModalBaseV2";
 
 interface Filter {
   field: string;
@@ -85,6 +93,7 @@ interface SidebarFiltersProps {
   >;
   classes: { id: string; color: string; name: string }[];
   selectedTasks: number[];
+  setSelectedTasks: (tasks: any[]) => void;
   tasks: any[];
   accessToken: string | null;
   modelApiUrl: string | null;
@@ -102,6 +111,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   setVisibleColumns,
   classes,
   selectedTasks,
+  setSelectedTasks,
   tasks,
   accessToken,
   modelApiUrl,
@@ -110,9 +120,6 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
   onPredict,
   onPredictionComplete,
 }) => {
-  // const [filters, setFilters] = useState<Filter[]>([
-  //   { field: "image", operator: "contains", value: "", logic: "and" },
-  // ]);
   const imageRef = useRef<HTMLImageElement>(null);
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [isColumnDropdownOpen, setIsColumnDropdownOpen] = useState(false);
@@ -125,17 +132,26 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
 
   const [filters, setFilters] = useState<Filter[]>([]);
   const [isApplyingFilter, setIsApplyingFilter] = useState(false);
-  // const [activeDropdown, setActiveDropdown] = useState<
-  //   "class" | "filter" | "column" | null
-  // >(null);
   const taskColumns = tasks.length > 0 ? Object.keys(tasks[0]) : [];
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [sortColumn, setSortColumn] = useState<string>("id");
   const [isActionsDropdownOpen, setIsActionsDropdownOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<
-    "class" | "filter" | "column" | "actions" | null
+    "class" | "filter" | "column" | "actions" | "sorts" | null
   >(null);
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
+
+  const [showAlert, setShowAlert] = useState(false);
+  const [alertMessage, setAlertMessage] = useState("");
+  const [alertType, setAlertType] = useState<
+    "success" | "error" | "warning" | "info"
+  >("success");
+
+  const [showModal, setShowModal] = useState(false);
+  const [modalMessage, setModalMessage] = useState("");
+  const [onConfirmAction, setOnConfirmAction] = useState<(() => void) | null>(
+    null
+  );
 
   // Ambil semua kolom yang ada di visibleColumns (visible & unvisible)
   const allColumns = Object.keys(visibleColumns);
@@ -177,7 +193,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
         return "datetime";
       return "string";
     }
-    return "string"; // Default fallback
+    return "string";
   };
 
   const CustomDateInput = forwardRef<
@@ -197,9 +213,9 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     setFilters([
       ...filters,
       {
-        field: "", // Field kosong menunggu user memilih kolom
-        operator: "", // Operator akan dipilih berdasarkan kolom
-        value: "", // Default kosong, akan diatur berdasarkan tipe data
+        field: "",
+        operator: "",
+        value: "",
         logic: "and",
       },
     ]);
@@ -301,31 +317,122 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     return null;
   };
 
+  // Function to show alert
+  const triggerAlert = (type: "success" | "error", message: string) => {
+    setAlertType(type);
+    setAlertMessage(message);
+    setShowAlert(true);
+  };
+
+  // Open confirmation modal
+  const openConfirmModal = (message: string, action: () => void) => {
+    setModalMessage(message);
+    setOnConfirmAction(() => action);
+    setShowModal(true);
+  };
+
+  // Close confirmation modal
+  const closeModal = () => {
+    setShowModal(false);
+    setOnConfirmAction(null);
+  };
+
+  useEffect(() => {
+    setFilteredTasks(tasks);
+  }, [tasks]);
+
+  // Delete selected tasks
+  const handleDeleteTasks = async () => {
+    if (!projectId || selectedTasks.length === 0) return;
+
+    try {
+      const response = await api.delete(
+        "/annotations/upload-data/delete-tasks/",
+        {
+          data: { project_id: projectId, task_ids: selectedTasks },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (response.status === 200) {
+        triggerAlert("success", "Tasks deleted successfully!");
+        setSelectedTasks([]);
+
+        // Refresh the tasks list after deletion
+        applyFilters();
+      } else {
+        triggerAlert(
+          "error",
+          response.data.detail || "Failed to delete tasks."
+        );
+      }
+    } catch (error) {
+      triggerAlert("error", "An error occurred while deleting tasks.");
+      console.error("Error deleting tasks:", error);
+    }
+  };
+
+  // Delete selected annotations
+  const handleDeleteAnnotations = async () => {
+    if (!projectId || selectedTasks.length === 0) return;
+
+    try {
+      const response = await api.delete(
+        "/annotations/upload-data/delete-annotations/",
+        {
+          data: { project_id: projectId, task_ids: selectedTasks },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+
+      if (response.status === 200) {
+        triggerAlert("success", "Annotations deleted successfully!");
+        setSelectedTasks([]);
+
+        // ✅ Refresh the tasks list after deletion
+        applyFilters();
+      } else {
+        triggerAlert(
+          "error",
+          response.data.detail || "Failed to delete annotations."
+        );
+      }
+    } catch (error) {
+      triggerAlert("error", "An error occurred while deleting annotations.");
+      console.error("Error deleting annotations:", error);
+    }
+  };
+
   const applyFilters = useCallback(async () => {
     setIsApplyingFilter(true);
     try {
       if (filters.length === 0) {
-        // ✅ Jika tidak ada filter, ambil data default dari endpoint utama
-        console.log("No filters applied, fetching default data...");
+        // const response = await api.get(
+        //   `/annotations/upload-data/?project_id=${projectId}`,
+        //   {
+        //     headers: { Authorization: `Bearer ${accessToken}` },
+        //   }
+        // );
+
         const response = await api.get(
-          `/annotations/upload-data/?project_id=${projectId}`,
+          `/annotations/upload-data/${projectId}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
-        );
+        );        
 
         if (response.data.data.length === 0) {
-          setFilteredTasks([]); // Jika tidak ada data, kosongkan daftar
+          setFilteredTasks([]);
           setSelectedTaskId(null);
         } else {
           setFilteredTasks(response.data.data);
-          setSelectedTaskId(response.data.data[0].id); // Pilih ID pertama yang valid
+          setSelectedTaskId(response.data.data[0].id);
         }
         setIsApplyingFilter(false);
         return;
       }
 
-      // ✅ Jika ada filter yang diterapkan, buat query string
+      // Jika ada filter yang diterapkan, buat query string
       const queryString = filters
         .map((filter) => {
           let formattedValue = filter.value;
@@ -388,7 +495,9 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     }
   }, [filters, projectId, accessToken, setFilteredTasks, setSelectedTaskId]);
 
-  const toggleDropdown = (dropdown: "class" | "filter" | "column") => {
+  const toggleDropdown = (
+    dropdown: "actions" | "sorts" | "class" | "filter" | "column"
+  ) => {
     setActiveDropdown((prev) => (prev === dropdown ? null : dropdown));
   };
 
@@ -537,36 +646,6 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
     <div className="mb-4 relative">
       {/* Filter and Column Toggles */}
       <div className="p-4 flex items-center space-x-4 bg-white shadow-md rounded overflow-x-auto">
-        {/* Sorting Controls */}
-        <div className="flex items-center space-x-0">
-          {" "}
-          <span className="text-gray-700 font-medium">Order</span>
-          {/* Sorting Column Dropdown */}
-          <div className="relative flex items-center border border-gray-300 rounded text-sm font-medium">
-            <button
-              className="flex items-center px-2 py-1"
-              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-            >
-              <span className="text-gray-700">
-                {sortColumn.replace(/_/g, " ").toUpperCase()}
-              </span>
-              <ChevronDownIcon className="h-5 w-5 text-gray-500 ml-1" />
-            </button>
-
-            {/* Sorting Toggle Button (Melekat tanpa jarak) */}
-            <button
-              className="flex items-center px-2 py-1 border border-gray-300 rounded-l-none rounded-r"
-              onClick={() => toggleSortOrder(sortColumn)}
-            >
-              {sortOrder === "asc" ? (
-                <SortAscIcon className="h-5 w-5 text-gray-500" />
-              ) : (
-                <SortDescIcon className="h-5 w-5 text-gray-500" />
-              )}
-            </button>
-          </div>
-        </div>
-
         {/* Actions Dropdown */}
         <div className="relative">
           <button
@@ -577,8 +656,63 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
           >
             <span className="text-gray-700">{selectedTasks.length}</span>
             <span className="text-gray-700 ml-1">Task</span>
-            <ChevronDownIcon className="h-5 w-5 ml-2" />
+            <ChevronDownIcon
+              className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "actions" ? "rotate-180" : ""}`}
+            />
           </button>
+        </div>
+
+        {/* Columns Button */}
+        <button
+          className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
+          onClick={() => toggleDropdown("column")}
+        >
+          <span className="text-gray-700">Columns</span>
+          <ChevronDownIcon
+            className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "column" ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {/* Filter Button */}
+        <button
+          className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium"
+          onClick={() => toggleDropdown("filter")}
+        >
+          <span className="text-gray-700">Filters</span>
+          <ChevronDownIcon
+            className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "filter" ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {/* Sorting Controls */}
+        <div className="flex items-center space-x-0">
+          {" "}
+          <span className="text-gray-700 text-sm">Order </span>
+          {/* Sorting Column Dropdown */}
+          <div className="relative flex items-center border border-gray-300 rounded text-sm font-medium">
+            <button
+              className="flex items-center px-2 py-1"
+              onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+            >
+              <span className="text-gray-700 text-xs">
+                {sortColumn.replace(/_/g, " ").toUpperCase()}
+              </span>
+              <ChevronDownIcon
+                className={`h-4 w-4 ml-1 transform transition-transform ${activeDropdown === "sorts" ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            <button
+              className="flex items-center px-2 py-1 border border-gray-300 rounded-l-none rounded-r"
+              onClick={() => toggleSortOrder(sortColumn)}
+            >
+              {sortOrder === "asc" ? (
+                <SortAscIcon className="h-4 w-4 text-gray-500" />
+              ) : (
+                <SortDescIcon className="h-4 w-4 text-gray-500" />
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Predict Button */}
@@ -606,28 +740,6 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
             className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "class" ? "rotate-180" : ""}`}
           />
         </button>
-
-        {/* Filter Button */}
-        <button
-          className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium"
-          onClick={() => toggleDropdown("filter")}
-        >
-          <span className="text-gray-700">Filters</span>
-          <ChevronDownIcon
-            className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "filter" ? "rotate-180" : ""}`}
-          />
-        </button>
-
-        {/* Columns Button */}
-        <button
-          className="flex items-center bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded text-sm font-medium focus:outline-none"
-          onClick={() => toggleDropdown("column")}
-        >
-          <span className="text-gray-700">Columns</span>
-          <ChevronDownIcon
-            className={`h-5 w-5 ml-2 transform transition-transform ${activeDropdown === "column" ? "rotate-180" : ""}`}
-          />
-        </button>
       </div>
 
       {/* Dropdown List of Sorting Column*/}
@@ -651,28 +763,118 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
       {/* Dropdown Actions */}
       {activeDropdown === "actions" && (
         <div className="absolute top-12 left-0 bg-white border border-gray-300 shadow-lg rounded-md z-50 w-72 p-4 max-h-96 overflow-y-auto">
-          <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100">
+          {/* Retrieve Predictions */}
+          <button
+            className={`block w-full text-left px-3 py-2 text-sm ${
+              selectedTasks.length > 0
+                ? "hover:bg-gray-100 text-gray-700"
+                : "cursor-not-allowed opacity-50 text-gray-400"
+            }`}
+            disabled={selectedTasks.length <= 0}
+          >
             Retrieve Predictions
           </button>
-          <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100">
+
+          {/* Create Annotations from Predictions */}
+          <button
+            className={`block w-full text-left px-3 py-2 text-sm ${
+              selectedTasks.length > 0
+                ? "hover:bg-gray-100 text-gray-700"
+                : "cursor-not-allowed opacity-50 text-gray-400"
+            }`}
+            disabled={selectedTasks.length <= 0}
+          >
             Create Annotations from Predictions
           </button>
-          <button className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100">
+
+          {/* Remove Duplicated Tasks */}
+          <button
+            className={`block w-full text-left px-3 py-2 text-sm ${
+              selectedTasks.length > 0
+                ? "hover:bg-gray-100 text-gray-700"
+                : "cursor-not-allowed opacity-50 text-gray-400"
+            }`}
+            disabled={selectedTasks.length <= 0}
+          >
             Remove Duplicated Tasks
           </button>
           <hr className="my-1" />
 
-          {/* Delete Options with Trash Icon */}
-          <button className="flex items-center w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-100">
-            <TrashIcon className="h-5 w-5 text-red-600 mr-2" />
+          {/* Alert Messages */}
+          <AlertBase
+            show={showAlert}
+            type={alertType}
+            message={alertMessage}
+            onClose={() => setShowAlert(false)}
+          />
+
+          {/* Confirmation Modal */}
+          <ModalBase
+            show={showModal}
+            message={modalMessage}
+            onClose={closeModal}
+            onConfirm={
+              onConfirmAction
+                ? () => {
+                    onConfirmAction();
+                    closeModal();
+                  }
+                : undefined
+            }
+          />
+
+          {/* Delete Tasks Button */}
+          <button
+            onClick={() =>
+              openConfirmModal(
+                "Are you sure you want to delete selected tasks?",
+                handleDeleteTasks
+              )
+            }
+            className={`flex items-center w-full text-left px-3 py-2 text-sm ${
+              selectedTasks.length > 0
+                ? "text-red-600 hover:bg-red-100"
+                : "text-red-300 cursor-not-allowed opacity-50"
+            }`}
+            disabled={selectedTasks.length <= 0}
+          >
+            <TrashIcon
+              className={`h-5 w-5 mr-2 ${selectedTasks.length > 0 ? "text-red-600" : "text-red-300"}`}
+            />
             Delete Tasks
           </button>
-          <button className="flex items-center w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-100">
-            <TrashIcon className="h-5 w-5 text-red-600 mr-2" />
+
+          {/* Delete Annotations Button */}
+          <button
+            onClick={() =>
+              openConfirmModal(
+                "Are you sure you want to delete selected annotations?",
+                handleDeleteAnnotations
+              )
+            }
+            className={`flex items-center w-full text-left px-3 py-2 text-sm ${
+              selectedTasks.length > 0
+                ? "text-red-600 hover:bg-red-100"
+                : "text-red-300 cursor-not-allowed opacity-50"
+            }`}
+            disabled={selectedTasks.length <= 0}
+          >
+            <TrashIcon
+              className={`h-5 w-5 mr-2 ${selectedTasks.length > 0 ? "text-red-600" : "text-red-300"}`}
+            />
             Delete Annotations
           </button>
-          <button className="flex items-center w-full text-left px-3 py-2 text-sm text-red-600 hover:bg-red-100">
-            <TrashIcon className="h-5 w-5 text-red-600 mr-2" />
+          <button
+            className={`flex items-center w-full text-left px-3 py-2 text-sm ${
+              selectedTasks.length > 0
+                ? "text-red-600 hover:bg-red-100"
+                : "text-red-300 cursor-not-allowed opacity-50"
+            }`}
+            disabled={selectedTasks.length <= 0}
+          >
+            <TrashIcon
+              className={`h-5 w-5 mr-2 ${selectedTasks.length > 0 ? "text-red-600" : "text-red-300"}`}
+            />
             Delete Predictions
           </button>
         </div>
@@ -851,7 +1053,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
                             typeof filter.value === "object" &&
                             "max" in filter.value
                               ? filter.value.max
-                              : null, // ✅ Pastikan `max` tetap ada
+                              : null,
                         })
                       }
                       customInput={<CustomDateInput />}
@@ -876,7 +1078,7 @@ const SidebarFilters: React.FC<SidebarFiltersProps> = ({
                             typeof filter.value === "object" &&
                             "min" in filter.value
                               ? filter.value.min
-                              : null, // ✅ Pastikan `min` tetap ada
+                              : null,
                           max: date
                             ? moment(date).format("YYYY-MM-DDTHH:mm:ss.SSSSSS")
                             : null,

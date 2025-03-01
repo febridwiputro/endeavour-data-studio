@@ -7,13 +7,13 @@ import ResizableBar from "./ResizableBar";
 import MainPanel from "./MainPanel";
 import DetailsPanel from "./DetailsPanel";
 import { Task, BoundingBox, Annotation } from "./types";
+import HeaderPanel from "./HeaderPanel";
 
 const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   const { accessToken } = useSelector((state: RootState) => state.auth);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
-  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [panelWidth, setPanelWidth] = useState(60);
   const [isDragging, setIsDragging] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -29,6 +29,9 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     | "zoomToActualSize"
     | null
   >(null);
+  const selectedProjectId = useSelector(
+    (state: RootState) => state.project.selectedProjectId
+  );
   const [showDashLines, setShowDashLines] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     if (!accessToken) return;
 
     try {
-      const response = await api.get(`/annotations/classes-and-tags/1`, {
+      const response = await api.get(`/annotations/classes-and-tags/${selectedProjectId}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       const { data } = response.data;
@@ -88,15 +91,13 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
       setError(null);
 
       try {
-        const response = await api.get("/annotations/upload-data/1", {
+        const response = await api.get(`/annotations/upload-data/${selectedProjectId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
 
         const { data } = response.data;
-
-        // Map tasks to match the expected SidebarTask type
         const mappedTasks = data.map((item: any) => ({
           id: item.upload_id,
           file_url: item.file_url,
@@ -112,7 +113,7 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
         }));
 
         setTasks(mappedTasks);
-        setFilteredTasks(mappedTasks); // Inisialisasi filteredTasks dengan tasks
+        setFilteredTasks(mappedTasks);
       } catch (err: any) {
         setError(err.response?.data?.message || "Failed to fetch tasks.");
       } finally {
@@ -123,8 +124,6 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     fetchTasks();
   }, [accessToken]);
 
-  // const selectedTask =
-  //   tasks.find((task) => task.id === selectedTaskId) || tasks[0];
   const selectedTask =
     filteredTasks.find((task) => task.id === selectedTaskId) ||
     filteredTasks[0];
@@ -191,13 +190,45 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
     []
   );
   const [hiddenBoxes, setHiddenBoxes] = useState<number[]>([]);
+  const [annotationStatus, setAnnotationStatus] = useState({
+    total_data: 0,
+    annotated_data: 0,
+    non_annotated_data: 0,
+    last_update: "",
+  });
+
+  useEffect(() => {
+    const fetchAnnotationStatus = async () => {
+      try {
+        const response = await api.get(
+          "/annotations/image-annotations/annotation-status/",
+          {
+            params: { project_id: 1 },
+          }
+        );
+        if (response.data.status === "success") {
+          setAnnotationStatus(response.data.data);
+        } else {
+          throw new Error("Failed to fetch annotation status");
+        }
+      } catch (err: any) {
+        setError(
+          err.response?.data?.message || "Error fetching annotation status"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnotationStatus();
+  }, []);
 
   const onToggleBoxVisibility = (id: number | string) => {
     setHiddenBoxes(
       (prev) =>
         prev.includes(Number(id))
-          ? prev.filter((boxId) => boxId !== Number(id)) // Remove the id
-          : [...prev, Number(id)] // Add the id
+          ? prev.filter((boxId) => boxId !== Number(id))
+          : [...prev, Number(id)]
     );
   };
 
@@ -231,10 +262,10 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   };
 
   const toggleMoveMode = () => {
-    setIsMoveMode((prev) => !prev); // Toggle isMoveMode
+    setIsMoveMode((prev) => !prev);
     setCursorStyle((prev) =>
       prev === "grabbing" || prev === "grab" ? "default" : "grab"
-    ); // Set grab saat mode aktif
+    );
   };
 
   useEffect(() => {
@@ -783,101 +814,109 @@ const AnnotationAnnotateProjectLabelingPage: React.FC = () => {
   if (!tasks.length) return <p>No tasks available.</p>;
 
   return (
-    <div className="flex max-h-screen">
-      <Sidebar
-        tasks={filteredTasks}
-        selectedTaskId={selectedTaskId}
-        setSelectedTaskId={setSelectedTaskId}
-        panelWidth={panelWidth}
+    <div className="flex flex-col max-h-screen">
+      <HeaderPanel
+        projectName="Default"
+        totalTasks={annotationStatus.total_data}
+        annotatedData={annotationStatus.annotated_data}
+        unannotatedData={annotationStatus.non_annotated_data}
       />
-      <ResizableBar
-        panelWidth={panelWidth}
-        setPanelWidth={setPanelWidth}
-        isDragging={isDragging}
-        setIsDragging={setIsDragging}
-      />
-      <MainPanel
-        accessToken={accessToken || localStorage.getItem("accessToken") || ""}
-        tasks={filteredTasks}
-        filteredTasks={filteredTasks}
-        selectedTaskId={selectedTaskId}
-        setSelectedTaskId={setSelectedTaskId}
-        panelWidth={panelWidth}
-        isDragging={isDragging}
-        showDashLines={showDashLines}
-        cursorPosition={{ x: 0, y: 0 }}
-        zoomLevel={zoomLevel}
-        panOffset={panOffset}
-        currentPanOffset={currentPanOffset}
-        isPanning={isPanning}
-        isDashLineMode={isDashLineMode}
-        isMoveMode={isMoveMode}
-        handleMouseDown={handleMouseDown}
-        handleMouseMove={handleMouseMove}
-        handleMouseUp={handleMouseUp}
-        handleMouseLeave={handleMouseLeave}
-        activeTool={activeTool}
-        cursorStyle={cursorStyle}
-        handleNormalCursor={handleNormalCursor}
-        handleZoomIn={handleZoomIn}
-        handleZoomOut={handleZoomOut}
-        handleMove={handleMove}
-        handleDashLineCursor={handleDashLineCursor}
-        handlePan={handlePan}
-        handleZoomToFit={handleZoomToFit}
-        handleZoomToActualSize={handleZoomToActualSize}
-        handleMouseDownForMove={handleMouseDownForMove}
-        handleMouseMoveForMove={handleMouseMoveForMove}
-        handleMouseUpForMove={handleMouseUpForMove}
-        boundingBoxes={boundingBoxes}
-        setBoundingBoxes={setBoundingBoxes}
-        deletedBoundingBoxes={deletedBoundingBoxes}
-        setDeletedBoundingBoxes={setDeletedBoundingBoxes}
-        classes={classes}
-        setClasses={setClasses}
-        selectedColors={selectedColors}
-        setSelectedColors={setSelectedColors}
-        selectedBoxIndex={selectedBoxIndex}
-        setSelectedBoxIndex={setSelectedBoxIndex}
-        toggleColor={toggleColor}
-        toggleMoveMode={toggleMoveMode}
-        toggleDashLineMode={toggleDashLineMode}
-        undoStack={undoStack}
-        redoStack={redoStack}
-        handleUndo={handleUndo}
-        handleRedo={handleRedo}
-        handleDelete={handleDelete}
-        handleReset={handleReset}
-        activeMainTab={activeMainTab}
-        setActiveMainTab={setActiveMainTab}
-        activeSubTab={activeSubTab}
-        setActiveSubTab={setActiveSubTab}
-        showModal={showModal}
-        cancelReset={cancelReset}
-        confirmReset={confirmReset}
-        canvasRef={canvasRef}
-        activeClass={activeClass}
-        setActiveClass={setActiveClass}
-      />
+      <div className="flex flex-grow">
+        <Sidebar
+          tasks={filteredTasks}
+          selectedTaskId={selectedTaskId}
+          setSelectedTaskId={setSelectedTaskId}
+          panelWidth={panelWidth}
+        />
+        <ResizableBar
+          panelWidth={panelWidth}
+          setPanelWidth={setPanelWidth}
+          isDragging={isDragging}
+          setIsDragging={setIsDragging}
+        />
+        <MainPanel
+          accessToken={accessToken || localStorage.getItem("accessToken") || ""}
+          tasks={filteredTasks}
+          filteredTasks={filteredTasks}
+          selectedTaskId={selectedTaskId}
+          setSelectedTaskId={setSelectedTaskId}
+          panelWidth={panelWidth}
+          isDragging={isDragging}
+          showDashLines={showDashLines}
+          cursorPosition={{ x: 0, y: 0 }}
+          zoomLevel={zoomLevel}
+          panOffset={panOffset}
+          currentPanOffset={currentPanOffset}
+          isPanning={isPanning}
+          isDashLineMode={isDashLineMode}
+          isMoveMode={isMoveMode}
+          handleMouseDown={handleMouseDown}
+          handleMouseMove={handleMouseMove}
+          handleMouseUp={handleMouseUp}
+          handleMouseLeave={handleMouseLeave}
+          activeTool={activeTool}
+          cursorStyle={cursorStyle}
+          handleNormalCursor={handleNormalCursor}
+          handleZoomIn={handleZoomIn}
+          handleZoomOut={handleZoomOut}
+          handleMove={handleMove}
+          handleDashLineCursor={handleDashLineCursor}
+          handlePan={handlePan}
+          handleZoomToFit={handleZoomToFit}
+          handleZoomToActualSize={handleZoomToActualSize}
+          handleMouseDownForMove={handleMouseDownForMove}
+          handleMouseMoveForMove={handleMouseMoveForMove}
+          handleMouseUpForMove={handleMouseUpForMove}
+          boundingBoxes={boundingBoxes}
+          setBoundingBoxes={setBoundingBoxes}
+          deletedBoundingBoxes={deletedBoundingBoxes}
+          setDeletedBoundingBoxes={setDeletedBoundingBoxes}
+          classes={classes}
+          setClasses={setClasses}
+          selectedColors={selectedColors}
+          setSelectedColors={setSelectedColors}
+          selectedBoxIndex={selectedBoxIndex}
+          setSelectedBoxIndex={setSelectedBoxIndex}
+          toggleColor={toggleColor}
+          toggleMoveMode={toggleMoveMode}
+          toggleDashLineMode={toggleDashLineMode}
+          undoStack={undoStack}
+          redoStack={redoStack}
+          handleUndo={handleUndo}
+          handleRedo={handleRedo}
+          handleDelete={handleDelete}
+          handleReset={handleReset}
+          activeMainTab={activeMainTab}
+          setActiveMainTab={setActiveMainTab}
+          activeSubTab={activeSubTab}
+          setActiveSubTab={setActiveSubTab}
+          showModal={showModal}
+          cancelReset={cancelReset}
+          confirmReset={confirmReset}
+          canvasRef={canvasRef}
+          activeClass={activeClass}
+          setActiveClass={setActiveClass}
+        />
 
-      <DetailsPanel
-        selectedTask={selectedTask}
-        annotations={classes.map((cls) => ({
-          id: cls.id,
-          type: cls.name,
-          color: cls.color,
-        }))}
-        activeMainTab={activeMainTab}
-        setActiveMainTab={setActiveMainTab}
-        activeSubTab={activeSubTab}
-        setActiveSubTab={setActiveSubTab}
-        boundingBoxes={boundingBoxes}
-        selectedBoxIndex={selectedBoxIndex}
-        hiddenBoxes={hiddenBoxes}
-        onDeleteBox={onDeleteBox}
-        onToggleBoxVisibility={onToggleBoxVisibility}
-        onSelectBoundingBox={handleSelectBoundingBox}
-      />
+        <DetailsPanel
+          selectedTask={selectedTask}
+          annotations={classes.map((cls) => ({
+            id: cls.id,
+            type: cls.name,
+            color: cls.color,
+          }))}
+          activeMainTab={activeMainTab}
+          setActiveMainTab={setActiveMainTab}
+          activeSubTab={activeSubTab}
+          setActiveSubTab={setActiveSubTab}
+          boundingBoxes={boundingBoxes}
+          selectedBoxIndex={selectedBoxIndex}
+          hiddenBoxes={hiddenBoxes}
+          onDeleteBox={onDeleteBox}
+          onToggleBoxVisibility={onToggleBoxVisibility}
+          onSelectBoundingBox={handleSelectBoundingBox}
+        />
+      </div>
     </div>
   );
 };

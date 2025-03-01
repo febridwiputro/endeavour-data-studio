@@ -20,8 +20,10 @@ interface DefaultContentProps {
   }) => void;
 }
 
-
-const DefaultContent: React.FC<DefaultContentProps> = ({ menuData, onAnnotationSelect }) => {
+const DefaultContent: React.FC<DefaultContentProps> = ({
+  menuData,
+  onAnnotationSelect,
+}) => {
   const dispatch = useDispatch<AppDispatch>();
   const { annotationFeatures, status } = useSelector(
     (state: RootState) => state.projectAnnotations
@@ -115,7 +117,6 @@ const DefaultContent: React.FC<DefaultContentProps> = ({ menuData, onAnnotationS
   return (
     <section className="flex-1 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 w-full">
       <div className="h-screen overflow-hidden flex">
-
         {/* Main Content with Scroll */}
         <div className="flex-1 overflow-auto px-6 py-4 sm:px-8 sm:py-6 lg:px-10 lg:py-8">
           <DropdownSearch

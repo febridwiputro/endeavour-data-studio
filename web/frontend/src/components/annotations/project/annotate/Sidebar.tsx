@@ -215,6 +215,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         setVisibleColumns={setVisibleColumns}
         classes={classes}
         selectedTasks={selectedTasks}
+        setSelectedTasks={setSelectedTasks}
         tasks={tasks}
         accessToken={accessToken}
         modelApiUrl={modelApiUrl}
@@ -272,7 +273,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                       onChange={() => toggleTaskSelection(task.id)}
                     />
                   </td>
-                  {/* ✅ Perbaikan: Gunakan index + 1 untuk menampilkan nomor urut dengan benar */}
                   <td className="border border-gray-200 p-2 text-center">
                     {index + 1}
                   </td>

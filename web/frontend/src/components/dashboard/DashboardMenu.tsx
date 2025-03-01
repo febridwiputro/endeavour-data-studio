@@ -1,18 +1,7 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
-import AnnotationsPage from "@/pages/annotations";
-import DataVisualization from "@/pages/data-visualization";
 
-// Halaman kosong untuk "Image Color Picker"
-const ImageColorPickerPage: React.FC = () => {
-  return (
-    <div className="text-center py-16">
-      <h1 className="text-2xl font-semibold">Image Color Picker</h1>
-      <p className="text-gray-600 text-sm mt-2">This feature is coming soon.</p>
-    </div>
-  );
-};
 
 const DashboardMenu: React.FC = () => {
   const { menu, loading, error } = useSelector((state: RootState) => state.menu);
@@ -29,24 +18,6 @@ const DashboardMenu: React.FC = () => {
       .replace(/fill="currentColor"/g, 'fill="#1a4e9d"');
   };
 
-  // Kembali ke Dashboard
-  const handleBackToDashboard = () => {
-    setSelectedMenu(null);
-  };
-
-  // Render halaman sesuai dengan menu yang dipilih
-  if (selectedMenu === "Annotations") {
-    return <AnnotationsPage />;
-  }
-
-  if (selectedMenu === "Image Color Picker") {
-    return <ImageColorPickerPage />;
-  }
-
-  if (selectedMenu === "Data Visualization") {
-    return <DataVisualization />;
-  }
-  
 
   return (
     <div>

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Layout from "@/components/Layout";
 import {
   FaFacebook,
   FaInstagram,
@@ -8,6 +9,10 @@ import {
   FaChevronRight,
   FaChevronLeft,
 } from "react-icons/fa";
+import { HomeIcon, FolderIcon } from "@heroicons/react/24/outline";
+import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
+import { useRouter } from "next/router";
 
 const URLExtractorPage = () => {
   const features = [
@@ -46,10 +51,38 @@ const URLExtractorPage = () => {
     ],
   };
 
+  const { menu } = useSelector((state: RootState) => state.menu);
+  const router = useRouter();
+
   const [selectedFeature, setSelectedFeature] = useState<keyof typeof subFeatures>(
     "Facebook URL Extractor"
   );
   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+
+  useEffect(() => {
+    if (router.pathname === "/url-extractor") {
+      setSelectedFeature("Facebook URL Extractor");
+    }
+  }, [router.pathname]);
+
+  const breadcrumbItems = [
+    { label: "Home", href: "/", icon: <HomeIcon className="w-4 h-4" /> },
+    {
+      label: "URL Extractor",
+      href: "/url-extractor",
+      icon: <FolderIcon className="w-4 h-4" />,
+    },
+    ...(selectedFeature
+      ? [
+          {
+            label: selectedFeature,
+            href: "",
+            icon: <FolderIcon className="w-4 h-4" />,
+            isActive: true,
+          },
+        ]
+      : []),
+  ];
 
   const handleSidebarToggle = () => {
     setIsSidebarMinimized(!isSidebarMinimized);
@@ -63,78 +96,228 @@ const URLExtractorPage = () => {
     }`;
 
   return (
-    <div className="flex h-screen w-screen">
-      {/* Sidebar */}
-      <div
-        className={`bg-white ${
-          isSidebarMinimized ? "w-16" : "w-64"
-        } flex flex-col border-r border-gray-200 shadow transition-all duration-300`}
-      >
-        {/* Header Section */}
+    <Layout
+      menuData={menu}
+      onMenuClick={() => router.push("/url-extractor")}
+      selectedMenu="URL Extractor"
+      breadcrumbItems={breadcrumbItems}
+    >
+      <div className="flex h-screen">
+        {/* Sidebar */}
         <div
-          className={`flex items-center ${
-            isSidebarMinimized ? "justify-center" : "justify-between"
-          } p-4 bg-blue-100 border-b border-gray-200`}
+          className={`${
+            isSidebarMinimized ? "w-16" : "w-64"
+          } h-full bg-white flex flex-col border-r border-gray-200 shadow transition-all duration-300`}
         >
-          {!isSidebarMinimized && (
-            <h1 className="text-lg font-semibold text-blue-600">URL Extractor</h1>
-          )}
-          <button
-            onClick={handleSidebarToggle}
-            className="bg-white rounded-full p-2 text-blue-500 hover:text-blue-600 hover:bg-gray-100 transition-all"
-            title={isSidebarMinimized ? "Expand Sidebar" : "Collapse Sidebar"}
+          {/* Header Section */}
+          <div
+            className={`flex items-center ${
+              isSidebarMinimized ? "justify-center" : "justify-between"
+            } p-4 bg-blue-100 border-b border-gray-200`}
           >
-            {isSidebarMinimized ? <FaChevronRight /> : <FaChevronLeft />}
-          </button>
+            {!isSidebarMinimized && (
+              <h1 className="text-lg font-semibold text-blue-600">URL Extractor</h1>
+            )}
+            <button
+              onClick={handleSidebarToggle}
+              className="bg-white rounded-full p-2 text-blue-500 hover:text-blue-600 hover:bg-gray-100 transition-all"
+              title={isSidebarMinimized ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isSidebarMinimized ? <FaChevronRight /> : <FaChevronLeft />}
+            </button>
+          </div>
+
+          {/* Menu Items */}
+          <ul className="flex-1 space-y-2 mt-4 px-2">
+            {features.map((feature) => (
+              <li key={feature.name}>
+                <button
+                  className={`${getButtonClass(feature.name)} ${
+                    isSidebarMinimized
+                      ? "justify-center flex-col h-10 w-10 mx-auto"
+                      : "justify-start flex-row w-full"
+                  } flex items-center hover:shadow-lg`}
+                  onClick={() => setSelectedFeature(feature.name as keyof typeof subFeatures)}
+                  title={isSidebarMinimized ? feature.name : undefined}
+                >
+                  <feature.icon
+                    className={`${
+                      isSidebarMinimized ? "w-5 h-5" : "w-6 h-6"
+                    } text-blue-500`}
+                  />
+                  {!isSidebarMinimized && (
+                    <span className="ml-3 text-sm">{feature.name}</span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <footer className="text-center p-4 text-gray-500 text-xs">
+            URLExtractor © 2025
+          </footer>
         </div>
 
-        {/* Menu Items */}
-        <ul className="flex-1 space-y-2 mt-4 px-2">
-          {features.map((feature) => (
-            <li key={feature.name}>
-              <button
-                className={`${getButtonClass(feature.name)} ${
-                  isSidebarMinimized
-                    ? "justify-center flex-col h-10 w-10 mx-auto"
-                    : "justify-start flex-row w-full"
-                } flex items-center hover:shadow-lg`}
-                onClick={() => setSelectedFeature(feature.name as keyof typeof subFeatures)}
-                title={isSidebarMinimized ? feature.name : undefined}
-              >
-                <feature.icon
-                  className={`${
-                    isSidebarMinimized ? "w-5 h-5" : "w-6 h-6"
-                  } text-blue-500`}
-                />
-                {!isSidebarMinimized && (
-                  <span className="ml-3 text-sm">{feature.name}</span>
-                )}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <footer className="text-center p-4 text-gray-500 text-xs">
-          URLExtractor © 2025
-        </footer>
+        {/* Main Content */}
+        <main className="flex-1 p-6 bg-gray-50">
+          <h1 className="text-2xl font-bold mb-6 text-gray-800">{selectedFeature}</h1>
+          <h2 className="text-lg font-semibold mb-4">Sub-Features:</h2>
+          <ul className="list-disc list-inside space-y-2">
+            {subFeatures[selectedFeature]?.map((subFeature, index) => (
+              <li key={index} className="text-gray-700">
+                {subFeature}
+              </li>
+            ))}
+          </ul>
+          <button className="mt-6 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
+            Explore {selectedFeature}
+          </button>
+        </main>
       </div>
-
-      {/* Main Content */}
-      <main className="flex-1 p-6 bg-gray-50">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">{selectedFeature}</h1>
-        <h2 className="text-lg font-semibold mb-4">Sub-Features:</h2>
-        <ul className="list-disc list-inside space-y-2">
-          {subFeatures[selectedFeature]?.map((subFeature, index) => (
-            <li key={index} className="text-gray-700">
-              {subFeature}
-            </li>
-          ))}
-        </ul>
-        <button className="mt-6 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
-          Explore {selectedFeature}
-        </button>
-      </main>
-    </div>
+    </Layout>
   );
 };
 
 export default URLExtractorPage;
+
+
+
+// import React, { useState } from "react";
+// import {
+//   FaFacebook,
+//   FaInstagram,
+//   FaTwitter,
+//   FaTiktok,
+//   FaYoutube,
+//   FaChevronRight,
+//   FaChevronLeft,
+// } from "react-icons/fa";
+
+// const URLExtractorPage = () => {
+//   const features = [
+//     { name: "Facebook URL Extractor", icon: FaFacebook },
+//     { name: "Instagram URL Extractor", icon: FaInstagram },
+//     { name: "Twitter URL Extractor", icon: FaTwitter },
+//     { name: "TikTok URL Extractor", icon: FaTiktok },
+//     { name: "YouTube URL Extractor", icon: FaYoutube },
+//   ];
+
+//   const subFeatures: Record<
+//     "Facebook URL Extractor" | "Instagram URL Extractor" | "Twitter URL Extractor" | "TikTok URL Extractor" | "YouTube URL Extractor",
+//     string[]
+//   > = {
+//     "Facebook URL Extractor": [
+//       "Download Video",
+//       "Download Image",
+//       "Crawling",
+//     ],
+//     "Instagram URL Extractor": [
+//       "Download Video",
+//       "Download Image",
+//       "IG Stories",
+//       "Instagram Reels",
+//       "Instagram Viewer",
+//       "Crawling",
+//     ],
+//     "Twitter URL Extractor": ["Download Video", "Download Image", "Crawling"],
+//     "TikTok URL Extractor": ["Download Video", "TikTok MP4", "TikTok MP3", "Crawling"],
+//     "YouTube URL Extractor": [
+//       "Download Video",
+//       "Download YouTube MP4",
+//       "Download YouTube Shorts",
+//       "Download YouTube MP3",
+//       "Crawling",
+//     ],
+//   };
+
+//   const [selectedFeature, setSelectedFeature] = useState<keyof typeof subFeatures>(
+//     "Facebook URL Extractor"
+//   );
+//   const [isSidebarMinimized, setIsSidebarMinimized] = useState(false);
+
+//   const handleSidebarToggle = () => {
+//     setIsSidebarMinimized(!isSidebarMinimized);
+//   };
+
+//   const getButtonClass = (featureName: string) =>
+//     `flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-all ${
+//       selectedFeature === featureName
+//         ? "bg-blue-100 text-blue-600 font-semibold shadow-lg"
+//         : "text-gray-700 hover:bg-gray-100 hover:shadow-md"
+//     }`;
+
+//   return (
+//     <div className="flex h-screen w-screen">
+//       {/* Sidebar */}
+//       <div
+//         className={`bg-white ${
+//           isSidebarMinimized ? "w-16" : "w-64"
+//         } flex flex-col border-r border-gray-200 shadow transition-all duration-300`}
+//       >
+//         {/* Header Section */}
+//         <div
+//           className={`flex items-center ${
+//             isSidebarMinimized ? "justify-center" : "justify-between"
+//           } p-4 bg-blue-100 border-b border-gray-200`}
+//         >
+//           {!isSidebarMinimized && (
+//             <h1 className="text-lg font-semibold text-blue-600">URL Extractor</h1>
+//           )}
+//           <button
+//             onClick={handleSidebarToggle}
+//             className="bg-white rounded-full p-2 text-blue-500 hover:text-blue-600 hover:bg-gray-100 transition-all"
+//             title={isSidebarMinimized ? "Expand Sidebar" : "Collapse Sidebar"}
+//           >
+//             {isSidebarMinimized ? <FaChevronRight /> : <FaChevronLeft />}
+//           </button>
+//         </div>
+
+//         {/* Menu Items */}
+//         <ul className="flex-1 space-y-2 mt-4 px-2">
+//           {features.map((feature) => (
+//             <li key={feature.name}>
+//               <button
+//                 className={`${getButtonClass(feature.name)} ${
+//                   isSidebarMinimized
+//                     ? "justify-center flex-col h-10 w-10 mx-auto"
+//                     : "justify-start flex-row w-full"
+//                 } flex items-center hover:shadow-lg`}
+//                 onClick={() => setSelectedFeature(feature.name as keyof typeof subFeatures)}
+//                 title={isSidebarMinimized ? feature.name : undefined}
+//               >
+//                 <feature.icon
+//                   className={`${
+//                     isSidebarMinimized ? "w-5 h-5" : "w-6 h-6"
+//                   } text-blue-500`}
+//                 />
+//                 {!isSidebarMinimized && (
+//                   <span className="ml-3 text-sm">{feature.name}</span>
+//                 )}
+//               </button>
+//             </li>
+//           ))}
+//         </ul>
+//         <footer className="text-center p-4 text-gray-500 text-xs">
+//           URLExtractor © 2025
+//         </footer>
+//       </div>
+
+//       {/* Main Content */}
+//       <main className="flex-1 p-6 bg-gray-50">
+//         <h1 className="text-2xl font-bold mb-6 text-gray-800">{selectedFeature}</h1>
+//         <h2 className="text-lg font-semibold mb-4">Sub-Features:</h2>
+//         <ul className="list-disc list-inside space-y-2">
+//           {subFeatures[selectedFeature]?.map((subFeature, index) => (
+//             <li key={index} className="text-gray-700">
+//               {subFeature}
+//             </li>
+//           ))}
+//         </ul>
+//         <button className="mt-6 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition">
+//           Explore {selectedFeature}
+//         </button>
+//       </main>
+//     </div>
+//   );
+// };
+
+// export default URLExtractorPage;
