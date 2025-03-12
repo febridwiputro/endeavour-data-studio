@@ -1,3 +1,129 @@
+// import React, { useState, useEffect } from "react";
+// import { useDispatch, useSelector } from "react-redux";
+// import { login } from "../features/auth/authSlice";
+// import { useRouter } from "next/router";
+// import { FiEye, FiEyeOff } from "react-icons/fi";
+// import AlertBase from "@/components/base/AlertBase";
+
+// const LoginPage: React.FC = () => {
+//   const [email, setEmail] = useState("");
+//   const [password, setPassword] = useState("");
+//   const [showPassword, setShowPassword] = useState(false);
+//   const [alert, setAlert] = useState({
+//     show: false,
+//     type: "error" as "success" | "error" | "info" | "warning",
+//     message: "",
+//   });
+//   const [rememberMe, setRememberMe] = useState(false);
+
+//   const dispatch = useDispatch<any>();
+//   const router = useRouter();
+//   const { loading, error } = useSelector((state: any) => state.auth);
+
+//   useEffect(() => {
+//     const savedEmail = localStorage.getItem("rememberedEmail");
+//     if (savedEmail) {
+//       setEmail(savedEmail);
+//       setRememberMe(true);
+//     }
+//   }, []);
+
+//   const handleLogin = async () => {
+//     if (!email || !password) {
+//       setAlert({ show: true, type: "error", message: "Email and password are required." });
+//       return;
+//     }
+
+//     try {
+//       const result = await dispatch(login({ email, password }));
+//       if (result.meta.requestStatus === "fulfilled") {
+//         if (rememberMe) {
+//           localStorage.setItem("rememberedEmail", email);
+//         } else {
+//           localStorage.removeItem("rememberedEmail");
+//         }
+//         setAlert({ show: true, type: "success", message: "Login successful! Redirecting..." });
+//         setTimeout(() => router.push("/home"), 1000);
+//       } else {
+//         setAlert({ show: true, type: "error", message: result.payload || "Login failed. Please try again." });
+//       }
+//     } catch (err) {
+//       setAlert({ show: true, type: "error", message: "An unexpected error occurred." });
+//     }
+//   };
+
+//   return (
+//     <div className="flex flex-col md:flex-row h-screen w-full">
+//       {/* Left Section - Hidden on mobile */}
+//       <div className="hidden md:flex flex-col items-center justify-center w-1/2 bg-[#1a4f9d] p-12">
+//         <h1 className="text-5xl font-bold text-white">Data Studio</h1>
+//         <p className="text-lg text-white mt-2">A full-fledged open-source solution for data labeling</p>
+//       </div>
+
+//       {/* Right Section - Responsive */}
+//       <div className="flex flex-col justify-center items-center w-full md:w-1/2 bg-white p-8 sm:p-12">
+//         <div className="max-w-sm w-full">
+//           <h2 className="text-2xl font-bold text-gray-800 mb-4">Log in</h2>
+//           <p className="text-sm text-gray-500">
+//             Don't have an account? 
+//             <span onClick={() => router.push("/signup")} className="text-blue-600 font-semibold cursor-pointer hover:underline"> Sign up</span>
+//           </p>
+//           <form
+//             onSubmit={(e) => {
+//               e.preventDefault();
+//               handleLogin();
+//             }}
+//           >
+//             <div className="mb-4">
+//               <label className="block text-sm font-medium text-gray-600">Email Address</label>
+//               <input
+//                 type="email"
+//                 className="w-full p-3 border rounded-lg mt-2 focus:ring focus:ring-blue-200 focus:outline-none"
+//                 placeholder="you@example.com"
+//                 value={email}
+//                 onChange={(e) => setEmail(e.target.value)}
+//               />
+//             </div>
+//             <div className="mb-4 relative">
+//               <label className="block text-sm font-medium text-gray-600">Password</label>
+//               <div className="relative">
+//                 <input
+//                   type={showPassword ? "text" : "password"}
+//                   className="w-full p-3 pr-10 border rounded-lg mt-2 focus:ring focus:ring-blue-200 focus:outline-none"
+//                   placeholder="Your password"
+//                   value={password}
+//                   onChange={(e) => setPassword(e.target.value)}
+//                 />
+//                 <span onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-3 flex items-center cursor-pointer text-gray-600">
+//                   {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+//                 </span>
+//               </div>
+//             </div>
+//             {error && <p className="text-red-500 text-sm mb-2">{error}</p>}
+//             <div className="mb-4 flex items-center justify-between">
+//               <div className="flex items-center">
+//                 <input type="checkbox" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="h-4 w-4 text-blue-600 border-gray-300 rounded-md" />
+//                 <label className="ml-3 text-sm text-gray-800">Remember me</label>
+//               </div>
+//               <a onClick={() => router.push("/forgot-password")} className="text-blue-600 font-semibold text-sm cursor-pointer hover:underline">Forgot Password?</a>
+//             </div>
+//             <button type="submit" className="w-full bg-[#1a4f9d] text-white py-3 rounded-lg hover:bg-blue-500 transition" disabled={loading}>
+//               {loading ? "Logging in..." : "Log In"}
+//             </button>
+//           </form>
+//         </div>
+//       </div>
+
+//       {/* Alert */}
+//       <AlertBase show={alert.show} type={alert.type} message={alert.message} onClose={() => setAlert({ ...alert, show: false })} />
+//     </div>
+//   );
+// };
+
+// export default LoginPage;
+
+
+
 // src/pages/login.tsx
 
 import React, { useState, useEffect } from "react";

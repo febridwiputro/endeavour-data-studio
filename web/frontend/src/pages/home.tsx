@@ -3,12 +3,16 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { RootState, AppDispatch } from "@/store/store";
 import Layout from "@/components/Layout";
-import { HomeIcon, FolderIcon } from "@heroicons/react/24/outline";
+import {
+  HomeIcon,
+  FolderIcon,
+} from "@heroicons/react/24/outline";
 import { fetchMenu } from "@/features/menu/menuSlice";
-import dynamic from "next/dynamic"; // For dynamic imports
+import dynamic from "next/dynamic";
 
 // Dynamically import pages
 const DashboardPage = dynamic(() => import("./dashboard"));
+// const DashboardPage = dynamic(() => import("@/pages/dashboard"), { ssr: false });
 const AnnotationsPage = dynamic(() => import("./annotations"));
 const ImageColorPickerPage = dynamic(() => import("./image-color-picker"));
 const DataVisualizationPage = dynamic(() => import("./data-visualization"));
@@ -22,20 +26,24 @@ const JsonEditorPage = dynamic(() => import("./json-editor"));
 const URLExtractorPage = dynamic(() => import("./url-extractor"));
 const DatasetSplitPage = dynamic(() => import("./dataset-split"));
 const DataScraperPage = dynamic(() => import("./data-scraper"));
-const CryptographyGeneratorPage = dynamic(() => import("./cryptography-generator"));
-const GeospatialDataEditorPage = dynamic(() => import("./geospatial-data-editor"));
+const CryptographyGeneratorPage = dynamic(
+  () => import("./cryptography-generator")
+);
+const GeospatialDataEditorPage = dynamic(
+  () => import("./geospatial-data-editor")
+);
 const StatisticalAnalysisPage = dynamic(() => import("./statistical-analysis"));
-const AlgorithmExplanationPage = dynamic(() => import("./algorithm-explanation"));
+const AlgorithmExplanationPage = dynamic(
+  () => import("./algorithm-explanation")
+);
 const VideoEditorPage = dynamic(() => import("./video-editor"));
 
 const HomePage: React.FC = () => {
   const [selectedMenu, setSelectedMenu] = useState<string>("Dashboard");
-
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
   const { menu } = useSelector((state: RootState) => state.menu);
 
-  // Fetch menu items on component mount
   useEffect(() => {
     dispatch(fetchMenu());
   }, [dispatch]);
@@ -46,10 +54,8 @@ const HomePage: React.FC = () => {
     router.push(`/${formattedMenuName}`);
   };
 
-  // Dynamically determine the page to render based on the current route
   const renderPageContent = () => {
     const { pathname } = router;
-
     switch (pathname.replace("/", "").replace(/-/g, " ").toLowerCase()) {
       case "annotations":
         return <AnnotationsPage />;
@@ -87,9 +93,9 @@ const HomePage: React.FC = () => {
         return <AlgorithmExplanationPage />;
       case "video editor":
         return <VideoEditorPage />;
-        default:
-          return <DashboardPage onMenuClick={handleMenuClick} />;
-      }
+      default:
+        return <DashboardPage onMenuClick={handleMenuClick} />;
+    }
   };
 
   // Breadcrumb items based on current route
@@ -100,8 +106,8 @@ const HomePage: React.FC = () => {
           {
             label: router.pathname
               .replace("/", "")
-              .replace(/-/g, " ")
-              .toUpperCase(),
+              .replace(/-/g, " "),
+              // .toUpperCase(),
             href: router.pathname,
             icon: <FolderIcon className="w-4 h-4" />,
           },
@@ -118,7 +124,10 @@ const HomePage: React.FC = () => {
           router.push(`/${formattedPath}`);
         }
       }}
-      selectedMenu={router.pathname.replace("/", "").replace(/-/g, " ").toUpperCase()}
+      selectedMenu={router.pathname
+        .replace("/", "")
+        .replace(/-/g, " ")
+        .toUpperCase()}
       breadcrumbItems={breadcrumbItems}
     >
       {renderPageContent()}
@@ -127,6 +136,7 @@ const HomePage: React.FC = () => {
 };
 
 export default HomePage;
+
 
 
 
@@ -253,10 +263,6 @@ export default HomePage;
 // };
 
 // export default HomePage;
-
-
-
-
 
 // import React, { useEffect, useState } from "react";
 // import { useDispatch, useSelector } from "react-redux";
@@ -393,9 +399,6 @@ export default HomePage;
 
 // export default HomePage;
 
-
-
-
 // import React, { useEffect, useState } from "react";
 // import { useDispatch, useSelector } from "react-redux";
 // import { useRouter } from "next/router";
@@ -526,8 +529,6 @@ export default HomePage;
 
 // export default HomePage;
 
-
-
 // import React, { useEffect, useState } from "react";
 // import { useDispatch, useSelector } from "react-redux";
 // import { useRouter } from "next/router";
@@ -611,7 +612,6 @@ export default HomePage;
 //         return <DashboardPage onMenuClick={handleMenuClick} />;
 //     }
 //   };
-  
 
 //   return (
 //     <div className="flex h-screen">
@@ -649,8 +649,6 @@ export default HomePage;
 
 // export default HomePage;
 
-
-
 // import React, { useEffect, useState } from "react";
 // import { useDispatch, useSelector } from "react-redux";
 // import { useRouter } from "next/router";
@@ -683,7 +681,6 @@ export default HomePage;
 // import DataScraperPage from "./data-scraper";
 // import CryptographyGeneratorPage from "./cryptography-generator";
 // import GeospatialDataEditorPage from "./geospatial-data-editor";
-
 
 // const HomePage: React.FC = () => {
 //   const { isDarkMode } = useDarkMode();
@@ -774,9 +771,6 @@ export default HomePage;
 // };
 
 // export default HomePage;
-
-
-
 
 // import React, { useEffect, useState } from "react";
 // import { useDispatch, useSelector } from "react-redux";
@@ -886,8 +880,6 @@ export default HomePage;
 // };
 
 // export default HomePage;
-
-
 
 // // src/pages/home.tsx
 
