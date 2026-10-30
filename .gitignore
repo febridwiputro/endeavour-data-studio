@@ -3,6 +3,13 @@ web/backend/img-adjst/
 web/backend/static/image_output
 web/backend/temp_exports/
 
+# Local model weights and generated ML artifacts
+*.pt
+*.pth
+*.onnx
+web/backend/app/tools/mlflow/mlruns/
+web/backend/output/
+
 *.vscode/
 
 # Byte-compiled / optimized / DLL files
